@@ -1,14 +1,64 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React, { useState } from 'react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+
+const PaywallPage = () => {
+  const [email, setEmail] = useState('');
+  const [price, setPrice] = useState(10);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Placeholder for payment logic
+    console.log('Submitted', { email, price });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Guaranteed Response Paywall</CardTitle>
+          <CardDescription>Get a guaranteed response within 24 hours or get a full refund</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Your Email</Label>
+              <Input 
+                type="email" 
+                placeholder="Enter your email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Set Your Price ($)</Label>
+              <Input 
+                type="number" 
+                min="5" 
+                max="500" 
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                placeholder="Set your desired price" 
+              />
+              <p className="text-sm text-muted-foreground">
+                Platform takes 20% commission: ${(price * 0.2).toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You receive: ${(price * 0.8).toFixed(2)}
+              </p>
+            </div>
+            <Button type="submit" className="w-full">
+              Proceed to Payment
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default Index;
+export default PaywallPage;
