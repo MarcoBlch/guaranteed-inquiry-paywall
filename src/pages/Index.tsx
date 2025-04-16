@@ -1,17 +1,24 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
 
 const PaywallPage = () => {
   const [email, setEmail] = useState('');
   const [price, setPrice] = useState(10);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder for payment logic
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error('Please login first');
+      return;
+    }
+    
     console.log('Submitted', { email, price });
   };
 
@@ -51,9 +58,14 @@ const PaywallPage = () => {
                 You receive: ${(price * 0.8).toFixed(2)}
               </p>
             </div>
-            <Button type="submit" className="w-full">
-              Proceed to Payment
-            </Button>
+            <div className="flex flex-col space-y-2">
+              <Button type="submit" className="w-full">
+                Proceed to Payment
+              </Button>
+              <Button type="button" variant="outline" onClick={() => window.location.href = '/auth'}>
+                Login / Sign Up
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
