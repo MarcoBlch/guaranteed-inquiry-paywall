@@ -88,14 +88,24 @@ const ProfileForm = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Saving...' : 'Save Changes'}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate('/dashboard')}
+            >
+              Go to Dashboard
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -103,3 +113,4 @@ const ProfileForm = () => {
 };
 
 export default ProfileForm;
+
