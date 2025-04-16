@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -37,14 +36,13 @@ const PaymentPage = () => {
       }
       
       try {
-        // Get user profile including price and username
-        const { data: profile, error } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('price, paypal_email')
           .eq('id', userId)
           .single();
           
-        if (error || !profile) {
+        if (profileError || !profile) {
           throw new Error('Could not find user');
         }
         
@@ -52,7 +50,7 @@ const PaymentPage = () => {
           throw new Error('This user has not set up payment options yet');
         }
         
-        setPrice(profile.price || 10);
+        setPrice(profile.price);
         setUserName(profile.paypal_email.split('@')[0] || 'this user');
         setLoading(false);
       } catch (err: any) {
@@ -85,20 +83,17 @@ const PaymentPage = () => {
     setSubmitting(true);
     
     try {
-      // In a real app we would process payment here
-      // For now, we simulate a successful payment
-      
-      // 1. Upload attachments if any
-      const fileUrls = [];
+      // Upload attachments if any
+      const fileUrls: string[] = [];
       
       for (const file of attachments) {
         const fileName = `${Date.now()}_${file.name}`;
-        const { data, error } = await supabase
+        const { data, error: uploadError } = await supabase
           .storage
           .from('message_attachments')
           .upload(`${userId}/${fileName}`, file);
           
-        if (error) throw error;
+        if (uploadError) throw uploadError;
         
         if (data) {
           const { data: { publicUrl } } = supabase
@@ -110,8 +105,8 @@ const PaymentPage = () => {
         }
       }
       
-      // 2. Store the message
-      const { error } = await supabase
+      // Store the message
+      const { error: insertError } = await supabase
         .from('messages')
         .insert({
           user_id: userId,
@@ -121,7 +116,7 @@ const PaymentPage = () => {
           amount_paid: price
         });
         
-      if (error) throw error;
+      if (insertError) throw insertError;
       
       // Success - redirect to thank you page
       navigate('/payment-success');
