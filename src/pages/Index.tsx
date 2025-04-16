@@ -1,26 +1,38 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
+import { useNavigate } from 'react-router-dom';
 
 const PaywallPage = () => {
   const [email, setEmail] = useState('');
   const [price, setPrice] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    
+    checkAuth();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!isAuthenticated) {
       toast.error('Please login first');
       return;
     }
     
-    console.log('Submitted', { email, price });
+    navigate('/dashboard');
   };
 
   return (
@@ -31,43 +43,35 @@ const PaywallPage = () => {
           <CardDescription>Get a guaranteed response within 24 hours or get a full refund</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-8">
             <div className="space-y-2">
-              <Label>Your Email</Label>
-              <Input 
-                type="email" 
-                placeholder="Enter your email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required 
-              />
+              <h3 className="text-lg font-medium">How it works:</h3>
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Set your desired price for guaranteed responses</li>
+                <li>People pay to send you messages with attachments</li>
+                <li>You receive the messages in your email</li>
+                <li>Respond within 24 hours or they get refunded</li>
+              </ol>
             </div>
-            <div className="space-y-2">
-              <Label>Set Your Price ($)</Label>
-              <Input 
-                type="number" 
-                min="5" 
-                max="500" 
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                placeholder="Set your desired price" 
-              />
-              <p className="text-sm text-muted-foreground">
-                Platform takes 20% commission: ${(price * 0.2).toFixed(2)}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                You receive: ${(price * 0.8).toFixed(2)}
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Button type="submit" className="w-full">
-                Proceed to Payment
+            
+            {isAuthenticated ? (
+              <Button 
+                className="w-full" 
+                onClick={() => navigate('/dashboard')}
+              >
+                Go to Dashboard
               </Button>
-              <Button type="button" variant="outline" onClick={() => window.location.href = '/auth'}>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/auth')}
+              >
                 Login / Sign Up
               </Button>
-            </div>
-          </form>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
