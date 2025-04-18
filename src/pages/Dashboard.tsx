@@ -23,33 +23,34 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error('Please login first');
-        navigate('/auth');
-        return;
-      }
-      
-      setUserId(user.id);
-      
-      // Load profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('paypal_email')
-        .eq('id', user.id)
-        .single();
-        
-      if (profile?.paypal_email) {
-        setPaypalEmail(profile.paypal_email);
-      }
-    };
-    
     checkAuth();
   }, [navigate]);
 
-  const handleSavePrice = async () => {
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error('Please login first');
+      navigate('/auth');
+      return;
+    }
+    
+    setUserId(user.id);
+    
+    // Load profile data
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('paypal_email, price')
+      .eq('id', user.id)
+      .single();
+      
+    if (profile) {
+      setPaypalEmail(profile.paypal_email || '');
+      setPrice(profile.price || 10);
+    }
+  };
+
+  const handleSaveSettings = async () => {
     if (!userId) return;
     
     setLoading(true);
@@ -71,6 +72,11 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
+
   const generatePaymentLink = () => {
     if (!userId) return '';
     
@@ -83,29 +89,19 @@ const Dashboard = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/profile')}
-            >
-              Profile
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={async () => {
-                await supabase.auth.signOut();
-                navigate('/');
-              }}
-            >
-              Logout
-            </Button>
-          </div>
+          <Button 
+            variant="destructive" 
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
         </div>
         
         <Tabs defaultValue="settings">
           <TabsList className="mb-4">
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="payments">Payment Link</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
           
           <TabsContent value="settings">
@@ -135,20 +131,9 @@ const Dashboard = () => {
                   </p>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="paypal">PayPal Email</Label>
-                  <Input
-                    id="paypal"
-                    type="email"
-                    placeholder="Your PayPal email for payments"
-                    value={paypalEmail}
-                    onChange={(e) => setPaypalEmail(e.target.value)}
-                  />
-                </div>
-                
                 <Button 
-                  onClick={handleSavePrice} 
-                  disabled={loading || !paypalEmail}
+                  onClick={handleSaveSettings} 
+                  disabled={loading}
                 >
                   {loading ? 'Saving...' : 'Save Settings'}
                 </Button>
@@ -182,6 +167,37 @@ const Dashboard = () => {
                   When someone uses this link, they'll be able to send you a message with payment.
                   You'll receive an email notification once payment is complete.
                 </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Settings</CardTitle>
+                <CardDescription>Update your payment details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="paypal">PayPal Email</Label>
+                    <Input
+                      id="paypal"
+                      type="email"
+                      placeholder="Enter your PayPal email"
+                      value={paypalEmail}
+                      onChange={(e) => setPaypalEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleSaveSettings}
+                    disabled={loading || !paypalEmail}
+                    className="w-full"
+                  >
+                    {loading ? 'Saving...' : 'Save Profile'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
