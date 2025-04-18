@@ -27,6 +27,12 @@ serve(async (req) => {
       body: 'grant_type=client_credentials'
     });
 
+    if (!auth.ok) {
+      const errorData = await auth.json();
+      console.error("PayPal auth error:", errorData);
+      throw new Error(`PayPal authentication failed: ${errorData.error_description || 'Unknown error'}`);
+    }
+
     const { access_token } = await auth.json();
 
     // Create order
@@ -47,7 +53,14 @@ serve(async (req) => {
       })
     });
 
+    if (!order.ok) {
+      const errorData = await order.json();
+      console.error("PayPal order creation error:", errorData);
+      throw new Error(`PayPal order creation failed: ${errorData.message || 'Unknown error'}`);
+    }
+
     const data = await order.json();
+    console.log("PayPal order created successfully:", data.id);
 
     return new Response(
       JSON.stringify(data),
@@ -59,6 +72,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error("PayPal integration error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
