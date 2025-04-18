@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 
 const PaymentPage = () => {
   const { userId } = useParams();
@@ -69,16 +70,28 @@ const PaymentPage = () => {
       setAttachments(selectedFiles);
     }
   };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) return;
-    
-    // Validate
-    if (message.length < 10) {
-      toast.error('Please enter a message with at least 10 characters');
+
+  const createOrder = async () => {
+    if (!customerEmail || message.length < 10) {
+      toast.error('Please fill in all required fields');
       return;
     }
+    
+    return fetch('/api/create-paypal-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        price: price,
+      }),
+    })
+    .then((response) => response.json())
+    .then((order) => order.id);
+  };
+
+  const onApprove = async (data: any) => {
+    if (!userId) return;
     
     setSubmitting(true);
     
@@ -88,14 +101,14 @@ const PaymentPage = () => {
       
       for (const file of attachments) {
         const fileName = `${Date.now()}_${file.name}`;
-        const { data, error: uploadError } = await supabase
+        const { data: uploadData, error: uploadError } = await supabase
           .storage
           .from('message_attachments')
           .upload(`${userId}/${fileName}`, file);
           
         if (uploadError) throw uploadError;
         
-        if (data) {
+        if (uploadData) {
           const { data: { publicUrl } } = supabase
             .storage
             .from('message_attachments')
@@ -154,90 +167,94 @@ const PaymentPage = () => {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Send a Message to {userName}</CardTitle>
-          <CardDescription>
-            Your message will be delivered with a guaranteed response within 24 hours
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Your Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Your email for the response"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="message">Your Message (up to 250 words)</Label>
-              <Textarea
-                id="message"
-                placeholder="Write your message here..."
-                value={message}
-                onChange={(e) => {
-                  // Limit to approx 250 words
-                  const words = e.target.value.split(/\s+/);
-                  if (words.length <= 250) {
-                    setMessage(e.target.value);
-                  }
-                }}
-                className="min-h-32"
-                required
-              />
-              <p className="text-sm text-right text-muted-foreground">
-                {message.split(/\s+/).filter(Boolean).length}/250 words
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="attachments">Attachments (up to 2 files)</Label>
-              <Input
-                id="attachments"
-                type="file"
-                multiple
-                onChange={handleFileChange}
-              />
-              {attachments.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Selected files: {attachments.map(f => f.name).join(', ')}
+    <PayPalScriptProvider options={{ 
+      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
+      currency: "USD",
+      intent: "capture"
+    }}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader>
+            <CardTitle>Send a Message to {userName}</CardTitle>
+            <CardDescription>
+              Your message will be delivered with a guaranteed response within 24 hours
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Your Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Your email for the response"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message">Your Message (up to 250 words)</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Write your message here..."
+                  value={message}
+                  onChange={(e) => {
+                    // Limit to approx 250 words
+                    const words = e.target.value.split(/\s+/);
+                    if (words.length <= 250) {
+                      setMessage(e.target.value);
+                    }
+                  }}
+                  className="min-h-32"
+                  required
+                />
+                <p className="text-sm text-right text-muted-foreground">
+                  {message.split(/\s+/).filter(Boolean).length}/250 words
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="attachments">Attachments (up to 2 files)</Label>
+                <Input
+                  id="attachments"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                />
+                {attachments.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Selected files: {attachments.map(f => f.name).join(', ')}
+                  </div>
+                )}
+              </div>
+              
+              <div className="py-4">
+                <div className="flex justify-between items-center">
+                  <span>Price:</span>
+                  <span className="font-medium">${price.toFixed(2)}</span>
                 </div>
-              )}
-            </div>
-            
-            <div className="py-4">
-              <div className="flex justify-between items-center">
-                <span>Price:</span>
-                <span className="font-medium">${price.toFixed(2)}</span>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Platform fee (20%):</span>
+                  <span>${(price * 0.2).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Recipient receives:</span>
+                  <span>${(price * 0.8).toFixed(2)}</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center text-sm text-muted-foreground">
-                <span>Platform fee (20%):</span>
-                <span>${(price * 0.2).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm text-muted-foreground">
-                <span>Recipient receives:</span>
-                <span>${(price * 0.8).toFixed(2)}</span>
-              </div>
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={submitting}
-            >
-              {submitting ? 'Processing...' : `Pay $${price.toFixed(2)}`}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+              
+              <PayPalButtons 
+                createOrder={createOrder}
+                onApprove={onApprove}
+                style={{ layout: "horizontal" }}
+              />
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </PayPalScriptProvider>
   );
 };
 
