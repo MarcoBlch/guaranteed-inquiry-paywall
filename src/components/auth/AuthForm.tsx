@@ -23,7 +23,7 @@ const AuthForm = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/profile');
+        navigate('/dashboard'); // Changed from '/profile' to '/dashboard'
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
