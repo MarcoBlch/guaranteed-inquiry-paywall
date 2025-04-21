@@ -124,7 +124,8 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     }
   };
 
-  const onError = (err: any) => {
+  // Renamed from onError to handlePayPalError to avoid naming conflict
+  const handlePayPalError = (err: any) => {
     console.error('PayPal error:', err);
     setPaymentError('PayPal payment failed. Please try again.');
     toast.error('PayPal payment failed. Please try again.');
@@ -205,7 +206,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
       <PayPalButtons 
         createOrder={createOrder}
         onApprove={onApprove}
-        onError={onError}
+        onError={handlePayPalError}
         style={{ layout: "horizontal" }}
         disabled={submitting}
       />
