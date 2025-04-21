@@ -19,7 +19,6 @@ const PaymentPage = () => {
   const { details, loading, error } = usePaymentDetails(userId);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   
-  // Debug logs to trace the issue
   console.log('Payment page rendering with:', { userId, details, loading, error, paymentError });
   
   if (loading) {

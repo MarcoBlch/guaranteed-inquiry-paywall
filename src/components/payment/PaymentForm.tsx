@@ -124,11 +124,12 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     }
   };
 
-  // Renamed from onError to handlePayPalError to avoid naming conflict
+  // Renamed to avoid conflict with the prop of the same name
   const handlePayPalError = (err: any) => {
     console.error('PayPal error:', err);
     setPaymentError('PayPal payment failed. Please try again.');
     toast.error('PayPal payment failed. Please try again.');
+    onError('PayPal payment failed. Please try again.');
   };
   
   return (

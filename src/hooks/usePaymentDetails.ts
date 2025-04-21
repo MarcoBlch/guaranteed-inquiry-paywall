@@ -23,6 +23,15 @@ export const usePaymentDetails = (userId: string | undefined) => {
       try {
         console.log('Fetching profile for userId:', userId);
         
+        // Check if storage bucket exists, if not, create it
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if (!buckets?.find(b => b.name === 'message_attachments')) {
+          console.log('Creating message_attachments bucket');
+          await supabase.storage.createBucket('message_attachments', {
+            public: true
+          });
+        }
+        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('price, paypal_email')
