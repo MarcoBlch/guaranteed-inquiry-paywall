@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -16,12 +16,10 @@ import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 
 const PaymentPage = () => {
   const { userId } = useParams();
-  const navigate = useNavigate();
   const { details, loading, error } = usePaymentDetails(userId);
   
-  const handlePaymentSuccess = () => {
-    navigate('/payment-success');
-  };
+  // Debug logs to trace the issue
+  console.log('Payment page rendering with:', { userId, details, loading, error });
   
   if (loading) {
     return (
@@ -41,14 +39,14 @@ const PaymentPage = () => {
   
   return (
     <PayPalScriptProvider options={{ 
-      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'AQumX7VDN1jFHc0Rv-CovXEvrvg_Mws4PqutqXkOiRstwCHXSA4atD49JXbNrF7-hoFCChchG1MaajL2',
+      clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb', // Use sandbox 'sb' as fallback
       currency: "USD",
       intent: "capture"
     }}>
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
         <Card className="w-full max-w-lg">
           <CardHeader>
-            <CardTitle>Send a Message to {details?.userName}</CardTitle>
+            <CardTitle>Send a Message to {details?.userName || 'User'}</CardTitle>
             <CardDescription>
               Your message will be delivered with a guaranteed response within 24 hours
             </CardDescription>
@@ -58,7 +56,7 @@ const PaymentPage = () => {
               <PaymentForm 
                 userId={userId} 
                 price={details.price} 
-                onSuccess={handlePaymentSuccess} 
+                onSuccess={() => window.location.href = '/payment-success'} 
               />
             )}
           </CardContent>

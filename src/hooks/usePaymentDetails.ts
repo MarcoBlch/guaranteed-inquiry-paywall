@@ -21,14 +21,23 @@ export const usePaymentDetails = (userId: string | undefined) => {
       }
       
       try {
+        console.log('Fetching profile for userId:', userId);
+        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('price, paypal_email')
           .eq('id', userId)
           .single();
           
-        if (profileError || !profile) {
+        console.log('Profile query result:', { profile, profileError });
+        
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
           throw new Error('Could not find user');
+        }
+        
+        if (!profile) {
+          throw new Error('User not found');
         }
         
         if (!profile.price || !profile.paypal_email) {
@@ -39,9 +48,11 @@ export const usePaymentDetails = (userId: string | undefined) => {
           price: profile.price,
           userName: profile.paypal_email.split('@')[0] || 'this user'
         });
-        setLoading(false);
+        
       } catch (err: any) {
-        setError(err.message);
+        console.error('Payment details error:', err);
+        setError(err.message || 'Failed to load payment details');
+      } finally {
         setLoading(false);
       }
     };
