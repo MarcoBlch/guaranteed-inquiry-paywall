@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Card, 
@@ -17,9 +17,10 @@ import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 const PaymentPage = () => {
   const { userId } = useParams();
   const { details, loading, error } = usePaymentDetails(userId);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   
   // Debug logs to trace the issue
-  console.log('Payment page rendering with:', { userId, details, loading, error });
+  console.log('Payment page rendering with:', { userId, details, loading, error, paymentError });
   
   if (loading) {
     return (
@@ -29,17 +30,17 @@ const PaymentPage = () => {
     );
   }
   
-  if (error) {
+  if (error || paymentError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <PaymentError error={error} />
+        <PaymentError error={paymentError || error || 'Payment error'} />
       </div>
     );
   }
   
   return (
     <PayPalScriptProvider options={{ 
-      clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb', // Use sandbox 'sb' as fallback
+      clientId: 'sb', // Using sandbox 'sb' as the default client ID
       currency: "USD",
       intent: "capture"
     }}>
@@ -57,6 +58,7 @@ const PaymentPage = () => {
                 userId={userId} 
                 price={details.price} 
                 onSuccess={() => window.location.href = '/payment-success'} 
+                onError={(message) => setPaymentError(message)}
               />
             )}
           </CardContent>

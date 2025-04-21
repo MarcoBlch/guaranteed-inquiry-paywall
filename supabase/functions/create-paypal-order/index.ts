@@ -15,14 +15,51 @@ serve(async (req) => {
   }
 
   try {
-    const { price } = await req.json();
+    console.log('Starting create-paypal-order function');
+    
+    // Validate request content type
+    const contentType = req.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error('Invalid content type:', contentType);
+      throw new Error('Request must be application/json');
+    }
+    
+    // Parse request body
+    let payload;
+    try {
+      payload = await req.json();
+      console.log('Received payload:', JSON.stringify(payload));
+    } catch (e) {
+      console.error('Failed to parse request JSON:', e);
+      throw new Error('Invalid JSON in request body');
+    }
+    
+    // Validate price parameter
+    const { price } = payload;
+    if (!price || typeof price !== 'number' || price <= 0) {
+      console.error('Invalid price value:', price);
+      throw new Error('Price must be a positive number');
+    }
+    
+    console.log(`Attempting to create PayPal order for price: ${price}`);
+    
+    // Check for PayPal credentials
+    const clientId = Deno.env.get('PAYPAL_CLIENT_ID');
+    const secretKey = Deno.env.get('PAYPAL_SECRET_KEY');
+    
+    if (!clientId || !secretKey) {
+      console.error('Missing PayPal credentials');
+      throw new Error('PayPal credentials not configured');
+    }
     
     // Get access token
+    console.log('Requesting PayPal access token');
     const auth = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Basic ${btoa(`${Deno.env.get('PAYPAL_CLIENT_ID')}:${Deno.env.get('PAYPAL_SECRET_KEY')}`)}`,
+        'Authorization': `Basic ${btoa(`${clientId}:${secretKey}`)}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: 'grant_type=client_credentials'
     });
@@ -34,8 +71,10 @@ serve(async (req) => {
     }
 
     const { access_token } = await auth.json();
+    console.log('Received access token from PayPal');
 
     // Create order
+    console.log('Creating PayPal order');
     const order = await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
       method: 'POST',
       headers: {
@@ -74,7 +113,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("PayPal integration error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'Failed to create PayPal order' }),
       { 
         headers: { 
           ...corsHeaders, 
