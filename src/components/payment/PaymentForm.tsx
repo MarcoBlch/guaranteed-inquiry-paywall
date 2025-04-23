@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,27 +34,17 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     try {
       console.log('Creating PayPal order for price:', price);
 
-      const response = await fetch('https://znncfayiwfamujvrprvf.supabase.co/functions/v1/create-paypal-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          price: price,
-        }),
+      const { data, error } = await supabase.functions.invoke('create-paypal-order', {
+        body: { price },
       });
 
-      console.log('PayPal order response status:', response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error creating order:', errorData);
-        throw new Error(errorData.error || 'Failed to create payment order');
+      if (error) {
+        console.error('Error creating order:', error);
+        throw new Error(error.message || 'Failed to create payment order');
       }
 
-      const order = await response.json();
-      console.log('PayPal order created:', order.id);
-      return order.id;
+      console.log('PayPal order created:', data.id);
+      return data.id;
     } catch (error: any) {
       console.error('Error creating order:', error);
       setPaymentError(error.message || 'Error creating payment order');
@@ -137,7 +126,6 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     }
   };
 
-  // Custom PayPal error handler
   const handlePayPalError = (err: any) => {
     console.error('PayPal error:', err);
     setPaymentError('PayPal payment failed. Please try again.');
