@@ -31,3 +31,6 @@ enable_confirmations = false
 [functions]
 [functions.send-email-notification]
 verify_jwt = true
+
+[functions.get-paypal-client-id]
+verify_jwt = false

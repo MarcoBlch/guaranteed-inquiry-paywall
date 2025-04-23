@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Card, 
@@ -13,11 +13,31 @@ import PaymentForm from "@/components/payment/PaymentForm";
 import PaymentError from "@/components/payment/PaymentError";
 import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
+import { supabase } from "@/lib/supabase";
 
 const PaymentPage = () => {
   const { userId } = useParams();
   const { details, loading, error } = usePaymentDetails(userId);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paypalClientId, setPaypalClientId] = useState<string>("sb"); // Default to sandbox
+  
+  useEffect(() => {
+    // Try to get the PayPal client ID from Supabase
+    const fetchPayPalConfig = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-paypal-client-id');
+        if (data?.clientId && !error) {
+          console.log('Using PayPal client ID from config');
+          setPaypalClientId(data.clientId);
+        }
+      } catch (err) {
+        console.warn('Could not fetch PayPal client ID, using sandbox mode', err);
+        // Continue with sandbox mode if there's an error
+      }
+    };
+    
+    fetchPayPalConfig();
+  }, []);
   
   console.log('Payment page rendering with:', { userId, details, loading, error, paymentError });
   
@@ -39,7 +59,7 @@ const PaymentPage = () => {
   
   return (
     <PayPalScriptProvider options={{ 
-      clientId: 'sb', // Using sandbox 'sb' as the default client ID
+      clientId: paypalClientId,
       currency: "USD",
       intent: "capture"
     }}>

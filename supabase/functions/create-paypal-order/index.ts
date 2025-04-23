@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
@@ -41,29 +40,99 @@ serve(async (req) => {
     
     console.log(`Creating PayPal order for price: ${price}`);
     
-    // Since we're in sandbox/development mode, create a mock order
-    // This avoids needing real PayPal credentials during development
-    const mockOrderId = `MOCK_${Date.now()}`;
+    // Get PayPal credentials from environment
+    const clientId = Deno.env.get('PAYPAL_CLIENT_ID');
+    const clientSecret = Deno.env.get('PAYPAL_SECRET_KEY');
     
-    return new Response(
-      JSON.stringify({
-        id: mockOrderId,
-        status: 'CREATED',
-        links: [
-          {
-            href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
-            rel: 'approve',
-            method: 'GET'
+    // If we have real PayPal credentials, use the actual PayPal API
+    if (clientId && clientSecret && clientId !== 'sb') {
+      console.log('Using real PayPal API');
+      
+      try {
+        // Get access token from PayPal
+        const tokenResponse = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`
+          },
+          body: 'grant_type=client_credentials'
+        });
+        
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          console.error('PayPal token error:', errorData);
+          throw new Error('Failed to authenticate with PayPal');
+        }
+        
+        const { access_token } = await tokenResponse.json();
+        
+        // Create order with PayPal
+        const orderResponse = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+          },
+          body: JSON.stringify({
+            intent: 'CAPTURE',
+            purchase_units: [{
+              amount: {
+                currency_code: 'USD',
+                value: price.toString()
+              }
+            }]
+          })
+        });
+        
+        if (!orderResponse.ok) {
+          const errorData = await orderResponse.json();
+          console.error('PayPal order error:', errorData);
+          throw new Error('Failed to create PayPal order');
+        }
+        
+        const order = await orderResponse.json();
+        
+        return new Response(
+          JSON.stringify(order),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
           }
-        ]
-      }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+        );
+      } catch (paypalError) {
+        console.error('PayPal API error:', paypalError);
+        throw new Error(`PayPal API error: ${paypalError.message}`);
       }
-    );
+    } else {
+      // Otherwise, create a mock order
+      console.log('Using mock PayPal order (sandbox mode)');
+      const mockOrderId = `MOCK_${Date.now()}`;
+      
+      return new Response(
+        JSON.stringify({
+          id: mockOrderId,
+          status: 'CREATED',
+          links: [
+            {
+              href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
+              rel: 'approve',
+              method: 'GET'
+            }
+          ]
+        }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+    }
+    
   } catch (error) {
     console.error("PayPal integration error:", error);
     
