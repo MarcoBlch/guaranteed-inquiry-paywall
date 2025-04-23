@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -40,6 +41,16 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
 
       if (error || data.error) {
         throw new Error(error?.message || data.error || 'Failed to create payment order');
+      }
+
+      // Log detailed info about the response
+      console.log('PayPal order response:', data);
+      
+      if (data.mode === 'sandbox' || data.mode === 'sandbox_fallback') {
+        console.warn(`Using PayPal sandbox mode: ${data.reason || data.mode}`);
+        if (data.errorDetails) {
+          console.error('PayPal API error details:', data.errorDetails);
+        }
       }
 
       console.log('PayPal order created:', data.id);

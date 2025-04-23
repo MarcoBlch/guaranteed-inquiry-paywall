@@ -72,125 +72,102 @@ serve(async (req) => {
     const clientId = Deno.env.get('PAYPAL_CLIENT_ID');
     const clientSecret = Deno.env.get('PAYPAL_SECRET_KEY');
     
-    // If we have real PayPal credentials, use the actual PayPal API
-    if (clientId && clientSecret && clientId !== 'sb') {
-      console.log('Using real PayPal API');
+    console.log(`PayPal credentials check: ClientID exists: ${!!clientId}, SecretKey exists: ${!!clientSecret}`);
+    console.log(`ClientID type: ${typeof clientId}, value length: ${clientId?.length}`);
+    
+    // Check if we have valid credentials (non-sandbox)
+    if (!clientId || !clientSecret) {
+      console.log('Missing PayPal credentials, using sandbox mode');
+      const mockOrderId = `MOCK_MISSING_CREDS_${Date.now()}`;
       
-      try {
-        // Get access token from PayPal
-        const tokenResponse = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`
-          },
-          body: 'grant_type=client_credentials'
-        });
-        
-        if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.json();
-          console.error('PayPal token error:', errorData);
-          
-          // Fall back to sandbox mode instead of throwing an error
-          console.log('Falling back to sandbox mode');
-          const mockOrderId = `MOCK_${Date.now()}`;
-          
-          return new Response(
-            JSON.stringify({
-              id: mockOrderId,
-              status: 'CREATED',
-              links: [
-                {
-                  href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
-                  rel: 'approve',
-                  method: 'GET'
-                }
-              ]
-            }),
-            { 
-              headers: { 
-                ...corsHeaders, 
-                'Content-Type': 'application/json' 
-              } 
+      return new Response(
+        JSON.stringify({
+          id: mockOrderId,
+          status: 'CREATED',
+          mode: 'sandbox_fallback',
+          reason: 'missing_credentials',
+          links: [
+            {
+              href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
+              rel: 'approve',
+              method: 'GET'
             }
-          );
+          ]
+        }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
         }
-        
-        const { access_token } = await tokenResponse.json();
-        
-        // Create order with PayPal
-        const orderResponse = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`
-          },
-          body: JSON.stringify({
-            intent: 'CAPTURE',
-            purchase_units: [{
-              amount: {
-                currency_code: 'USD',
-                value: price.toString()
-              }
-            }]
-          })
-        });
-        
-        if (!orderResponse.ok) {
-          const errorData = await orderResponse.json();
-          console.error('PayPal order error:', errorData);
-          
-          // Fall back to sandbox mode instead of throwing an error
-          console.log('Falling back to sandbox mode after PayPal API error');
-          const mockOrderId = `MOCK_${Date.now()}`;
-          
-          return new Response(
-            JSON.stringify({
-              id: mockOrderId,
-              status: 'CREATED',
-              links: [
-                {
-                  href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
-                  rel: 'approve',
-                  method: 'GET'
-                }
-              ]
-            }),
-            { 
-              headers: { 
-                ...corsHeaders, 
-                'Content-Type': 'application/json' 
-              } 
+      );
+    }
+    
+    // Check if credentials appear to be sandbox
+    if (clientId === 'sb' || clientId?.startsWith('sb-') || clientId?.includes('sandbox')) {
+      console.log('Detected sandbox credentials, using sandbox mode');
+      const mockOrderId = `MOCK_SANDBOX_CREDS_${Date.now()}`;
+      
+      return new Response(
+        JSON.stringify({
+          id: mockOrderId,
+          status: 'CREATED',
+          mode: 'sandbox',
+          reason: 'sandbox_credentials',
+          links: [
+            {
+              href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
+              rel: 'approve',
+              method: 'GET'
             }
-          );
+          ]
+        }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
         }
-        
-        const order = await orderResponse.json();
-        
-        return new Response(
-          JSON.stringify(order),
-          { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            } 
-          }
-        );
-      } catch (paypalError) {
-        console.error('PayPal API error:', paypalError);
-        
-        // Fall back to sandbox mode on any error
-        console.log('Falling back to sandbox mode after exception');
-        const mockOrderId = `MOCK_${Date.now()}`;
+      );
+    }
+    
+    // If we have real PayPal credentials, use the actual PayPal API
+    console.log('Using live PayPal API');
+    
+    try {
+      // Determine endpoint based on credentials
+      const apiBase = clientId.includes('sandbox') 
+        ? 'https://api-m.sandbox.paypal.com' 
+        : 'https://api-m.paypal.com';
+      
+      console.log(`Using PayPal API base URL: ${apiBase}`);
+      
+      // Get access token from PayPal
+      const tokenResponse = await fetch(`${apiBase}/v1/oauth2/token`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`
+        },
+        body: 'grant_type=client_credentials'
+      });
+      
+      const tokenData = await tokenResponse.json();
+      
+      if (!tokenResponse.ok) {
+        console.error('PayPal token error:', JSON.stringify(tokenData));
         
         return new Response(
           JSON.stringify({
-            id: mockOrderId,
+            id: `MOCK_TOKEN_ERROR_${Date.now()}`,
             status: 'CREATED',
+            mode: 'sandbox_fallback',
+            error: tokenData.error_description || 'Failed to get PayPal access token',
+            errorDetails: tokenData,
             links: [
               {
-                href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
+                href: `https://www.sandbox.paypal.com/checkoutnow?token=MOCK_TOKEN_ERROR`,
                 rel: 'approve',
                 method: 'GET'
               }
@@ -204,18 +181,81 @@ serve(async (req) => {
           }
         );
       }
-    } else {
-      // Otherwise, create a mock order
-      console.log('Using mock PayPal order (sandbox mode)');
-      const mockOrderId = `MOCK_${Date.now()}`;
+      
+      console.log('Successfully obtained PayPal access token');
+      const { access_token } = tokenData;
+      
+      // Create order with PayPal
+      const orderResponse = await fetch(`${apiBase}/v2/checkout/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`
+        },
+        body: JSON.stringify({
+          intent: "CAPTURE",
+          purchase_units: [{
+            amount: {
+              currency_code: "USD",
+              value: price.toString()
+            }
+          }]
+        })
+      });
+      
+      const orderData = await orderResponse.json();
+      
+      if (!orderResponse.ok) {
+        console.error('PayPal order creation error:', JSON.stringify(orderData));
+        
+        return new Response(
+          JSON.stringify({
+            id: `MOCK_ORDER_ERROR_${Date.now()}`,
+            status: 'CREATED',
+            mode: 'sandbox_fallback',
+            error: orderData.message || 'Failed to create PayPal order',
+            errorDetails: orderData,
+            links: [
+              {
+                href: `https://www.sandbox.paypal.com/checkoutnow?token=MOCK_ORDER_ERROR`,
+                rel: 'approve',
+                method: 'GET'
+              }
+            ]
+          }),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
+      }
+      
+      console.log('Successfully created PayPal order:', orderData.id);
       
       return new Response(
+        JSON.stringify(orderData),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+    } catch (paypalError) {
+      console.error('PayPal API error:', paypalError);
+      
+      // Fall back to sandbox mode on any error with detailed info
+      return new Response(
         JSON.stringify({
-          id: mockOrderId,
+          id: `MOCK_API_ERROR_${Date.now()}`,
           status: 'CREATED',
+          mode: 'sandbox_fallback',
+          error: paypalError.message || 'Unexpected error calling PayPal API',
           links: [
             {
-              href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
+              href: `https://www.sandbox.paypal.com/checkoutnow?token=MOCK_API_ERROR`,
               rel: 'approve',
               method: 'GET'
             }
@@ -234,17 +274,15 @@ serve(async (req) => {
     console.error("PayPal integration error:", error);
     
     // Create a mock order even when there's an unexpected error
-    console.log('Creating mock order after catching unexpected error');
-    const mockOrderId = `MOCK_ERROR_${Date.now()}`;
-    
     return new Response(
       JSON.stringify({
-        id: mockOrderId,
+        id: `MOCK_ERROR_${Date.now()}`,
         status: 'CREATED',
+        mode: 'sandbox_fallback',
         error: error.message || 'Unexpected error',
         links: [
           {
-            href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockOrderId}`,
+            href: `https://www.sandbox.paypal.com/checkoutnow?token=MOCK_ERROR_${Date.now()}`,
             rel: 'approve',
             method: 'GET'
           }
