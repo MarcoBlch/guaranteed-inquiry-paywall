@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -7,6 +6,8 @@ import PriceBreakdown from "./PriceBreakdown";
 import EmailInput from "./EmailInput";
 import MessageInput from "./MessageInput";
 import PaymentSection from "./PaymentSection";
+import PaymentErrorMessage from "./PaymentErrorMessage";
+import ProcessingIndicator from "./ProcessingIndicator";
 
 interface PaymentFormProps {
   userId: string;
@@ -150,12 +151,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
 
   return (
     <form className="space-y-4">
-      {paymentError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
-          <p className="text-sm font-medium">Payment Error: {paymentError}</p>
-          <p className="text-xs mt-1">Please try again or contact support if the problem persists.</p>
-        </div>
-      )}
+      {paymentError && <PaymentErrorMessage error={paymentError} />}
 
       <EmailInput 
         value={customerEmail}
@@ -182,11 +178,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
         onError={handlePayPalError}
       />
 
-      {submitting && (
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">Processing payment...</p>
-        </div>
-      )}
+      {submitting && <ProcessingIndicator />}
     </form>
   );
 };
