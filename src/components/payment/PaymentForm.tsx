@@ -1,14 +1,12 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { PayPalButtons } from "@paypal/react-paypal-js";
 import { supabase } from "@/lib/supabase";
 import FileUploadSection from "./FileUploadSection";
 import PriceBreakdown from "./PriceBreakdown";
+import EmailInput from "./EmailInput";
+import MessageInput from "./MessageInput";
+import PaymentSection from "./PaymentSection";
 
 interface PaymentFormProps {
   userId: string;
@@ -39,14 +37,8 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
         body: { price },
       });
 
-      if (error) {
-        console.error('Error creating order:', error);
-        throw new Error(error.message || 'Failed to create payment order');
-      }
-
-      if (data.error) {
-        console.error('Error from edge function:', data.error);
-        throw new Error(data.error || 'Failed to create payment order');
+      if (error || data.error) {
+        throw new Error(error?.message || data.error || 'Failed to create payment order');
       }
 
       console.log('PayPal order created:', data.id);
@@ -67,7 +59,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     console.log('Payment approved, order ID:', data.orderID);
 
     try {
-      // Check if storage bucket exists
+      // Try to ensure storage bucket exists
       let bucketExists = false;
       try {
         const { data: bucket } = await supabase.storage.getBucket('message_attachments');
@@ -76,7 +68,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
         console.log('Error checking bucket:', err);
       }
       
-      // Create storage bucket if it doesn't exist
+      // Create bucket if needed
       if (!bucketExists) {
         try {
           console.log('Creating message_attachments bucket');
@@ -88,13 +80,11 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
           }
         } catch (storageError: any) {
           console.log('Storage error:', storageError.message);
-          // Continue even if there's an error checking bucket
         }
       }
 
-      // Upload attachments if any
+      // Handle file uploads
       const fileUrls: string[] = [];
-
       for (const file of attachments) {
         try {
           const fileName = `${Date.now()}_${file.name}`;
@@ -103,10 +93,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
             .from('message_attachments')
             .upload(`${userId}/${fileName}`, file);
 
-          if (uploadError) {
-            console.error('File upload error:', uploadError);
-            throw uploadError;
-          }
+          if (uploadError) throw uploadError;
 
           if (uploadData) {
             const { data: { publicUrl } } = supabase
@@ -118,27 +105,22 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
           }
         } catch (fileError: any) {
           console.error('File upload error:', fileError);
-          // Continue with other files if one fails
         }
       }
 
-      // Store the message
+      // Store message
       const { error: insertError } = await supabase
         .from('messages')
         .insert({
-          user_id: userId,  // Explicitly set the user_id
+          user_id: userId,
           sender_email: customerEmail,
           content: message,
           attachments: fileUrls,
           amount_paid: price
         });
 
-      if (insertError) {
-        console.error('Message insert error:', insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
-      // Success - call onSuccess callback
       toast.success('Your message has been sent!');
       onSuccess();
     } catch (err: any) {
@@ -153,20 +135,14 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
   const handlePayPalError = (err: any) => {
     console.error('PayPal error:', err);
     
-    // Check if it's the INVALID_RESOURCE_ID error which happens with mock orders
-    if (err && err.message === 'INVALID_RESOURCE_ID') {
-      // This is expected in sandbox mode with mock orders
+    if (err?.message === 'INVALID_RESOURCE_ID') {
       toast.warning('Running in sandbox mode. In production, real PayPal accounts would be used.');
-      
-      // Simulate successful payment for demo purposes
       setTimeout(() => {
         onApprove({ orderID: `SIMULATED_${Date.now()}` });
       }, 1500);
-      
       return;
     }
     
-    // For other errors, show the normal error
     setPaymentError('PayPal payment failed. Please try again.');
     toast.error('PayPal payment failed. Please try again.');
     onError('PayPal payment failed. Please try again.');
@@ -181,38 +157,15 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Your Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="Your email for the response"
-          value={customerEmail}
-          onChange={(e) => setCustomerEmail(e.target.value)}
-          required
-        />
-      </div>
+      <EmailInput 
+        value={customerEmail}
+        onChange={setCustomerEmail}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="message">Your Message (up to 250 words)</Label>
-        <Textarea
-          id="message"
-          placeholder="Write your message here..."
-          value={message}
-          onChange={(e) => {
-            // Limit to approx 250 words
-            const words = e.target.value.split(/\s+/);
-            if (words.length <= 250) {
-              setMessage(e.target.value);
-            }
-          }}
-          className="min-h-32"
-          required
-        />
-        <p className="text-sm text-right text-muted-foreground">
-          {message.split(/\s+/).filter(Boolean).length}/250 words
-        </p>
-      </div>
+      <MessageInput 
+        value={message}
+        onChange={setMessage}
+      />
 
       <FileUploadSection
         attachments={attachments}
@@ -221,12 +174,12 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
 
       <PriceBreakdown price={price} />
 
-      <PayPalButtons
-        createOrder={createOrder}
+      <PaymentSection
+        price={price}
+        disabled={submitting}
+        onCreateOrder={createOrder}
         onApprove={onApprove}
         onError={handlePayPalError}
-        style={{ layout: "horizontal" }}
-        disabled={submitting}
       />
 
       {submitting && (
