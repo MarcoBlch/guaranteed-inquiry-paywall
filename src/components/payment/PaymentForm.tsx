@@ -126,7 +126,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
       const { error: insertError } = await supabase
         .from('messages')
         .insert({
-          user_id: userId,
+          user_id: userId,  // Explicitly set the user_id
           sender_email: customerEmail,
           content: message,
           attachments: fileUrls,
