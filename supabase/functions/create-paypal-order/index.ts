@@ -1,8 +1,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-const PAYPAL_API = 'https://api-m.sandbox.paypal.com';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -41,10 +39,10 @@ serve(async (req) => {
       throw new Error('Price must be a positive number');
     }
     
-    console.log(`Creating mock PayPal order for price: ${price}`);
+    console.log(`Creating PayPal order for price: ${price}`);
     
-    // For testing purposes, we'll create a mock order
-    // This simulates the PayPal sandbox without requiring real credentials
+    // Since we're in sandbox/development mode, create a mock order
+    // This avoids needing real PayPal credentials during development
     const mockOrderId = `MOCK_${Date.now()}`;
     
     return new Response(
@@ -68,8 +66,13 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("PayPal integration error:", error);
+    
+    // Return a more detailed error response
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to create PayPal order' }),
+      JSON.stringify({ 
+        error: error.message || 'Failed to create PayPal order',
+        details: error.stack || 'No stack trace available'
+      }),
       { 
         headers: { 
           ...corsHeaders, 

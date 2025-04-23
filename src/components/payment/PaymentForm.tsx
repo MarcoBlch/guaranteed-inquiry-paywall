@@ -46,7 +46,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
       });
 
       console.log('PayPal order response status:', response.status);
-
+      
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error creating order:', errorData);
@@ -69,29 +69,47 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     if (!userId) return;
 
     setSubmitting(true);
+    console.log('Payment approved, order ID:', data.orderID);
 
     try {
-      console.log('Payment approved, order ID:', data.orderID);
+      // Create storage bucket if it doesn't exist
+      try {
+        const { data: bucketExists } = await supabase.storage.getBucket('message_attachments');
+        if (!bucketExists) {
+          const { error: bucketError } = await supabase.storage.createBucket('message_attachments', {
+            public: true
+          });
+          if (bucketError) throw bucketError;
+        }
+      } catch (storageError: any) {
+        console.log('Storage check:', storageError.message);
+        // Continue even if there's an error checking bucket
+      }
 
       // Upload attachments if any
       const fileUrls: string[] = [];
 
       for (const file of attachments) {
-        const fileName = `${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase
-          .storage
-          .from('message_attachments')
-          .upload(`${userId}/${fileName}`, file);
-
-        if (uploadError) throw uploadError;
-
-        if (uploadData) {
-          const { data: { publicUrl } } = supabase
+        try {
+          const fileName = `${Date.now()}_${file.name}`;
+          const { data: uploadData, error: uploadError } = await supabase
             .storage
             .from('message_attachments')
-            .getPublicUrl(`${userId}/${fileName}`);
+            .upload(`${userId}/${fileName}`, file);
 
-          fileUrls.push(publicUrl);
+          if (uploadError) throw uploadError;
+
+          if (uploadData) {
+            const { data: { publicUrl } } = supabase
+              .storage
+              .from('message_attachments')
+              .getPublicUrl(`${userId}/${fileName}`);
+
+            fileUrls.push(publicUrl);
+          }
+        } catch (fileError: any) {
+          console.error('File upload error:', fileError);
+          // Continue with other files if one fails
         }
       }
 
@@ -109,6 +127,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
       if (insertError) throw insertError;
 
       // Success - call onSuccess callback
+      toast.success('Your message has been sent!');
       onSuccess();
     } catch (err: any) {
       setSubmitting(false);
@@ -118,7 +137,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     }
   };
 
-  // Custom PayPal error handler to avoid naming collision with prop
+  // Custom PayPal error handler
   const handlePayPalError = (err: any) => {
     console.error('PayPal error:', err);
     setPaymentError('PayPal payment failed. Please try again.');

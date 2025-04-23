@@ -23,20 +23,25 @@ export const usePaymentDetails = (userId: string | undefined) => {
       try {
         console.log('Fetching profile for userId:', userId);
         
-        // Check if storage bucket exists, if not, create it
-        const { data: buckets } = await supabase.storage.listBuckets();
-        if (!buckets?.find(b => b.name === 'message_attachments')) {
-          console.log('Creating message_attachments bucket');
-          await supabase.storage.createBucket('message_attachments', {
-            public: true
-          });
+        // Create message_attachments bucket if it doesn't exist
+        try {
+          const { data: buckets } = await supabase.storage.listBuckets();
+          if (!buckets?.find(b => b.name === 'message_attachments')) {
+            console.log('Creating message_attachments bucket');
+            await supabase.storage.createBucket('message_attachments', {
+              public: true
+            });
+          }
+        } catch (storageError) {
+          console.log('Storage bucket check error, continuing anyway');
+          // Continue even if this fails
         }
         
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('price, paypal_email')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
           
         console.log('Profile query result:', { profile, profileError });
         
