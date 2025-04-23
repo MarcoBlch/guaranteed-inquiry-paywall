@@ -34,3 +34,6 @@ verify_jwt = true
 
 [functions.get-paypal-client-id]
 verify_jwt = false
+
+[functions.create-paypal-order]
+verify_jwt = false

@@ -44,6 +44,11 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
         throw new Error(error.message || 'Failed to create payment order');
       }
 
+      if (data.error) {
+        console.error('Error from edge function:', data.error);
+        throw new Error(data.error || 'Failed to create payment order');
+      }
+
       console.log('PayPal order created:', data.id);
       return data.id;
     } catch (error: any) {
