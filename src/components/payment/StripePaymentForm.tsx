@@ -39,7 +39,7 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
 
     try {
       // Create payment intent
-      const { data: paymentResponse, error } = await supabase.functions.invoke('create-stripe-payment', {
+      const { data: paymentData, error } = await supabase.functions.invoke('create-stripe-payment', {
         body: {
           price: paymentData.price,
           responseDeadlineHours: paymentData.responseDeadlineHours,
@@ -51,7 +51,7 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
 
       // Confirm payment
       const { error: confirmError } = await stripe.confirmCardPayment(
-        paymentResponse.clientSecret,
+        paymentData.clientSecret,
         {
           payment_method: {
             card: elements.getElement(CardElement)!,
@@ -69,7 +69,7 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
       // Process the escrow payment and create message
       const { error: processError } = await supabase.functions.invoke('process-escrow-payment', {
         body: {
-          paymentIntentId: paymentResponse.paymentIntentId,
+          paymentIntentId: paymentData.paymentIntentId,
           messageData: paymentData
         }
       });

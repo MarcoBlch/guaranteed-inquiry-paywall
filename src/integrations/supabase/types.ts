@@ -86,7 +86,7 @@ export type Database = {
           amount: number
           created_at: string | null
           currency: string | null
-          expires_at: string | null
+          expires_at: string
           id: string
           message_id: string | null
           recipient_user_id: string | null
@@ -99,7 +99,7 @@ export type Database = {
           amount: number
           created_at?: string | null
           currency?: string | null
-          expires_at?: string | null
+          expires_at?: string
           id?: string
           message_id?: string | null
           recipient_user_id?: string | null
@@ -112,7 +112,7 @@ export type Database = {
           amount?: number
           created_at?: string | null
           currency?: string | null
-          expires_at?: string | null
+          expires_at?: string
           id?: string
           message_id?: string | null
           recipient_user_id?: string | null
@@ -204,7 +204,6 @@ export type Database = {
           id: string
           notification_sent: boolean | null
           read: boolean | null
-          response_deadline_hours: number | null
           sender_email: string
           updated_at: string | null
           user_id: string
@@ -217,7 +216,6 @@ export type Database = {
           id?: string
           notification_sent?: boolean | null
           read?: boolean | null
-          response_deadline_hours?: number | null
           sender_email: string
           updated_at?: string | null
           user_id: string
@@ -230,50 +228,11 @@ export type Database = {
           id?: string
           notification_sent?: boolean | null
           read?: boolean | null
-          response_deadline_hours?: number | null
           sender_email?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: []
-      }
-      pricing_tiers: {
-        Row: {
-          created_at: string | null
-          deadline_hours: number
-          id: string
-          is_active: boolean | null
-          price: number
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          deadline_hours: number
-          id?: string
-          is_active?: boolean | null
-          price: number
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          deadline_hours?: number
-          id?: string
-          is_active?: boolean | null
-          price?: number
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pricing_tiers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -307,10 +266,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      calculate_expiration_time: {
-        Args: { message_id: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
