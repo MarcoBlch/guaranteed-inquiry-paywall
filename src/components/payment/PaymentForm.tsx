@@ -166,6 +166,11 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
           >
             Continuer vers le paiement ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)
           </button>
+          
+          {/* Debug info - À supprimer après test */}
+          <div className="text-xs text-gray-500 mt-2">
+            Debug: Email={customerEmail ? 'OK' : 'MANQUE'}, Message={message.length}chars, Délai={selectedResponseTime ? 'OK' : 'MANQUE'}
+          </div>
         </>
       ) : (
         <div className="space-y-4">
