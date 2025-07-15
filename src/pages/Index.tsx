@@ -65,7 +65,7 @@ const PaywallPage = () => {
                 <Button 
                   variant="outline"
                   className="w-full" 
-                  onClick={() => navigate('/pay/user123')}
+                  onClick={() => navigate('/pay/b706cf3e-8d0b-47ed-af50-502b288510a8')}
                 >
                   🧪 Test Payment (Demo)
                 </Button>
