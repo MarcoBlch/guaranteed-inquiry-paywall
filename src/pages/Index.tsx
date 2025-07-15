@@ -55,12 +55,21 @@ const PaywallPage = () => {
             </div>
             
             {isAuthenticated ? (
-              <Button 
-                className="w-full" 
-                onClick={() => navigate('/dashboard')}
-              >
-                Go to Dashboard
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  className="w-full" 
+                  onClick={() => navigate('/dashboard')}
+                >
+                  Go to Dashboard
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="w-full" 
+                  onClick={() => navigate('/payment/user123')}
+                >
+                  🧪 Test Payment (Demo)
+                </Button>
+              </div>
             ) : (
               <Button
                 type="button"
