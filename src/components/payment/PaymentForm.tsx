@@ -39,7 +39,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
   const { options, loading, error } = useResponseTimeOptions(userId);
 
   const handleContinueToPayment = () => {
-    if (!customerEmail || message.length < 10 || !selectedResponseTime) {
+    if (!customerEmail || message.length < 5 || !selectedResponseTime) {
       toast.error('Veuillez remplir tous les champs requis et choisir un délai de réponse');
       return;
     }
@@ -161,7 +161,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
           <button
             type="button"
             onClick={handleContinueToPayment}
-            disabled={!customerEmail || message.length < 10 || !selectedResponseTime}
+            disabled={!customerEmail || message.length < 5 || !selectedResponseTime}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Continuer vers le paiement ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)
