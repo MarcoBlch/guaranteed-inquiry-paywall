@@ -72,10 +72,19 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
 
   const handleApprove = async (data: any) => {
     try {
+      const currentPaymentData = {
+        userId,
+        price: selectedResponseTime?.price || price,
+        responseDeadlineHours: selectedResponseTime?.hours || 24,
+        senderEmail: customerEmail,
+        content: message,
+        attachments: []
+      };
+
       const { error } = await supabase.functions.invoke('process-escrow-payment', {
         body: {
           orderID: data.orderID,
-          messageData: paymentData
+          messageData: currentPaymentData
         }
       });
 

@@ -66,6 +66,15 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
         throw new Error(confirmError.message);
       }
 
+      // Capture the payment after successful confirmation
+      const { data: captureResponse, error: captureError } = await supabase.functions.invoke('capture-stripe-payment', {
+        body: {
+          paymentIntentId: paymentResponse.paymentIntentId
+        }
+      });
+
+      if (captureError) throw captureError;
+
       // Process the escrow payment and create message
       const { error: processError } = await supabase.functions.invoke('process-escrow-payment', {
         body: {

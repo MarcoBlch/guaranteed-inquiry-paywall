@@ -82,6 +82,7 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({
+          orderID: mockOrderId,
           id: mockOrderId,
           status: 'CREATED',
           mode: 'sandbox_fallback',
@@ -110,6 +111,7 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({
+          orderID: mockOrderId,
           id: mockOrderId,
           status: 'CREATED',
           mode: 'sandbox',
@@ -158,9 +160,11 @@ serve(async (req) => {
       if (!tokenResponse.ok) {
         console.error('PayPal token error:', JSON.stringify(tokenData));
         
+        const mockErrorId = `MOCK_TOKEN_ERROR_${Date.now()}`;
         return new Response(
           JSON.stringify({
-            id: `MOCK_TOKEN_ERROR_${Date.now()}`,
+            orderID: mockErrorId,
+            id: mockErrorId,
             status: 'CREATED',
             mode: 'sandbox_fallback',
             error: tokenData.error_description || 'Failed to get PayPal access token',
@@ -242,9 +246,11 @@ serve(async (req) => {
       if (!orderResponse.ok) {
         console.error('PayPal order creation error:', JSON.stringify(orderData));
         
+        const mockErrorId = `MOCK_ORDER_ERROR_${Date.now()}`;
         return new Response(
           JSON.stringify({
-            id: `MOCK_ORDER_ERROR_${Date.now()}`,
+            orderID: mockErrorId,
+            id: mockErrorId,
             status: 'CREATED',
             mode: 'sandbox_fallback',
             error: orderData.message || 'Failed to create PayPal order',
@@ -269,7 +275,10 @@ serve(async (req) => {
       console.log('Successfully created PayPal order:', orderData.id);
       
       return new Response(
-        JSON.stringify(orderData),
+        JSON.stringify({
+          orderID: orderData.id,
+          ...orderData
+        }),
         { 
           headers: { 
             ...corsHeaders, 
@@ -281,9 +290,11 @@ serve(async (req) => {
       console.error('PayPal API error:', paypalError);
       
       // Fall back to sandbox mode on any error with detailed info
+      const mockErrorId = `MOCK_API_ERROR_${Date.now()}`;
       return new Response(
         JSON.stringify({
-          id: `MOCK_API_ERROR_${Date.now()}`,
+          orderID: mockErrorId,
+          id: mockErrorId,
           status: 'CREATED',
           mode: 'sandbox_fallback',
           error: paypalError.message || 'Unexpected error calling PayPal API',
@@ -308,15 +319,17 @@ serve(async (req) => {
     console.error("PayPal integration error:", error);
     
     // Create a mock order even when there's an unexpected error
+    const mockErrorId = `MOCK_ERROR_${Date.now()}`;
     return new Response(
       JSON.stringify({
-        id: `MOCK_ERROR_${Date.now()}`,
+        orderID: mockErrorId,
+        id: mockErrorId,
         status: 'CREATED',
         mode: 'sandbox_fallback',
         error: error.message || 'Unexpected error',
         links: [
           {
-            href: `https://www.sandbox.paypal.com/checkoutnow?token=MOCK_ERROR_${Date.now()}`,
+            href: `https://www.sandbox.paypal.com/checkoutnow?token=${mockErrorId}`,
             rel: 'approve',
             method: 'GET'
           }

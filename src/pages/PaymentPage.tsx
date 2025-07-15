@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 
 const PaymentPage = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { details, loading, error } = usePaymentDetails(userId);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paypalClientId, setPaypalClientId] = useState<string>("sb"); // Default to sandbox
@@ -76,7 +77,7 @@ const PaymentPage = () => {
               <PaymentForm 
                 userId={userId} 
                 price={details.price} 
-                onSuccess={() => window.location.href = '/payment-success'} 
+                onSuccess={() => navigate('/payment-success')} 
                 onError={(message) => setPaymentError(message)}
               />
             )}
