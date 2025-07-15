@@ -185,8 +185,8 @@ serve(async (req) => {
       console.log('Successfully obtained PayPal access token');
       const { access_token } = tokenData;
       
-      // Calculate commission (par exemple 5%)
-      const commissionRate = 0.05; // 5%
+      // Calculate commission (20%)
+      const commissionRate = 0.20; // 20%
       const commission = price * commissionRate;
       const recipientAmount = price - commission;
       
