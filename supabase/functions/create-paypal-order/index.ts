@@ -185,7 +185,12 @@ serve(async (req) => {
       console.log('Successfully obtained PayPal access token');
       const { access_token } = tokenData;
       
-      // Create order with PayPal
+      // Calculate commission (par exemple 5%)
+      const commissionRate = 0.05; // 5%
+      const commission = price * commissionRate;
+      const recipientAmount = price - commission;
+      
+      // Create order with PayPal using Payment Facilitator model
       const orderResponse = await fetch(`${apiBase}/v2/checkout/orders`, {
         method: 'POST',
         headers: {
@@ -196,10 +201,39 @@ serve(async (req) => {
           intent: "CAPTURE",
           purchase_units: [{
             amount: {
-              currency_code: "USD",
-              value: price.toString()
+              currency_code: "EUR", // Utiliser EUR selon votre setup
+              value: price.toString(),
+              breakdown: {
+                item_total: {
+                  currency_code: "EUR",
+                  value: price.toString()
+                }
+              }
+            },
+            items: [{
+              name: "Message Response Service",
+              unit_amount: {
+                currency_code: "EUR",
+                value: price.toString()
+              },
+              quantity: "1"
+            }],
+            payment_instruction: {
+              disbursement_mode: "INSTANT",
+              platform_fees: [{
+                amount: {
+                  currency_code: "EUR",
+                  value: commission.toFixed(2)
+                }
+              }]
             }
-          }]
+          }],
+          application_context: {
+            brand_name: "VotreService",
+            landing_page: "BILLING",
+            user_action: "PAY_NOW",
+            shipping_preference: "NO_SHIPPING"
+          }
         })
       });
       
