@@ -58,3 +58,6 @@ verify_jwt = true
 
 [functions.check-escrow-timeouts]
 verify_jwt = true
+
+[functions.mark-response-received]
+verify_jwt = true
