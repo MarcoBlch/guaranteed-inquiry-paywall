@@ -1,25 +1,22 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import PaymentForm from "@/components/payment/PaymentForm";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import StripeEscrowForm from "@/components/payment/StripeEscrowForm";
 import PaymentError from "@/components/payment/PaymentError";
 import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
+
+// ✅ STRIPE UNIQUEMENT - clé publique (pk_test_ pour test, pk_live_ pour production)
+const stripePromise = loadStripe('pk_test_51YourStripePublishableKeyHere');
 
 const PaymentPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { details, loading, error } = usePaymentDetails(userId);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  
-  console.log('Payment page rendering with:', { userId, details, loading, error, paymentError });
   
   if (loading) {
     return (
@@ -38,26 +35,28 @@ const PaymentPage = () => {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Send a Message to {details?.userName || 'User'}</CardTitle>
-          <CardDescription>
-            Your message will be delivered with a guaranteed response within 24 hours
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {details && userId && (
-            <PaymentForm 
-              userId={userId} 
-              price={details.price} 
-              onSuccess={() => navigate('/payment-success')} 
-              onError={(message) => setPaymentError(message)}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <Elements stripe={stripePromise}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Message avec Réponse Garantie</CardTitle>
+            <CardDescription className="text-lg">
+              Envoyez votre message avec garantie de réponse dans les délais choisis ou remboursement intégral
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {details && userId && (
+              <StripeEscrowForm 
+                userId={userId} 
+                basePrice={details.price} 
+                onSuccess={() => navigate('/payment-success')} 
+                onError={(message) => setPaymentError(message)}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </Elements>
   );
 };
 
