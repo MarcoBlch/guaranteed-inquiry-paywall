@@ -194,7 +194,7 @@ serve(async (req) => {
       const commission = price * commissionRate;
       const recipientAmount = price - commission;
       
-      // Create order with PayPal using Payment Facilitator model
+      // Create simple order with PayPal
       const orderResponse = await fetch(`${apiBase}/v2/checkout/orders`, {
         method: 'POST',
         headers: {
@@ -205,36 +205,15 @@ serve(async (req) => {
           intent: "CAPTURE",
           purchase_units: [{
             amount: {
-              currency_code: "EUR", // Utiliser EUR selon votre setup
-              value: price.toString(),
-              breakdown: {
-                item_total: {
-                  currency_code: "EUR",
-                  value: price.toString()
-                }
-              }
+              currency_code: "EUR",
+              value: price.toFixed(2)
             },
-            items: [{
-              name: "Message Response Service",
-              unit_amount: {
-                currency_code: "EUR",
-                value: price.toString()
-              },
-              quantity: "1"
-            }],
-            payment_instruction: {
-              disbursement_mode: "INSTANT",
-              platform_fees: [{
-                amount: {
-                  currency_code: "EUR",
-                  value: commission.toFixed(2)
-                }
-              }]
-            }
+            description: `FastPass Message Service`,
+            reference_id: `fastpass_${Date.now()}`
           }],
           application_context: {
-            brand_name: "VotreService",
-            landing_page: "BILLING",
+            brand_name: "FastPass",
+            landing_page: "NO_PREFERENCE",
             user_action: "PAY_NOW",
             shipping_preference: "NO_SHIPPING"
           }

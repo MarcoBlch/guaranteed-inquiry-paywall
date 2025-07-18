@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-const stripePromise = loadStripe('pk_test_51QG9QVHkfRPSCBNEKX8YQH1KLXxGzr0LPQyqGJi4FWe5lrlJwxQi3FYnhYIBqLy3QaGQQTKZ3v6TpJDKVZKBOzEV00TQlhJDi5'); // Remplacez par votre vraie clé publique
+const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMJoUVf3rWAiACX9gBaB89pQZVHADw19wCkfSZXE9xrYqsbwDy4iLE65LlB9WEe7W07BHWxqnM00euXQsJ19');
 
 interface PaymentFormData {
   userId: string;
