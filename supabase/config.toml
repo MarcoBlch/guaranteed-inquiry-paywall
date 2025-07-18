@@ -29,11 +29,17 @@ double_confirm_changes = true
 enable_confirmations = false
 
 [functions]
+[functions.create-stripe-payment]
+verify_jwt = false
+
+[functions.capture-stripe-payment] 
+verify_jwt = true
+
+[functions.process-escrow-payment]
+verify_jwt = true
+
 [functions.send-email-notification]
 verify_jwt = true
 
-[functions.get-paypal-client-id]
-verify_jwt = false
-
-[functions.create-paypal-order]
-verify_jwt = false
+[functions.send-response-email]
+verify_jwt = true
