@@ -46,3 +46,6 @@ verify_jwt = true
 
 [functions.create-stripe-connect-account]
 verify_jwt = false
+
+[functions.stripe-connect-webhook]
+verify_jwt = false
