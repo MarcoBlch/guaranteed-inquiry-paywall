@@ -8,7 +8,6 @@ import PaymentErrorMessage from "./PaymentErrorMessage";
 import ProcessingIndicator from "./ProcessingIndicator";
 import ResponseTimeSelector from "./ResponseTimeSelector";
 import StripePaymentForm from "./StripePaymentForm";
-import PaymentSection from "./PaymentSection";
 import { useResponseTimeOptions } from "@/hooks/useResponseTimeOptions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,7 +33,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal' | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | null>(null);
 
   const { options, loading, error } = useResponseTimeOptions(userId);
 
@@ -46,61 +45,8 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     setShowPayment(true);
   };
 
-  const handlePaymentMethodSelect = (method: 'stripe' | 'paypal') => {
+  const handlePaymentMethodSelect = (method: 'stripe') => {
     setPaymentMethod(method);
-  };
-
-  // PayPal handlers
-  const handleCreateOrder = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-paypal-order', {
-        body: {
-          price: selectedResponseTime?.price || price,
-          responseDeadlineHours: selectedResponseTime?.hours || 24,
-          userId
-        }
-      });
-      
-      if (error) throw error;
-      return data.orderID;
-    } catch (error: any) {
-      toast.error('Erreur lors de la création de la commande PayPal');
-      console.error('PayPal order creation error:', error);
-      throw error;
-    }
-  };
-
-  const handleApprove = async (data: any) => {
-    try {
-      const currentPaymentData = {
-        userId,
-        price: selectedResponseTime?.price || price,
-        responseDeadlineHours: selectedResponseTime?.hours || 24,
-        senderEmail: customerEmail,
-        content: message,
-        attachments: []
-      };
-
-      const { error } = await supabase.functions.invoke('process-escrow-payment', {
-        body: {
-          orderID: data.orderID,
-          messageData: currentPaymentData
-        }
-      });
-
-      if (error) throw error;
-      
-      toast.success('Paiement PayPal réussi ! Votre message a été envoyé.');
-      onSuccess();
-    } catch (error: any) {
-      toast.error('Erreur lors du traitement du paiement PayPal');
-      onError(error.message || 'Erreur PayPal');
-    }
-  };
-
-  const handlePayPalError = (err: any) => {
-    console.error('PayPal error:', err);
-    toast.error('Erreur PayPal: ' + (err.message || 'Erreur inconnue'));
   };
 
   const handlePaymentSuccess = () => {
@@ -183,47 +129,11 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
             </div>
           </div>
 
-          {!paymentMethod ? (
-            <div className="space-y-3">
-              <h3 className="font-medium text-center">Choisissez votre méthode de paiement</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => handlePaymentMethodSelect('stripe')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-colors"
-                >
-                  <div className="text-center">
-                    <div className="font-medium">💳 Stripe</div>
-                    <div className="text-sm text-gray-600">Carte bancaire</div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePaymentMethodSelect('paypal')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-colors"
-                >
-                  <div className="text-center">
-                    <div className="font-medium">🅿️ PayPal</div>
-                    <div className="text-sm text-gray-600">PayPal & cartes</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          ) : paymentMethod === 'stripe' ? (
-            <StripePaymentForm
-              paymentData={paymentData}
-              onSuccess={handlePaymentSuccess}
-              onError={handlePaymentError}
-            />
-          ) : (
-            <PaymentSection
-              price={selectedResponseTime?.price || price}
-              disabled={submitting}
-              onCreateOrder={handleCreateOrder}
-              onApprove={handleApprove}
-              onError={handlePayPalError}
-            />
-          )}
+          <StripePaymentForm
+            paymentData={paymentData}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+          />
 
           <button
             type="button"
