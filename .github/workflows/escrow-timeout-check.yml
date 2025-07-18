@@ -1,0 +1,38 @@
+name: Check Escrow Timeouts
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # Toutes les 15 minutes
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-timeouts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Expired Escrows
+        run: |
+          response=$(curl -s -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/check-escrow-timeouts" \
+            -d '{}')
+          
+          http_code="${response: -3}"
+          body="${response%???}"
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "Error: HTTP $http_code"
+            echo "$body"
+            exit 1
+          fi
+          
+          echo "Success: $body"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "🚨 Escrow timeout check failed!" 
+          # Ici ajouter notification Slack/Discord/Email si besoin
