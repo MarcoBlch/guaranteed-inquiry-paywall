@@ -46,7 +46,7 @@ serve(async (req) => {
         message_id: message.id,
         stripe_payment_intent_id: paymentIntentId,
         amount: messageData.price,
-        status: 'held',
+        status: 'held', // Fonds en escrow
         recipient_user_id: messageData.userId,
         sender_email: messageData.senderEmail,
         expires_at: expiresAt.toISOString()
