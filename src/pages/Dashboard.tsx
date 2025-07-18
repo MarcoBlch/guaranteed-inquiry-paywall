@@ -17,7 +17,6 @@ import { toast } from "sonner";
 
 const Dashboard = () => {
   const [price, setPrice] = useState(10);
-  const [paypalEmail, setPaypalEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -40,12 +39,11 @@ const Dashboard = () => {
     // Load profile data
     const { data: profile } = await supabase
       .from('profiles')
-      .select('paypal_email, price')
+      .select('price')
       .eq('id', user.id)
       .single();
       
     if (profile) {
-      setPaypalEmail(profile.paypal_email || '');
       setPrice(profile.price || 10);
     }
   };
@@ -58,7 +56,6 @@ const Dashboard = () => {
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          paypal_email: paypalEmail,
           price: price
         })
         .eq('id', userId);
@@ -175,27 +172,19 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Profile Settings</CardTitle>
-                <CardDescription>Update your payment details</CardDescription>
+                <CardDescription>Update your Stripe payment details</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="paypal">PayPal Email</Label>
-                    <Input
-                      id="paypal"
-                      type="email"
-                      placeholder="Enter your PayPal email"
-                      value={paypalEmail}
-                      onChange={(e) => setPaypalEmail(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Stripe payment integration is now active. Payment processing will be handled automatically.
+                  </p>
                   <Button 
                     onClick={handleSaveSettings}
-                    disabled={loading || !paypalEmail}
+                    disabled={loading}
                     className="w-full"
                   >
-                    {loading ? 'Saving...' : 'Save Profile'}
+                    {loading ? 'Saving...' : 'Save Settings'}
                   </Button>
                 </div>
               </CardContent>

@@ -39,7 +39,7 @@ export const usePaymentDetails = (userId: string | undefined) => {
         
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('price, paypal_email')
+          .select('price')
           .eq('id', userId)
           .maybeSingle();
           
@@ -54,13 +54,13 @@ export const usePaymentDetails = (userId: string | undefined) => {
           throw new Error('User not found');
         }
         
-        if (!profile.price || !profile.paypal_email) {
+        if (!profile.price) {
           throw new Error('This user has not set up payment options yet');
         }
         
         setDetails({
           price: profile.price,
-          userName: profile.paypal_email.split('@')[0] || 'this user'
+          userName: 'this user'
         });
         
       } catch (err: any) {
