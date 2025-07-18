@@ -11,81 +11,132 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  try {
-    const { userId } = await req.json()
-    
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+  console.log('🟢 Function started')
 
-    // Vérifier si compte existe déjà
-    const { data: profile } = await supabase
+  try {
+    // 1. Vérifier la requête
+    const body = await req.text()
+    console.log('📥 Request body:', body)
+    
+    let requestData
+    try {
+      requestData = JSON.parse(body)
+    } catch (e) {
+      console.error('❌ JSON parse error:', e)
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
+    }
+
+    const { userId } = requestData
+    console.log('👤 User ID:', userId)
+
+    if (!userId) {
+      console.error('❌ Missing userId')
+      return new Response(
+        JSON.stringify({ error: 'Missing userId parameter' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
+    }
+
+    // 2. Vérifier les variables d'environnement
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    console.log('🔑 Environment check:', {
+      hasStripeKey: !!stripeSecretKey,
+      stripeKeyPrefix: stripeSecretKey?.substring(0, 10),
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseServiceKey
+    })
+
+    if (!stripeSecretKey) {
+      console.error('❌ Missing STRIPE_SECRET_KEY')
+      return new Response(
+        JSON.stringify({ error: 'Stripe secret key not configured' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      )
+    }
+
+    // 3. Test connexion Supabase
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!)
+    
+    console.log('🗃️ Testing Supabase connection...')
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('stripe_account_id')
       .eq('id', userId)
       .single()
 
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
-    const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
-
-    let accountId = profile?.stripe_account_id
-
-    // Créer compte si nécessaire
-    if (!accountId) {
-      const accountResponse = await fetch('https://api.stripe.com/v1/accounts', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${stripeSecretKey}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          type: 'express',
-          country: 'FR',
-          'capabilities[transfers][requested]': 'true',
-          'capabilities[card_payments][requested]': 'true'
-        })
-      })
-
-      const account = await accountResponse.json()
-      if (!accountResponse.ok) throw new Error(account.error?.message)
-      
-      accountId = account.id
-
-      // Sauvegarder en base
-      await supabase
-        .from('profiles')
-        .update({ stripe_account_id: accountId })
-        .eq('id', userId)
+    if (profileError) {
+      console.error('❌ Supabase error:', profileError)
+      return new Response(
+        JSON.stringify({ error: `Database error: ${profileError.message}` }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      )
     }
 
-    // Créer onboarding link
-    const linkResponse = await fetch('https://api.stripe.com/v1/account_links', {
-      method: 'POST',
+    console.log('✅ Profile found:', { userId, hasExistingAccount: !!profile?.stripe_account_id })
+
+    // 4. Test API Stripe - Version simplifiée
+    console.log('💳 Testing Stripe API...')
+    
+    const testResponse = await fetch('https://api.stripe.com/v1/accounts?limit=1', {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${stripeSecretKey}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        account: accountId,
-        refresh_url: `${baseUrl}/dashboard?setup=stripe&refresh=true`,
-        return_url: `${baseUrl}/dashboard?setup=complete`,
-        type: 'account_onboarding'
-      })
+      }
     })
 
-    const link = await linkResponse.json()
-    if (!linkResponse.ok) throw new Error(link.error?.message)
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text()
+      console.error('❌ Stripe API test failed:', errorText)
+      return new Response(
+        JSON.stringify({ error: `Stripe API error: ${errorText}` }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      )
+    }
+
+    console.log('✅ Stripe API connection successful')
+
+    // 5. Pour le moment, retourner un mock URL
+    const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
+    const mockUrl = `${baseUrl}/dashboard?setup=mock-success`
+
+    console.log('🎯 Returning mock onboarding URL')
 
     return new Response(
-      JSON.stringify({ onboarding_url: link.url }),
+      JSON.stringify({ 
+        onboarding_url: mockUrl,
+        debug: 'This is a debug version - real Stripe Connect creation disabled'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error creating Stripe Connect account:', error)
+    console.error('💥 Unexpected error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
