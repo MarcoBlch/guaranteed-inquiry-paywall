@@ -92,21 +92,82 @@ serve(async (req) => {
 
     console.log('✅ Profile found:', { userId, hasExistingAccount: !!profile?.stripe_account_id })
 
-    // 4. Test API Stripe - Version simplifiée
-    console.log('💳 Testing Stripe API...')
+    // 4. Créer ou récupérer compte Stripe Connect
+    console.log('💳 Creating Stripe Connect account...')
     
-    const testResponse = await fetch('https://api.stripe.com/v1/accounts?limit=1', {
-      method: 'GET',
+    let stripeAccountId = profile?.stripe_account_id
+
+    if (!stripeAccountId) {
+      // Créer nouveau compte Connect
+      const accountResponse = await fetch('https://api.stripe.com/v1/accounts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${stripeSecretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          type: 'express',
+          country: 'FR',
+          email: user.email || '',
+        })
+      })
+
+      if (!accountResponse.ok) {
+        const errorText = await accountResponse.text()
+        console.error('❌ Account creation failed:', errorText)
+        return new Response(
+          JSON.stringify({ error: `Failed to create Stripe account: ${errorText}` }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
+      }
+
+      const account = await accountResponse.json()
+      stripeAccountId = account.id
+      console.log('✅ Created Stripe account:', stripeAccountId)
+
+      // Sauvegarder l'ID dans Supabase
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ stripe_account_id: stripeAccountId })
+        .eq('id', userId)
+
+      if (updateError) {
+        console.error('❌ Failed to save account ID:', updateError)
+        return new Response(
+          JSON.stringify({ error: `Failed to save account: ${updateError.message}` }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
+      }
+    }
+
+    // 5. Créer lien d'onboarding
+    const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
+    
+    const onboardingResponse = await fetch('https://api.stripe.com/v1/account_links', {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${stripeSecretKey}`,
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        account: stripeAccountId,
+        refresh_url: `${baseUrl}/dashboard?setup=refresh`,
+        return_url: `${baseUrl}/dashboard?setup=complete`,
+        type: 'account_onboarding',
+      })
     })
 
-    if (!testResponse.ok) {
-      const errorText = await testResponse.text()
-      console.error('❌ Stripe API test failed:', errorText)
+    if (!onboardingResponse.ok) {
+      const errorText = await onboardingResponse.text()
+      console.error('❌ Onboarding link creation failed:', errorText)
       return new Response(
-        JSON.stringify({ error: `Stripe API error: ${errorText}` }),
+        JSON.stringify({ error: `Failed to create onboarding link: ${errorText}` }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500 
@@ -114,18 +175,13 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Stripe API connection successful')
-
-    // 5. Pour le moment, retourner un mock URL
-    const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
-    const mockUrl = `${baseUrl}/dashboard?setup=mock-success`
-
-    console.log('🎯 Returning mock onboarding URL')
+    const onboardingData = await onboardingResponse.json()
+    console.log('✅ Created onboarding link')
 
     return new Response(
       JSON.stringify({ 
-        onboarding_url: mockUrl,
-        debug: 'This is a debug version - real Stripe Connect creation disabled'
+        onboarding_url: onboardingData.url,
+        stripe_account_id: stripeAccountId
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
