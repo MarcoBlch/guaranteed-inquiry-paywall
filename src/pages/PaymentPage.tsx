@@ -10,7 +10,7 @@ import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 
 // ✅ STRIPE UNIQUEMENT - clé publique (pk_test_ pour test, pk_live_ pour production)
-const stripePromise = loadStripe('pk_test_51YourStripePublishableKeyHere');
+const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMJoUVf3rWAiACX9gBaB89pQZVHADw19wCkfSZXE9xrYqsbwDy4iLE65LlB9WEe7W07BHWxqnM00euXQsJ19');
 
 const PaymentPage = () => {
   const { userId } = useParams();
