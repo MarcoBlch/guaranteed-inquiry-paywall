@@ -1,4 +1,6 @@
 
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
 project_id = "znncfayiwfamujvrprvf"
 
 [api]
@@ -31,33 +33,23 @@ enable_confirmations = false
 [functions]
 [functions.create-stripe-payment]
 verify_jwt = false
-
 [functions.capture-stripe-payment] 
 verify_jwt = true
-
 [functions.process-escrow-payment]
 verify_jwt = true
-
 [functions.send-email-notification]
 verify_jwt = true
-
-[functions.send-response-email]
-verify_jwt = true
-
 [functions.create-stripe-connect-account]
 verify_jwt = false
-
-[functions.stripe-connect-webhook]
-verify_jwt = false
-
 [functions.distribute-escrow-funds]
 verify_jwt = true
-
-[functions.process-pending-transfers]
-verify_jwt = true
-
 [functions.check-escrow-timeouts]
 verify_jwt = true
-
 [functions.mark-response-received]
+verify_jwt = true
+[functions.stripe-connect-webhook]
+verify_jwt = false
+[functions.process-pending-transfers]
+verify_jwt = true
+[functions.send-response-email]
 verify_jwt = true
