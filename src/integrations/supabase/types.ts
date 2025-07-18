@@ -280,24 +280,27 @@ export type Database = {
           created_at: string | null
           id: string
           is_admin: boolean | null
-          paypal_email: string | null
           price: number | null
+          stripe_account_id: string | null
+          stripe_onboarding_completed: boolean | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id: string
           is_admin?: boolean | null
-          paypal_email?: string | null
           price?: number | null
+          stripe_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           is_admin?: boolean | null
-          paypal_email?: string | null
           price?: number | null
+          stripe_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
