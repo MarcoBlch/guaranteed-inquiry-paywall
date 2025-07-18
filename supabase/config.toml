@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.distribute-escrow-funds]
 verify_jwt = true
+
+[functions.process-pending-transfers]
+verify_jwt = true
