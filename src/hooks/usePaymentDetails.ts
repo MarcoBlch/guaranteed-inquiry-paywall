@@ -39,7 +39,7 @@ export const usePaymentDetails = (userId: string | undefined) => {
         
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('price')
+          .select('price, stripe_account_id, stripe_onboarding_completed')
           .eq('id', userId)
           .maybeSingle();
           
@@ -54,8 +54,8 @@ export const usePaymentDetails = (userId: string | undefined) => {
           throw new Error('User not found');
         }
         
-        if (!profile.price) {
-          throw new Error('This user has not set up payment options yet');
+        if (!profile.price || !profile.stripe_onboarding_completed) {
+          throw new Error('This user has not completed Stripe setup yet');
         }
         
         setDetails({
