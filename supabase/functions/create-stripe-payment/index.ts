@@ -13,7 +13,11 @@ serve(async (req) => {
   }
 
   try {
-    const { price, responseDeadlineHours, userId } = await req.json()
+    console.log('Starting create-stripe-payment function');
+    const requestBody = await req.json();
+    console.log('Request body:', requestBody);
+    
+    const { price, responseDeadlineHours, userId } = requestBody;
     
     if (!price || !responseDeadlineHours || !userId) {
       throw new Error('Missing required parameters')
@@ -35,11 +39,9 @@ serve(async (req) => {
         amount: Math.round(price * 100).toString(), // Convert to cents
         currency: 'eur',
         capture_method: 'manual', // Hold funds without capturing
-        metadata: {
-          responseDeadlineHours: responseDeadlineHours.toString(),
-          recipientUserId: userId,
-          escrowType: 'guaranteed_response'
-        }
+        'metadata[responseDeadlineHours]': responseDeadlineHours.toString(),
+        'metadata[recipientUserId]': userId,
+        'metadata[escrowType]': 'guaranteed_response'
       }),
     })
 
