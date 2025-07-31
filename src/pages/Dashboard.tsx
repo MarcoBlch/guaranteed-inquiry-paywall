@@ -30,7 +30,10 @@ const Dashboard = () => {
     // Vérifier si retour de Stripe onboarding
     if (searchParams.get('setup') === 'complete') {
       toast.success('Configuration Stripe terminée !');
-      checkAuth(); // Recharger les données
+      // Attendre un peu puis recharger les données
+      setTimeout(() => {
+        checkAuth();
+      }, 1000);
     }
   }, [navigate, searchParams]);
 
