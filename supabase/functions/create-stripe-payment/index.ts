@@ -35,11 +35,11 @@ serve(async (req) => {
         amount: Math.round(price * 100).toString(), // Convert to cents
         currency: 'eur',
         capture_method: 'manual', // Hold funds without capturing
-        metadata: JSON.stringify({
+        metadata: {
           responseDeadlineHours: responseDeadlineHours.toString(),
           recipientUserId: userId,
           escrowType: 'guaranteed_response'
-        })
+        }
       }),
     })
 
