@@ -105,8 +105,8 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      // Redirect to Stripe onboarding
-      window.location.href = data.onboarding_url;
+      // Ouvrir Stripe dans un nouvel onglet
+      window.open(data.onboarding_url, '_blank');
     } catch (error: any) {
       toast.error(error.message);
     } finally {
