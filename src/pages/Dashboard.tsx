@@ -91,7 +91,11 @@ const Dashboard = () => {
   };
 
   const handleStripeOnboarding = async () => {
-    if (!userId) return;
+    if (!userId) {
+      toast.error('Please login first');
+      navigate('/auth');
+      return;
+    }
     
     setLoading(true);
     try {
