@@ -98,6 +98,40 @@ serve(async (req) => {
     let stripeAccountId = profile?.stripe_account_id
 
     if (!stripeAccountId) {
+      // Récupérer l'email de l'utilisateur depuis Supabase
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (userError) {
+        console.error('❌ Failed to get user data:', userError)
+        return new Response(
+          JSON.stringify({ error: `Failed to get user data: ${userError.message}` }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
+      }
+
+      // Récupérer l'email depuis auth.users
+      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId)
+      
+      if (authError || !authUser.user?.email) {
+        console.error('❌ Failed to get user email:', authError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to get user email' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
+      }
+
+      console.log('✅ User email found:', authUser.user.email)
+
       // Créer nouveau compte Connect
       const accountResponse = await fetch('https://api.stripe.com/v1/accounts', {
         method: 'POST',
@@ -108,7 +142,7 @@ serve(async (req) => {
         body: new URLSearchParams({
           type: 'express',
           country: 'FR',
-          email: user.email || '',
+          email: authUser.user.email,
         })
       })
 
