@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
   const [price, setPrice] = useState(10);
@@ -20,7 +21,7 @@ const Dashboard = () => {
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [pendingFunds, setPendingFunds] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -38,15 +39,11 @@ const Dashboard = () => {
   }, [navigate, searchParams]);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
       toast.error('Please login first');
       navigate('/auth');
       return;
     }
-    
-    setUserId(user.id);
     
     // Load profile data
     const { data: profile } = await supabase
@@ -75,14 +72,14 @@ const Dashboard = () => {
   };
 
   const handleSaveSettings = async () => {
-    if (!userId) return;
+    if (!user) return;
     
     setLoading(true);
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ price: price })
-        .eq('id', userId);
+        .eq('id', user.id);
         
       if (error) throw error;
       toast.success('Settings saved successfully!');
@@ -94,7 +91,7 @@ const Dashboard = () => {
   };
 
   const handleStripeOnboarding = async () => {
-    if (!userId) {
+    if (!user) {
       toast.error('Please login first');
       navigate('/auth');
       return;
@@ -103,7 +100,7 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-stripe-connect-account', {
-        body: { userId }
+        body: { userId: user.id }
       });
       
       if (error) throw error;
@@ -123,10 +120,10 @@ const Dashboard = () => {
   };
 
   const generatePaymentLink = () => {
-    if (!userId) return '';
+    if (!user) return '';
     
     const baseUrl = window.location.origin;
-    return `${baseUrl}/pay/${userId}`;
+    return `${baseUrl}/pay/${user.id}`;
   };
 
   return (
