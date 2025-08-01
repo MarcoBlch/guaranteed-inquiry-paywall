@@ -9,8 +9,8 @@ import PaymentError from "@/components/payment/PaymentError";
 import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 
-// ✅ STRIPE UNIQUEMENT - clé publique (pk_test_ pour test, pk_live_ pour production)
-const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMJoUVf3rWAiACX9gBaB89pQZVHADw19wCkfSZXE9xrYqsbwDy4iLE65LlB9WEe7W07BHWxqnM00euXQsJ19');
+// Replace with your actual Stripe publishable key from the Stripe dashboard
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_REPLACE_WITH_YOUR_ACTUAL_PUBLISHABLE_KEY');
 
 const PaymentPage = () => {
   const { userId } = useParams();
