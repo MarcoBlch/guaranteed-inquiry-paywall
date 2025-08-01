@@ -83,39 +83,64 @@ export type Database = {
       }
       email_logs: {
         Row: {
+          clicked_at: string | null
           created_at: string
+          delivered_at: string | null
           email_provider_id: string | null
           email_type: string
+          failed_at: string | null
+          failure_reason: string | null
           id: string
           message_id: string | null
           metadata: Json | null
+          opened_at: string | null
           recipient_email: string
           sender_email: string
           sent_at: string
+          updated_at: string | null
         }
         Insert: {
+          clicked_at?: string | null
           created_at?: string
+          delivered_at?: string | null
           email_provider_id?: string | null
           email_type: string
+          failed_at?: string | null
+          failure_reason?: string | null
           id?: string
           message_id?: string | null
           metadata?: Json | null
+          opened_at?: string | null
           recipient_email: string
           sender_email: string
           sent_at?: string
+          updated_at?: string | null
         }
         Update: {
+          clicked_at?: string | null
           created_at?: string
+          delivered_at?: string | null
           email_provider_id?: string | null
           email_type?: string
+          failed_at?: string | null
+          failure_reason?: string | null
           id?: string
           message_id?: string | null
           metadata?: Json | null
+          opened_at?: string | null
           recipient_email?: string
           sender_email?: string
           sent_at?: string
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "email_logs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_email_status"
+            referencedColumns: ["message_id"]
+          },
           {
             foreignKeyName: "email_logs_message_id_fkey"
             columns: ["message_id"]
@@ -166,6 +191,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_email_status"
+            referencedColumns: ["message_id"]
+          },
           {
             foreignKeyName: "escrow_transactions_message_id_fkey"
             columns: ["message_id"]
@@ -229,6 +261,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "escrow_transactions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_responses_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_email_status"
+            referencedColumns: ["message_id"]
           },
           {
             foreignKeyName: "message_responses_message_id_fkey"
@@ -381,12 +420,41 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      email_stats: {
+        Row: {
+          clicked: number | null
+          delivered: number | null
+          delivery_rate: number | null
+          email_type: string | null
+          failed: number | null
+          open_rate: number | null
+          opened: number | null
+          total_sent: number | null
+        }
+        Relationships: []
+      }
+      message_email_status: {
+        Row: {
+          any_delivered: boolean | null
+          any_failed: boolean | null
+          any_opened: boolean | null
+          emails_sent: number | null
+          last_email_sent: string | null
+          message_id: string | null
+          recipient_email: string | null
+          sender_email: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_expiration_time: {
         Args: { message_id: string }
         Returns: string
+      }
+      clean_old_email_logs: {
+        Args: { days_to_keep?: number }
+        Returns: number
       }
       get_current_user_email: {
         Args: Record<PropertyKey, never>
