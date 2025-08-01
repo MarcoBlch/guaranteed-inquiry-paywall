@@ -384,8 +384,7 @@ const Dashboard = () => {
                         };
 
                         const handleRespond = (messageId: string) => {
-                          setSelectedMessage(message);
-                          if (!message.read) markMessageAsRead(message.id);
+                          navigate(`/respond/${messageId}`);
                         };
                         
                         return (
