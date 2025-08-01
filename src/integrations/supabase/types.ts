@@ -441,7 +441,7 @@ export type Database = {
           emails_sent: number | null
           last_email_sent: string | null
           message_id: string | null
-          recipient_email: string | null
+          recipient_user_id: string | null
           sender_email: string | null
         }
         Relationships: []
