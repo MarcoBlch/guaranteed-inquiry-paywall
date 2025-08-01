@@ -24,8 +24,15 @@ serve(async (req) => {
     }
 
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
+    console.log('Stripe key found:', stripeSecretKey ? 'YES' : 'NO');
+    console.log('Stripe key prefix:', stripeSecretKey ? stripeSecretKey.substring(0, 10) + '...' : 'NONE');
+    
     if (!stripeSecretKey) {
       throw new Error('Stripe secret key not configured')
+    }
+
+    if (!stripeSecretKey.startsWith('sk_')) {
+      throw new Error('Invalid Stripe secret key format - must start with sk_')
     }
 
     // Create Stripe payment intent with escrow hold
