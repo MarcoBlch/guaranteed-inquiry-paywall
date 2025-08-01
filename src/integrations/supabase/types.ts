@@ -460,12 +460,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
       is_valid_email: {
         Args: { email_text: string }
+        Returns: boolean
+      }
+      is_verified_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       sanitize_text: {
