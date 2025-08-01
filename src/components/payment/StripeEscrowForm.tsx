@@ -56,7 +56,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       if (paymentError) throw paymentError;
 
-      // 2. Confirmer le paiement (hold)
+      // 2. Confirmer le paiement (autorisation seulement, pas de capture)
       const { error: confirmError } = await stripe.confirmCardPayment(
         paymentData.clientSecret,
         {
