@@ -21,16 +21,46 @@ const AuthForm = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate('/dashboard'); // Changed from '/profile' to '/dashboard'
+        const { error } = await supabase.auth.signInWithPassword({ 
+          email, 
+          password 
+        });
+        if (error) {
+          // SECURITY FIX: Better error handling for login
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Email ou mot de passe incorrect');
+          } else if (error.message.includes('Email not confirmed')) {
+            throw new Error('Veuillez confirmer votre email avant de vous connecter');
+          } else {
+            throw error;
+          }
+        }
+        navigate('/dashboard');
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        toast.success('Check your email to confirm your account!');
+        // SECURITY FIX: Add proper emailRedirectTo for signup
+        const redirectUrl = `${window.location.origin}/`;
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            emailRedirectTo: redirectUrl
+          }
+        });
+        if (error) {
+          // SECURITY FIX: Better error handling for signup
+          if (error.message.includes('already registered')) {
+            throw new Error('Cet email est déjà utilisé. Essayez de vous connecter.');
+          } else if (error.message.includes('password')) {
+            throw new Error('Le mot de passe doit contenir au moins 6 caractères.');
+          } else {
+            throw error;
+          }
+        }
+        toast.success('Vérifiez votre email pour confirmer votre compte!');
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Auth error:', error);
+      toast.error(error.message || 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }

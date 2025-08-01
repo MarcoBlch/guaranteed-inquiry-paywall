@@ -2,9 +2,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// SECURITY FIX: Restrict CORS to specific domains in production
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ENVIRONMENT') === 'production' 
+    ? 'https://your-domain.com' 
+    : '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
 }
 
 serve(async (req) => {
@@ -13,19 +17,68 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentIntentId, messageData } = await req.json()
+    const requestBody = await req.json()
+    const { paymentIntentId, messageData } = requestBody
+    
+    // SECURITY FIX: Comprehensive input validation
+    if (!paymentIntentId || typeof paymentIntentId !== 'string' || !paymentIntentId.startsWith('pi_')) {
+      throw new Error('Invalid payment intent ID')
+    }
+    
+    if (!messageData || typeof messageData !== 'object') {
+      throw new Error('Invalid message data')
+    }
+    
+    // Validate required fields
+    const requiredFields = ['userId', 'senderEmail', 'content', 'price', 'responseDeadlineHours']
+    for (const field of requiredFields) {
+      if (!messageData[field]) {
+        throw new Error(`Missing required field: ${field}`)
+      }
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(messageData.senderEmail)) {
+      throw new Error('Invalid sender email format')
+    }
+    
+    // Validate price and deadline
+    if (typeof messageData.price !== 'number' || messageData.price <= 0 || messageData.price > 100000) {
+      throw new Error('Invalid price amount')
+    }
+    
+    if (typeof messageData.responseDeadlineHours !== 'number' || 
+        messageData.responseDeadlineHours < 1 || 
+        messageData.responseDeadlineHours > 168) {
+      throw new Error('Invalid response deadline (must be 1-168 hours)')
+    }
+    
+    // Validate content length
+    if (typeof messageData.content !== 'string' || 
+        messageData.content.length < 10 || 
+        messageData.content.length > 10000) {
+      throw new Error('Invalid message content length')
+    }
+    
+    // Sanitize content to prevent XSS
+    const sanitizedContent = messageData.content
+      .replace(/[<>]/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      .trim()
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Insert message
+    // Insert message with sanitized content
     const { data: message, error: messageError } = await supabase
       .from('messages')
       .insert({
         user_id: messageData.userId,
         sender_email: messageData.senderEmail,
-        content: messageData.content,
+        content: sanitizedContent,
         attachments: messageData.attachments || [],
         amount_paid: messageData.price,
         response_deadline_hours: messageData.responseDeadlineHours
@@ -88,13 +141,22 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing escrow payment:', error)
+    
+    // SECURITY FIX: Sanitize error messages to prevent information leakage
+    let errorMessage = 'Une erreur interne s\'est produite'
+    if (error.message?.includes('Invalid') || error.message?.includes('Missing')) {
+      errorMessage = error.message // Safe validation errors
+    } else if (error.message?.includes('duplicate key')) {
+      errorMessage = 'Cette transaction existe déjà'
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: error.message?.includes('Invalid') || error.message?.includes('Missing') ? 400 : 500
       }
     )
   }
