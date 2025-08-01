@@ -327,150 +327,209 @@ const Dashboard = () => {
           </TabsList>
           
           <TabsContent value="messages">
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Liste des messages */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Messages reçus
-                  </CardTitle>
-                  <CardDescription>
-                    Cliquez sur un message pour répondre
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestion des Messages</CardTitle>
+                <CardDescription>
+                  Consultez et répondez aux messages payés reçus
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Messages Reçus</h3>
+                    <Badge variant="outline">{messages.length} total</Badge>
+                  </div>
+
                   {messages.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      Aucun message reçu pour le moment
-                    </p>
+                    <Card>
+                      <CardContent className="p-8 text-center">
+                        <p className="text-gray-500">Aucun message reçu pour le moment</p>
+                        <p className="text-sm text-gray-400 mt-2">
+                          Partagez votre lien de paiement pour recevoir des messages garantis
+                        </p>
+                      </CardContent>
+                    </Card>
                   ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-4">
                       {messages.map((message) => {
                         const hasResponse = message.message_responses.some(r => r.has_response);
-                        const isExpired = message.escrow_transactions.some(t => 
-                          new Date(t.expires_at) < new Date()
-                        );
+                        const escrow = message.escrow_transactions[0];
+                        const isExpired = escrow && new Date(escrow.expires_at) < new Date();
+                        
+                        const getStatusBadge = () => {
+                          if (!escrow) return <Badge variant="secondary">Aucun paiement</Badge>;
+
+                          switch (escrow.status) {
+                            case 'held':
+                              if (hasResponse) {
+                                return <Badge className="bg-green-500">Répondu - Paiement en cours</Badge>;
+                              }
+                              const timeLeft = new Date(escrow.expires_at).getTime() - Date.now();
+                              if (timeLeft > 0) {
+                                const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+                                return <Badge className="bg-orange-500">En attente - {hoursLeft}h restantes</Badge>;
+                              } else {
+                                return <Badge className="bg-yellow-500">Expiré - Remboursement</Badge>;
+                              }
+                            case 'released':
+                              return <Badge className="bg-green-600">Payé - €{(escrow.amount * 0.75).toFixed(2)} reçus</Badge>;
+                            case 'refunded':
+                              return <Badge variant="destructive">Remboursé - Pas de réponse</Badge>;
+                            case 'pending_user_setup':
+                              return <Badge className="bg-blue-500">En attente - Config Stripe requise</Badge>;
+                            default:
+                              return <Badge variant="secondary">{escrow.status}</Badge>;
+                          }
+                        };
+
+                        const handleRespond = (messageId: string) => {
+                          setSelectedMessage(message);
+                          if (!message.read) markMessageAsRead(message.id);
+                        };
                         
                         return (
-                          <div
-                            key={message.id}
-                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                              selectedMessage?.id === message.id 
-                                ? 'border-primary bg-primary/5' 
-                                : 'hover:bg-muted/50'
-                            } ${!message.read ? 'border-l-4 border-l-blue-500' : ''}`}
-                            onClick={() => {
-                              setSelectedMessage(message);
-                              if (!message.read) markMessageAsRead(message.id);
-                            }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">
-                                  {message.sender_email}
-                                </span>
-                                {!message.read && (
-                                  <Badge variant="secondary" className="text-xs">Nouveau</Badge>
-                                )}
+                          <Card key={message.id} className="hover:shadow-md transition-shadow">
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-base">
+                                    De: {message.sender_email}
+                                  </CardTitle>
+                                  <CardDescription>
+                                    {new Date(message.created_at).toLocaleString('fr-FR')}
+                                  </CardDescription>
+                                </div>
+                                <div className="text-right">
+                                  {getStatusBadge()}
+                                  {escrow && (
+                                    <div className="text-sm text-gray-500 mt-1">
+                                      €{escrow.amount.toFixed(2)}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1">
-                                {hasResponse ? (
-                                  <CheckCircle className="h-4 w-4 text-green-600" />
-                                ) : isExpired ? (
-                                  <AlertCircle className="h-4 w-4 text-red-600" />
-                                ) : (
-                                  <Clock className="h-4 w-4 text-orange-600" />
+                            </CardHeader>
+                            
+                            <CardContent>
+                              <div className="space-y-4">
+                                {/* Message original */}
+                                <div className="bg-gray-50 p-3 rounded-md">
+                                  <h4 className="font-medium text-sm mb-2">📝 Message:</h4>
+                                  <p className="text-sm">{message.content}</p>
+                                </div>
+
+                                {/* Réponse si existe */}
+                                {hasResponse && (
+                                  <div className="bg-green-50 p-3 rounded-md border-l-4 border-green-500">
+                                    <h4 className="font-medium text-sm mb-2 text-green-800">
+                                      ✅ Réponse envoyée le {message.message_responses
+                                        .find(r => r.response_received_at)?.response_received_at &&
+                                        new Date(message.message_responses
+                                          .find(r => r.response_received_at)!.response_received_at!)
+                                          .toLocaleDateString('fr-FR')}
+                                    </h4>
+                                  </div>
                                 )}
-                                <span className="text-xs font-medium">
-                                  €{message.amount_paid.toFixed(2)}
-                                </span>
+
+                                {/* Actions */}
+                                <div className="flex gap-2">
+                                  {escrow?.status === 'held' && !hasResponse && (
+                                    <>
+                                      {!isExpired ? (
+                                        <Button 
+                                          onClick={() => handleRespond(message.id)}
+                                          className="bg-green-600 hover:bg-green-700"
+                                        >
+                                          🚀 Répondre (€{(escrow.amount * 0.75).toFixed(2)})
+                                        </Button>
+                                      ) : (
+                                        <Button variant="outline" disabled>
+                                          ⏰ Délai expiré
+                                        </Button>
+                                      )}
+                                    </>
+                                  )}
+                                  
+                                  {escrow?.status === 'pending_user_setup' && (
+                                    <Button variant="outline" className="border-blue-500 text-blue-600" onClick={handleStripeOnboarding}>
+                                      ⚙️ Configurer Stripe pour recevoir €{(escrow.amount * 0.75).toFixed(2)}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {message.content}
-                            </p>
-                            <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
-                              <span>{new Date(message.created_at).toLocaleDateString()}</span>
-                              <span>Délai: {message.response_deadline_hours}h</span>
-                            </div>
-                          </div>
+                            </CardContent>
+                          </Card>
                         );
                       })}
                     </div>
                   )}
-                </CardContent>
-              </Card>
 
-              {/* Zone de réponse */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Send className="h-5 w-5" />
-                    {selectedMessage ? 'Répondre au message' : 'Sélectionnez un message'}
-                  </CardTitle>
+                  {/* Zone de réponse si message sélectionné */}
                   {selectedMessage && (
-                    <CardDescription>
-                      De: {selectedMessage.sender_email} • 
-                      Montant: €{selectedMessage.amount_paid.toFixed(2)} • 
-                      Délai: {selectedMessage.response_deadline_hours}h
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {selectedMessage ? (
-                    <div className="space-y-4">
-                      {/* Message original */}
-                      <div className="bg-muted p-3 rounded-lg">
-                        <p className="text-sm font-medium mb-1">Message original:</p>
-                        <p className="text-sm whitespace-pre-wrap">
-                          {selectedMessage.content}
-                        </p>
-                      </div>
+                    <Card className="mt-6">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Send className="h-5 w-5" />
+                          Répondre au message
+                        </CardTitle>
+                        <CardDescription>
+                          De: {selectedMessage.sender_email} • 
+                          Montant: €{selectedMessage.amount_paid.toFixed(2)} • 
+                          Délai: {selectedMessage.response_deadline_hours}h
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Message original */}
+                          <div className="bg-muted p-3 rounded-lg">
+                            <p className="text-sm font-medium mb-1">Message original:</p>
+                            <p className="text-sm whitespace-pre-wrap">
+                              {selectedMessage.content}
+                            </p>
+                          </div>
 
-                      {/* Zone de réponse */}
-                      <div className="space-y-2">
-                        <Label htmlFor="response">Votre réponse:</Label>
-                        <Textarea
-                          id="response"
-                          placeholder="Rédigez votre réponse ici..."
-                          value={responseText}
-                          onChange={(e) => setResponseText(e.target.value)}
-                          rows={6}
-                        />
-                      </div>
+                          {/* Zone de réponse */}
+                          <div className="space-y-2">
+                            <Label htmlFor="response">Votre réponse:</Label>
+                            <Textarea
+                              id="response"
+                              placeholder="Rédigez votre réponse ici..."
+                              value={responseText}
+                              onChange={(e) => setResponseText(e.target.value)}
+                              rows={6}
+                            />
+                          </div>
 
-                      {/* Status */}
-                      {selectedMessage.message_responses.some(r => r.has_response) ? (
-                        <div className="bg-green-50 p-3 rounded-lg">
-                          <p className="text-green-800 text-sm">
-                            ✅ Réponse déjà envoyée le {
-                              selectedMessage.message_responses
-                                .find(r => r.response_received_at)?.response_received_at &&
-                              new Date(selectedMessage.message_responses
-                                .find(r => r.response_received_at)!.response_received_at!)
-                                .toLocaleDateString()
-                            }
-                          </p>
+                          {/* Status */}
+                          {selectedMessage.message_responses.some(r => r.has_response) ? (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <p className="text-green-800 text-sm">
+                                ✅ Réponse déjà envoyée le {
+                                  selectedMessage.message_responses
+                                    .find(r => r.response_received_at)?.response_received_at &&
+                                  new Date(selectedMessage.message_responses
+                                    .find(r => r.response_received_at)!.response_received_at!)
+                                    .toLocaleDateString()
+                                }
+                              </p>
+                            </div>
+                          ) : (
+                            <Button 
+                              onClick={sendResponse} 
+                              disabled={loading || !responseText.trim()}
+                              className="w-full"
+                            >
+                              {loading ? 'Envoi en cours...' : 'Envoyer la réponse'}
+                            </Button>
+                          )}
                         </div>
-                      ) : (
-                        <Button 
-                          onClick={sendResponse} 
-                          disabled={loading || !responseText.trim()}
-                          className="w-full"
-                        >
-                          {loading ? 'Envoi en cours...' : 'Envoyer la réponse'}
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-8">
-                      Sélectionnez un message dans la liste pour y répondre
-                    </p>
+                      </CardContent>
+                    </Card>
                   )}
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="transactions">
