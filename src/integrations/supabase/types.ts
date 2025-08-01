@@ -81,6 +81,50 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          email_provider_id: string | null
+          email_type: string
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          sender_email: string
+          sent_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_provider_id?: string | null
+          email_type: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          sender_email: string
+          sent_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_provider_id?: string | null
+          email_type?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          sender_email?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escrow_transactions: {
         Row: {
           amount: number
