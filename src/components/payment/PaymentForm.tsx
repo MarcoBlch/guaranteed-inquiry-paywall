@@ -10,6 +10,7 @@ import ResponseTimeSelector from "./ResponseTimeSelector";
 import StripePaymentForm from "./StripePaymentForm";
 import { useResponseTimeOptions } from "@/hooks/useResponseTimeOptions";
 import { supabase } from "@/integrations/supabase/client";
+import { validateEmail, validateMessage, validateFiles, checkRateLimit } from "@/lib/security";
 
 interface PaymentFormProps {
   userId: string;
@@ -38,10 +39,36 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
   const { options, loading, error } = useResponseTimeOptions(userId);
 
   const handleContinueToPayment = () => {
-    if (!customerEmail || message.length < 5 || !selectedResponseTime) {
-      toast.error('Veuillez remplir tous les champs requis et choisir un délai de réponse');
+    // Rate limiting check
+    if (!checkRateLimit('payment-form', 3, 60000)) {
+      toast.error('Trop de tentatives. Veuillez attendre avant de réessayer.');
       return;
     }
+
+    // Validate inputs with security checks
+    const emailValidation = validateEmail(customerEmail);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.error || 'Email invalide');
+      return;
+    }
+
+    const messageValidation = validateMessage(message);
+    if (!messageValidation.isValid) {
+      toast.error(messageValidation.error || 'Message invalide');
+      return;
+    }
+
+    const fileValidation = validateFiles(attachments);
+    if (!fileValidation.isValid) {
+      toast.error(`Fichiers invalides: ${fileValidation.errors?.join(', ')}`);
+      return;
+    }
+
+    if (!selectedResponseTime) {
+      toast.error('Veuillez choisir un délai de réponse');
+      return;
+    }
+
     setShowPayment(true);
   };
 

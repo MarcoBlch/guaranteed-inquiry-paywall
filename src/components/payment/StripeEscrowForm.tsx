@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useResponseTimeOptions } from "@/hooks/useResponseTimeOptions";
+import { validateEmail, validateMessage, checkRateLimit, sanitizeText } from "@/lib/security";
 
 interface StripeEscrowFormProps {
   userId: string;
@@ -32,13 +33,27 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
     if (!stripe || !elements || processing) return;
     
-    if (!customerEmail || !message || !selectedResponseTime) {
-      toast.error('Veuillez remplir tous les champs requis');
+    // Rate limiting check
+    if (!checkRateLimit('stripe-payment', 3, 60000)) {
+      toast.error('Trop de tentatives. Veuillez attendre avant de réessayer.');
       return;
     }
 
-    if (message.length < 10) {
-      toast.error('Le message doit contenir au moins 10 caractères');
+    // Validate inputs with security checks
+    const emailValidation = validateEmail(customerEmail);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.error || 'Email invalide');
+      return;
+    }
+
+    const messageValidation = validateMessage(message);
+    if (!messageValidation.isValid) {
+      toast.error(messageValidation.error || 'Message invalide');
+      return;
+    }
+
+    if (!selectedResponseTime) {
+      toast.error('Veuillez sélectionner un délai de réponse');
       return;
     }
 
@@ -77,8 +92,8 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           paymentIntentId: paymentData.paymentIntentId,
           messageData: {
             userId,
-            senderEmail: customerEmail,
-            content: message,
+            senderEmail: sanitizeText(customerEmail),
+            content: messageValidation.sanitized || sanitizeText(message),
             price: selectedResponseTime.price,
             responseDeadlineHours: selectedResponseTime.hours,
             attachments: []
