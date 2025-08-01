@@ -9,8 +9,8 @@ import PaymentError from "@/components/payment/PaymentError";
 import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 
-// Replace with your actual Stripe publishable key from the Stripe dashboard
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_REPLACE_WITH_YOUR_ACTUAL_PUBLISHABLE_KEY');
+// Stripe publishable key - safe to store in code
+const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMLBBwEwv3hzswFpxx99iToSwtF1R0ouwbFHQygddjv7ABOuKELDjgO0e7tL9DkZiYVINdStjS00OQpDFGqR');
 
 const PaymentPage = () => {
   const { userId } = useParams();
