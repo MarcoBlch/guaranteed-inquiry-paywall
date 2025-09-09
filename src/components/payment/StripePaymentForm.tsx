@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMLBBwEwv3hzswFpxx99iToSwtF1R0ouwbFHQygddjv7ABOuKELDjgO0e7tL9DkZiYVINdStjS00OQpDFGqR');
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+if (!stripePublishableKey) {
+  throw new Error('Missing Stripe publishable key. Please check your .env file.');
+}
+
+const stripePromise = loadStripe(stripePublishableKey);
 
 interface PaymentFormData {
   userId: string;
@@ -67,7 +73,7 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
       }
 
       // Capture the payment after successful confirmation
-      const { data: captureResponse, error: captureError } = await supabase.functions.invoke('capture-stripe-payment', {
+      const { error: captureError } = await supabase.functions.invoke('capture-stripe-payment', {
         body: {
           paymentIntentId: paymentResponse.paymentIntentId
         }

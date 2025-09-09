@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import PaymentPage from "./pages/PaymentPage";
 import ResponsePage from "./pages/ResponsePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import AdminSetup from "./pages/AdminSetup";
 import { supabase } from "./lib/supabase";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,9 @@ const App = () => {
             
             {/* Page de succès après paiement */}
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            
+            {/* Admin setup page */}
+            <Route path="/admin-setup" element={<AdminSetup />} />
             
             {/* Routes alternatives/legacy (optionnel) */}
             <Route path="/payment/:userId" element={<PaymentPage />} />

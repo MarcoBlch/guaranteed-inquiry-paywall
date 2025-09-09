@@ -2,13 +2,33 @@ name: Check Escrow Timeouts
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Toutes les 15 minutes
+    - cron: '*/10 * * * *' # Toutes les 10 minutes (plus précis)
   workflow_dispatch: # Allow manual trigger
 
 jobs:
   check-timeouts:
     runs-on: ubuntu-latest
     steps:
+      - name: Send Deadline Reminders
+        run: |
+          response=$(curl -s -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/send-deadline-reminders" \
+            -d '{}')
+          
+          http_code="${response: -3}"
+          body="${response%???}"
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "Warning: Reminder check failed (HTTP $http_code): $body"
+          else
+            echo "Reminders: $body"
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: Check Expired Escrows
         run: |
           response=$(curl -s -w "%{http_code}" -X POST \

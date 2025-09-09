@@ -85,3 +85,15 @@ verify_jwt = true
 
 [functions.escrow-health-check]
 verify_jwt = false
+
+[functions.resend-email-webhook]
+verify_jwt = false
+
+[functions.send-deadline-reminders]
+verify_jwt = true
+
+[functions.send-refund-notification]
+verify_jwt = true
+
+[functions.send-timeout-notification]
+verify_jwt = true

@@ -80,6 +80,11 @@ const Dashboard = () => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [responseText, setResponseText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userFilter, setUserFilter] = useState('');
+  const [dateRange, setDateRange] = useState('30');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -143,9 +148,87 @@ const Dashboard = () => {
     await Promise.all([
       checkAuth(),
       loadMessages(),
-      loadTransactions()
+      loadTransactions(),
+      loadAnalytics()
     ]);
     setRefreshing(false);
+  };
+
+  const loadAnalytics = async () => {
+    if (!user) return;
+    setLoadingAnalytics(true);
+    
+    try {
+      // Get revenue metrics
+      let revenueQuery = supabase
+        .from('escrow_transactions')
+        .select('amount, created_at, status, recipient_user_id');
+      
+      if (!isAdmin) {
+        revenueQuery = revenueQuery.eq('recipient_user_id', user.id);
+      }
+      
+      const { data: revenueData } = await revenueQuery;
+
+      // Get message metrics
+      let messageQuery = supabase
+        .from('messages')
+        .select(`
+          id, 
+          created_at,
+          user_id,
+          message_responses (
+            has_response,
+            response_received_at
+          )
+        `);
+      
+      if (!isAdmin) {
+        messageQuery = messageQuery.eq('user_id', user.id);
+      }
+      
+      const { data: messageData } = await messageQuery;
+
+      // Calculate KPIs
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - parseInt(dateRange) * 24 * 60 * 60 * 1000);
+
+      const recentRevenue = revenueData?.filter(t => 
+        new Date(t.created_at) >= thirtyDaysAgo && t.status === 'released'
+      ) || [];
+
+      const recentMessages = messageData?.filter(m => 
+        new Date(m.created_at) >= thirtyDaysAgo
+      ) || [];
+
+      const respondedMessages = recentMessages.filter(m => 
+        m.message_responses && m.message_responses.length > 0 && m.message_responses[0].has_response
+      );
+
+      const analytics = {
+        totalRevenue: isAdmin 
+          ? revenueData?.filter(t => t.status === 'released').reduce((sum, t) => sum + (t.amount * 0.25), 0) || 0 // Platform commission
+          : revenueData?.filter(t => t.status === 'released').reduce((sum, t) => sum + (t.amount * 0.75), 0) || 0, // User share
+        monthlyRevenue: isAdmin 
+          ? recentRevenue.reduce((sum, t) => sum + (t.amount * 0.25), 0) // Platform commission
+          : recentRevenue.reduce((sum, t) => sum + (t.amount * 0.75), 0), // User share
+        totalMessages: messageData?.length || 0,
+        monthlyMessages: recentMessages.length,
+        responseRate: recentMessages.length > 0 ? (respondedMessages.length / recentMessages.length * 100) : 0,
+        averageTransactionValue: recentRevenue.length > 0 ? recentRevenue.reduce((sum, t) => sum + t.amount, 0) / recentRevenue.length : 0,
+        pendingTransactions: revenueData?.filter(t => t.status === 'held').length || 0,
+        refundedTransactions: revenueData?.filter(t => t.status === 'refunded').length || 0,
+        totalUsers: isAdmin ? new Set(messageData?.map(m => m.user_id)).size : 1,
+        isAdmin: isAdmin
+      };
+
+      setAnalytics(analytics);
+    } catch (error: any) {
+      console.error('Error loading analytics:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
+      setLoadingAnalytics(false);
+    }
   };
 
   const markMessageAsRead = async (messageId: string) => {
@@ -204,7 +287,7 @@ const Dashboard = () => {
     // Load profile data
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_completed, price')
+      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin')
       .eq('id', user.id)
       .single();
       
@@ -212,6 +295,7 @@ const Dashboard = () => {
       setStripeAccountId(profile.stripe_account_id || '');
       setStripeOnboarded(profile.stripe_onboarding_completed || false);
       setPrice(profile.price || 10);
+      setIsAdmin(profile.is_admin || false);
     }
 
     // Calculer fonds en attente
@@ -283,70 +367,100 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-50 to-blue-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Gérez vos messages et transactions escrow</p>
+    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute top-0 left-0 w-full h-full">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+        <div className="absolute bottom-20 right-10 w-24 h-24 bg-white/10 rounded-full blur-xl" />
+      </div>
+
+      <div className="relative z-10 min-h-screen p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+            <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-3 sm:py-4 w-full sm:w-auto">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Dashboard</h1>
+              <p className="text-white/80 text-sm sm:text-base">Manage your messages and escrow transactions</p>
+            </div>
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+              <Button 
+                variant="secondary" 
+                onClick={refreshData}
+                disabled={refreshing}
+                className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
+                size="sm"
+              >
+                <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+                <span className="sm:hidden">↻</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
+                size="sm"
+              >
+                <span className="text-xs sm:text-sm">Logout</span>
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={refreshData}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Actualiser
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
-          </div>
-        </div>
         
         <Tabs defaultValue="messages" onValueChange={(value) => {
           if (value === 'messages') loadMessages();
           if (value === 'transactions') loadTransactions();
+          if (value === 'analytics') loadAnalytics();
         }}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="messages">
-              <Mail className="h-4 w-4 mr-2" />
-              Messages ({messages.filter(m => !m.read).length})
+          <TabsList className="mb-4 sm:mb-6 bg-white/20 backdrop-blur-sm border-white/30 p-1 h-auto min-h-[3rem] flex-wrap sm:flex-nowrap gap-1 sm:gap-0">
+            <TabsTrigger value="messages" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium text-xs sm:text-sm px-2 sm:px-3 py-2 flex-1 sm:flex-none min-w-0">
+              <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="truncate">Msgs ({messages.filter(m => !m.read).length})</span>
             </TabsTrigger>
-            <TabsTrigger value="transactions">
-              <Euro className="h-4 w-4 mr-2" />
-              Transactions
+            <TabsTrigger value="transactions" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium text-xs sm:text-sm px-2 sm:px-3 py-2 flex-1 sm:flex-none">
+              <Euro className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Transactions</span>
+              <span className="sm:hidden">Trans</span>
             </TabsTrigger>
-            <TabsTrigger value="settings">Paramètres</TabsTrigger>
-            <TabsTrigger value="payments">Lien de paiement</TabsTrigger>
-            <TabsTrigger value="stripe">Stripe</TabsTrigger>
+            <TabsTrigger value="settings" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium text-xs sm:text-sm px-2 sm:px-3 py-2 flex-1 sm:flex-none">
+              <span className="hidden sm:inline">Settings</span>
+              <span className="sm:hidden">Set</span>
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium text-xs sm:text-sm px-2 sm:px-3 py-2 flex-1 sm:flex-none">
+              <span className="hidden sm:inline">Payment Link</span>
+              <span className="sm:hidden">Pay</span>
+            </TabsTrigger>
+            <TabsTrigger value="stripe" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium text-xs sm:text-sm px-2 sm:px-3 py-2 flex-1 sm:flex-none">
+              Stripe
+            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium text-xs sm:text-sm px-2 sm:px-3 py-2 flex-1 sm:flex-none">
+                <span className="hidden sm:inline">Admin Analytics</span>
+                <span className="sm:hidden">📊</span>
+              </TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="messages">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
               <CardHeader>
-                <CardTitle>Gestion des Messages</CardTitle>
+                <CardTitle>Message Management</CardTitle>
                 <CardDescription>
-                  Consultez et répondez aux messages payés reçus
+                  View and respond to paid messages received
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">Messages Reçus</h3>
+                    <h3 className="text-lg font-semibold">Messages Received</h3>
                     <Badge variant="outline">{messages.length} total</Badge>
                   </div>
 
                   {messages.length === 0 ? (
                     <Card>
                       <CardContent className="p-8 text-center">
-                        <p className="text-gray-500">Aucun message reçu pour le moment</p>
+                        <p className="text-gray-500">No messages received yet</p>
                         <p className="text-sm text-gray-400 mt-2">
-                          Partagez votre lien de paiement pour recevoir des messages garantis
+                          Share your payment link to receive guaranteed messages
                         </p>
                       </CardContent>
                     </Card>
@@ -358,26 +472,26 @@ const Dashboard = () => {
                         const isExpired = escrow && new Date(escrow.expires_at) < new Date();
                         
                         const getStatusBadge = () => {
-                          if (!escrow) return <Badge variant="secondary">Aucun paiement</Badge>;
+                          if (!escrow) return <Badge variant="secondary">No payment</Badge>;
 
                           switch (escrow.status) {
                             case 'held':
                               if (hasResponse) {
-                                return <Badge className="bg-green-500">Répondu - Paiement en cours</Badge>;
+                                return <Badge className="bg-green-500">Responded - Payment processing</Badge>;
                               }
                               const timeLeft = new Date(escrow.expires_at).getTime() - Date.now();
                               if (timeLeft > 0) {
                                 const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
-                                return <Badge className="bg-orange-500">En attente - {hoursLeft}h restantes</Badge>;
+                                return <Badge className="bg-orange-500">Pending - {hoursLeft}h remaining</Badge>;
                               } else {
-                                return <Badge className="bg-yellow-500">Expiré - Remboursement</Badge>;
+                                return <Badge className="bg-yellow-500">Expired - Refunding</Badge>;
                               }
                             case 'released':
-                              return <Badge className="bg-green-600">Payé - €{(escrow.amount * 0.75).toFixed(2)} reçus</Badge>;
+                              return <Badge className="bg-green-600">Paid - €{(escrow.amount * 0.75).toFixed(2)} received</Badge>;
                             case 'refunded':
-                              return <Badge variant="destructive">Remboursé - Pas de réponse</Badge>;
+                              return <Badge variant="destructive">Refunded - No response</Badge>;
                             case 'pending_user_setup':
-                              return <Badge className="bg-blue-500">En attente - Config Stripe requise</Badge>;
+                              return <Badge className="bg-blue-500">Pending - Stripe setup required</Badge>;
                             default:
                               return <Badge variant="secondary">{escrow.status}</Badge>;
                           }
@@ -393,10 +507,10 @@ const Dashboard = () => {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <CardTitle className="text-base">
-                                    De: {message.sender_email}
+                                    From: {message.sender_email}
                                   </CardTitle>
                                   <CardDescription>
-                                    {new Date(message.created_at).toLocaleString('fr-FR')}
+                                    {new Date(message.created_at).toLocaleString('en-US')}
                                   </CardDescription>
                                 </div>
                                 <div className="text-right">
@@ -412,21 +526,21 @@ const Dashboard = () => {
                             
                             <CardContent>
                               <div className="space-y-4">
-                                {/* Message original */}
+                                {/* Original message */}
                                 <div className="bg-gray-50 p-3 rounded-md">
                                   <h4 className="font-medium text-sm mb-2">📝 Message:</h4>
                                   <p className="text-sm">{message.content}</p>
                                 </div>
 
-                                {/* Réponse si existe */}
+                                {/* Response if exists */}
                                 {hasResponse && (
                                   <div className="bg-green-50 p-3 rounded-md border-l-4 border-green-500">
                                     <h4 className="font-medium text-sm mb-2 text-green-800">
-                                      ✅ Réponse envoyée le {message.message_responses
+                                      ✅ Response sent on {message.message_responses
                                         .find(r => r.response_received_at)?.response_received_at &&
                                         new Date(message.message_responses
                                           .find(r => r.response_received_at)!.response_received_at!)
-                                          .toLocaleDateString('fr-FR')}
+                                          .toLocaleDateString('en-US')}
                                     </h4>
                                   </div>
                                 )}
@@ -440,11 +554,11 @@ const Dashboard = () => {
                                           onClick={() => handleRespond(message.id)}
                                           className="bg-green-600 hover:bg-green-700"
                                         >
-                                          🚀 Répondre (€{(escrow.amount * 0.75).toFixed(2)})
+                                          🚀 Respond (€{(escrow.amount * 0.75).toFixed(2)})
                                         </Button>
                                       ) : (
                                         <Button variant="outline" disabled>
-                                          ⏰ Délai expiré
+                                          ⏰ Time expired
                                         </Button>
                                       )}
                                     </>
@@ -452,7 +566,7 @@ const Dashboard = () => {
                                   
                                   {escrow?.status === 'pending_user_setup' && (
                                     <Button variant="outline" className="border-blue-500 text-blue-600" onClick={handleStripeOnboarding}>
-                                      ⚙️ Configurer Stripe pour recevoir €{(escrow.amount * 0.75).toFixed(2)}
+                                      ⚙️ Setup Stripe to receive €{(escrow.amount * 0.75).toFixed(2)}
                                     </Button>
                                   )}
                                 </div>
@@ -463,89 +577,26 @@ const Dashboard = () => {
                       })}
                     </div>
                   )}
-
-                  {/* Zone de réponse si message sélectionné */}
-                  {selectedMessage && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Send className="h-5 w-5" />
-                          Répondre au message
-                        </CardTitle>
-                        <CardDescription>
-                          De: {selectedMessage.sender_email} • 
-                          Montant: €{selectedMessage.amount_paid.toFixed(2)} • 
-                          Délai: {selectedMessage.response_deadline_hours}h
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {/* Message original */}
-                          <div className="bg-muted p-3 rounded-lg">
-                            <p className="text-sm font-medium mb-1">Message original:</p>
-                            <p className="text-sm whitespace-pre-wrap">
-                              {selectedMessage.content}
-                            </p>
-                          </div>
-
-                          {/* Zone de réponse */}
-                          <div className="space-y-2">
-                            <Label htmlFor="response">Votre réponse:</Label>
-                            <Textarea
-                              id="response"
-                              placeholder="Rédigez votre réponse ici..."
-                              value={responseText}
-                              onChange={(e) => setResponseText(e.target.value)}
-                              rows={6}
-                            />
-                          </div>
-
-                          {/* Status */}
-                          {selectedMessage.message_responses.some(r => r.has_response) ? (
-                            <div className="bg-green-50 p-3 rounded-lg">
-                              <p className="text-green-800 text-sm">
-                                ✅ Réponse déjà envoyée le {
-                                  selectedMessage.message_responses
-                                    .find(r => r.response_received_at)?.response_received_at &&
-                                  new Date(selectedMessage.message_responses
-                                    .find(r => r.response_received_at)!.response_received_at!)
-                                    .toLocaleDateString()
-                                }
-                              </p>
-                            </div>
-                          ) : (
-                            <Button 
-                              onClick={sendResponse} 
-                              disabled={loading || !responseText.trim()}
-                              className="w-full"
-                            >
-                              {loading ? 'Envoi en cours...' : 'Envoyer la réponse'}
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="transactions">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Euro className="h-5 w-5" />
-                  Historique des transactions escrow
+                  Escrow Transaction History
                 </CardTitle>
                 <CardDescription>
-                  Suivez l'état de tous vos paiements reçus
+                  Track the status of all your received payments
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {transactions.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
-                    Aucune transaction pour le moment
+                    No transactions yet
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
@@ -553,22 +604,22 @@ const Dashboard = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Date</TableHead>
-                          <TableHead>Expéditeur</TableHead>
+                          <TableHead>Sender</TableHead>
                           <TableHead>Message</TableHead>
-                          <TableHead>Montant</TableHead>
-                          <TableHead>Statut</TableHead>
-                          <TableHead>Expire le</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Expires</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {transactions.map((transaction) => {
                           const isExpired = new Date(transaction.expires_at) < new Date();
                           const statusMap = {
-                            'pending': 'En attente',
-                            'pending_user_setup': 'Config. Stripe requise',
-                            'completed': 'Terminé',
-                            'expired': 'Expiré',
-                            'refunded': 'Remboursé'
+                            'pending': 'Pending',
+                            'pending_user_setup': 'Stripe setup required',
+                            'completed': 'Completed',
+                            'expired': 'Expired',
+                            'refunded': 'Refunded'
                           };
                           
                           const statusColor = {
@@ -615,7 +666,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle>Response Pricing</CardTitle>
                 <CardDescription>
@@ -639,8 +690,8 @@ const Dashboard = () => {
                     <p>• 72h response: €{price.toFixed(2)} (basic)</p>
                   </div>
                   <div className="bg-blue-50 p-3 rounded-md text-sm">
-                    <p><strong>Vos gains (75%):</strong> €{(price * 0.75).toFixed(2)} - €{(price * 1.5 * 0.75).toFixed(2)}</p>
-                    <p><strong>Commission plateforme (25%):</strong> €{(price * 0.25).toFixed(2)} - €{(price * 1.5 * 0.25).toFixed(2)}</p>
+                    <p><strong>Your earnings (75%):</strong> €{(price * 0.75).toFixed(2)} - €{(price * 1.5 * 0.75).toFixed(2)}</p>
+                    <p><strong>Platform commission (25%):</strong> €{(price * 0.25).toFixed(2)} - €{(price * 1.5 * 0.25).toFixed(2)}</p>
                   </div>
                 </div>
                 
@@ -652,7 +703,7 @@ const Dashboard = () => {
           </TabsContent>
           
           <TabsContent value="payments">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle>Your Payment Link</CardTitle>
                 <CardDescription>
@@ -684,14 +735,14 @@ const Dashboard = () => {
                 {pendingFunds > 0 && (
                   <div className="bg-green-50 p-3 rounded-md">
                     <p className="text-green-800">
-                      <strong>💰 {pendingFunds.toFixed(2)}€ en attente</strong> de configuration Stripe
+                      <strong>💰 {pendingFunds.toFixed(2)}€ pending</strong> Stripe setup
                     </p>
                     <Button 
                       onClick={handleStripeOnboarding} 
                       size="sm" 
                       className="mt-2"
                     >
-                      Configurer Stripe pour recevoir vos fonds
+                      Setup Stripe to receive your funds
                     </Button>
                   </div>
                 )}
@@ -700,7 +751,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="stripe">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle>Stripe Payment Setup</CardTitle>
                 <CardDescription>Configure your Stripe account to receive payments</CardDescription>
@@ -734,7 +785,203 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="analytics">
+            <div className="grid gap-6">
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {loadingAnalytics ? (
+                  // Loading skeleton
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <Card key={i} className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                      <CardContent className="p-6">
+                        <div className="animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : analytics ? (
+                  <>
+                    <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">
+                              {isAdmin ? 'Platform Revenue (25%)' : 'Total Revenue'}
+                            </p>
+                            <p className="text-2xl font-bold text-green-600">
+                              €{analytics.totalRevenue.toFixed(2)}
+                            </p>
+                          </div>
+                          <Euro className="w-8 h-8 text-green-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">
+                              Last {dateRange} Days
+                            </p>
+                            <p className="text-2xl font-bold text-blue-600">
+                              €{analytics.monthlyRevenue.toFixed(2)}
+                            </p>
+                          </div>
+                          <Euro className="w-8 h-8 text-blue-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Response Rate</p>
+                            <p className="text-2xl font-bold text-purple-600">
+                              {analytics.responseRate.toFixed(1)}%
+                            </p>
+                          </div>
+                          <CheckCircle className="w-8 h-8 text-purple-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">
+                              {isAdmin ? 'Active Users' : 'Total Messages'}
+                            </p>
+                            <p className="text-2xl font-bold text-orange-600">
+                              {isAdmin ? analytics.totalUsers : analytics.totalMessages}
+                            </p>
+                          </div>
+                          <Mail className="w-8 h-8 text-orange-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : null}
+              </div>
+
+              {/* Admin Controls */}
+              {isAdmin && (
+                <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Admin Controls</CardTitle>
+                    <CardDescription>Platform-wide analytics and filtering options</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="dateRange">Date Range</Label>
+                        <select
+                          id="dateRange"
+                          value={dateRange}
+                          onChange={(e) => {
+                            setDateRange(e.target.value);
+                            loadAnalytics();
+                          }}
+                          className="w-full p-2 border rounded-md bg-white"
+                        >
+                          <option value="7">Last 7 days</option>
+                          <option value="30">Last 30 days</option>
+                          <option value="90">Last 90 days</option>
+                          <option value="365">Last year</option>
+                        </select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="userFilter">Filter by User Email</Label>
+                        <Input
+                          id="userFilter"
+                          placeholder="user@example.com"
+                          value={userFilter}
+                          onChange={(e) => setUserFilter(e.target.value)}
+                          className="bg-white"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Actions</Label>
+                        <Button 
+                          onClick={loadAnalytics}
+                          disabled={loadingAnalytics}
+                          className="w-full bg-gradient-to-r from-blue-500 to-purple-600"
+                        >
+                          <RefreshCw className={`h-4 w-4 mr-2 ${loadingAnalytics ? 'animate-spin' : ''}`} />
+                          Refresh Data
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Performance Metrics */}
+              {analytics && !loadingAnalytics && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Performance Metrics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm font-medium">
+                          {isAdmin ? `Messages (${dateRange} days)` : 'Monthly Messages'}
+                        </span>
+                        <span className="font-bold text-blue-600">{analytics.monthlyMessages}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm font-medium">Avg. Transaction Value</span>
+                        <span className="font-bold text-green-600">€{analytics.averageTransactionValue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm font-medium">Pending Transactions</span>
+                        <span className="font-bold text-orange-600">{analytics.pendingTransactions}</span>
+                      </div>
+                      {isAdmin && analytics.refundedTransactions !== undefined && (
+                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                          <span className="text-sm font-medium">Refunded Transactions</span>
+                          <span className="font-bold text-red-600">{analytics.refundedTransactions}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/95 backdrop-blur-sm border-white/20 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button 
+                        onClick={refreshData}
+                        disabled={refreshing}
+                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                        Refresh All Data
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigator.clipboard.writeText(generatePaymentLink())}
+                        className="w-full"
+                      >
+                        📋 Copy Payment Link
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
