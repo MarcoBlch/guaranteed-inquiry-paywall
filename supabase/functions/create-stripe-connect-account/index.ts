@@ -132,7 +132,7 @@ serve(async (req) => {
 
       console.log('✅ User email found:', authUser.user.email)
 
-      // Créer nouveau compte Connect
+      // Créer nouveau compte Connect avec personnalisation FASTPASS
       const accountResponse = await fetch('https://api.stripe.com/v1/accounts', {
         method: 'POST',
         headers: {
@@ -143,6 +143,17 @@ serve(async (req) => {
           type: 'express',
           country: 'FR',
           email: authUser.user.email,
+          'business_type': 'individual',
+          'business_profile[category]': 'professional_services',
+          'business_profile[subcategory]': 'consulting',
+          'business_profile[product_description]': 'Premium professional communication and consulting services through FASTPASS platform',
+          'business_profile[name]': 'Professional Services',
+          'business_profile[url]': 'https://fastpass.email',
+          'settings[branding][primary_color]': '#ea580c', // Orange theme matching FASTPASS
+          'settings[payouts][schedule][interval]': 'daily',
+          'settings[payouts][statement_descriptor]': 'FASTPASS',
+          'capabilities[card_payments][requested]': 'true',
+          'capabilities[transfers][requested]': 'true',
         })
       })
 
@@ -183,6 +194,14 @@ serve(async (req) => {
     // 5. Créer lien d'onboarding
     const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
     
+    // Create a temporary auth token for seamless return
+    const authHeader = req.headers.get('authorization')
+    let authToken = ''
+    if (authHeader?.startsWith('Bearer ')) {
+      // Extract just the token part for URL-safe usage
+      authToken = authHeader.substring(7).substring(0, 50) // Truncate for URL safety
+    }
+    
     const onboardingResponse = await fetch('https://api.stripe.com/v1/account_links', {
       method: 'POST',
       headers: {
@@ -191,9 +210,10 @@ serve(async (req) => {
       },
       body: new URLSearchParams({
         account: stripeAccountId,
-        refresh_url: `${baseUrl}/dashboard?setup=refresh`,
-        return_url: `${baseUrl}/dashboard?setup=complete`,
+        refresh_url: `${baseUrl}/dashboard?setup=refresh&auth=${authToken}`,
+        return_url: `${baseUrl}/dashboard?setup=complete&auth=${authToken}`,
         type: 'account_onboarding',
+        'collect': 'eventually_due', // Collect only essential information upfront
       })
     })
 
