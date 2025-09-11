@@ -85,11 +85,15 @@ const Dashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userFilter, setUserFilter] = useState('');
   const [dateRange, setDateRange] = useState('30');
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    console.log('Dashboard mounted, searchParams:', Object.fromEntries(searchParams));
+    console.log('Current user:', user?.id);
+    console.log('Session:', session?.access_token?.substring(0, 20) + '...');
+    
     checkAuth();
     
     // Vérifier si retour de Stripe onboarding
