@@ -146,12 +146,20 @@ serve(async (req) => {
           'business_type': 'individual',
           'business_profile[category]': 'professional_services',
           'business_profile[subcategory]': 'consulting',
-          'business_profile[product_description]': 'Premium professional communication and consulting services through FASTPASS platform',
-          'business_profile[name]': 'Professional Services',
+          'business_profile[product_description]': 'Premium professional communication and response services through FASTPASS - guaranteed response platform for busy professionals',
+          'business_profile[name]': 'FASTPASS Professional Services',
           'business_profile[url]': 'https://fastpass.email',
+          'business_profile[support_phone]': '+33123456789',
+          'business_profile[support_email]': 'support@fastpass.email',
+          'business_profile[support_url]': 'https://fastpass.email/support',
           'settings[branding][primary_color]': '#ea580c', // Orange theme matching FASTPASS
+          'settings[branding][secondary_color]': '#dc2626', // Red accent
+          'settings[branding][icon]': 'https://fastpass.email/favicon.ico',
+          'settings[branding][logo]': 'https://fastpass.email/logo.png',
           'settings[payouts][schedule][interval]': 'daily',
           'settings[payouts][statement_descriptor]': 'FASTPASS',
+          'settings[dashboard][display_name]': 'FASTPASS Earnings Dashboard',
+          'settings[dashboard][timezone]': 'Europe/Paris',
           'capabilities[card_payments][requested]': 'true',
           'capabilities[transfers][requested]': 'true',
         })
@@ -194,14 +202,6 @@ serve(async (req) => {
     // 5. Créer lien d'onboarding
     const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
     
-    // Create a temporary auth token for seamless return
-    const authHeader = req.headers.get('authorization')
-    let authToken = ''
-    if (authHeader?.startsWith('Bearer ')) {
-      // Extract just the token part for URL-safe usage
-      authToken = authHeader.substring(7).substring(0, 50) // Truncate for URL safety
-    }
-    
     const onboardingResponse = await fetch('https://api.stripe.com/v1/account_links', {
       method: 'POST',
       headers: {
@@ -210,8 +210,8 @@ serve(async (req) => {
       },
       body: new URLSearchParams({
         account: stripeAccountId,
-        refresh_url: `${baseUrl}/dashboard?setup=refresh&auth=${authToken}`,
-        return_url: `${baseUrl}/dashboard?setup=complete&auth=${authToken}`,
+        refresh_url: `${baseUrl}/dashboard?setup=refresh`,
+        return_url: `${baseUrl}/dashboard?setup=complete`,
         type: 'account_onboarding',
         'collect': 'eventually_due', // Collect only essential information upfront
       })

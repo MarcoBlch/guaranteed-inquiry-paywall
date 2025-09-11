@@ -94,31 +94,24 @@ const Dashboard = () => {
     
     // Vérifier si retour de Stripe onboarding
     const setupStatus = searchParams.get('setup');
-    const authToken = searchParams.get('auth');
     
     if (setupStatus === 'complete') {
       toast.success('Configuration Stripe terminée !');
       
-      // If we have an auth token from Stripe redirect, ensure user stays logged in
-      if (authToken && !user) {
-        console.log('Restoring session after Stripe onboarding...');
-        // The auth context should handle session restoration
-      }
-      
-      // Clean up URL parameters
+      // Clean up URL parameters immediately
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete('setup');
       newSearchParams.delete('auth');
       navigate({ search: newSearchParams.toString() }, { replace: true });
       
-      // Attendre un peu puis recharger les données
+      // Refresh profile data to update onboarding status
       setTimeout(() => {
         checkAuth();
       }, 1000);
     } else if (setupStatus === 'refresh') {
       toast.info('Configuration Stripe en cours...');
     }
-  }, [navigate, searchParams, user]);
+  }, [navigate, searchParams]);
 
   const loadMessages = async () => {
     if (!user) return;

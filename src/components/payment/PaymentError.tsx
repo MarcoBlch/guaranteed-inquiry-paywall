@@ -19,17 +19,27 @@ interface PaymentErrorProps {
 const PaymentError = ({ error }: PaymentErrorProps) => {
   const navigate = useNavigate();
   
+  // Check if this is a Stripe setup error
+  const isStripeSetupError = error && error.includes('not completed Stripe setup');
+  
   // Clean the error message for display
   const displayError = error && error.includes('Error:') 
     ? error 
     : `Error: ${error}`;
   
-  const troubleshootingSteps = [
-    "Check your internet connection",
-    "Ensure your payment method is valid",
-    "Try using a different browser or device",
-    "The recipient may not have properly configured payment settings"
-  ];
+  const troubleshootingSteps = isStripeSetupError 
+    ? [
+        "The recipient is still setting up their payment system",
+        "Please try again in a few minutes",
+        "This is a one-time setup process",
+        "Your message will be available once setup is complete"
+      ]
+    : [
+        "Check your internet connection",
+        "Ensure your payment method is valid", 
+        "Try using a different browser or device",
+        "The recipient may not have properly configured payment settings"
+      ];
   
   return (
     <Card className="w-full max-w-md">
@@ -39,9 +49,14 @@ const PaymentError = ({ error }: PaymentErrorProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Alert variant="destructive" className="mb-4">
-          <AlertTitle>Payment Error</AlertTitle>
-          <AlertDescription>{displayError}</AlertDescription>
+        <Alert variant={isStripeSetupError ? "default" : "destructive"} className="mb-4">
+          <AlertTitle>{isStripeSetupError ? "Setup In Progress" : "Payment Error"}</AlertTitle>
+          <AlertDescription>
+            {isStripeSetupError 
+              ? "This professional is still configuring their FASTPASS payment system. Please check back in a few minutes."
+              : displayError
+            }
+          </AlertDescription>
         </Alert>
         
         <div className="space-y-4">

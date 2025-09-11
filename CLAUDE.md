@@ -491,5 +491,10 @@ Automated alerts configured for:
 - Comprehensive audit logging for all transactions
 - Automatic fund distribution within minutes of valid response
 - to memorize
-- to memorize
+- to memorize  
 - last update
+
+## Git Commit Guidelines
+- NEVER mention Claude or AI assistance in commits
+- Write commits as if made by human developer
+- Follow conventional commit format with clear descriptions
