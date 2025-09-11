@@ -200,7 +200,30 @@ serve(async (req) => {
     }
 
     // 5. Créer lien d'onboarding
-    const baseUrl = req.headers.get('origin') || 'http://localhost:5173'
+    const origin = req.headers.get('origin')
+    const referer = req.headers.get('referer')
+    
+    // Determine base URL with production domain priority
+    let baseUrl = 'https://fastpass.email' // Default to production
+    
+    if (origin) {
+      baseUrl = origin
+    } else if (referer) {
+      try {
+        baseUrl = new URL(referer).origin
+      } catch (e) {
+        console.log('Failed to parse referer URL:', referer)
+      }
+    } else if (process.env.NODE_ENV === 'development') {
+      baseUrl = 'http://localhost:5173'
+    }
+    
+    console.log('🌐 Base URL determined:', {
+      origin,
+      referer,
+      finalBaseUrl: baseUrl,
+      environment: process.env.NODE_ENV || 'production'
+    })
     
     const onboardingResponse = await fetch('https://api.stripe.com/v1/account_links', {
       method: 'POST',
