@@ -353,16 +353,19 @@ const Dashboard = () => {
       const { data, error } = await supabase.functions.invoke('create-stripe-connect-account', {
         body: { userId: user.id }
       });
-      
+
       if (error) throw error;
+
+      // Navigate in same tab instead of opening new tab
+      // This preserves the session and eliminates cross-tab sync issues
+      window.location.href = data.onboarding_url;
       
-      // Ouvrir Stripe dans un nouvel onglet
-      window.open(data.onboarding_url, '_blank');
     } catch (error: any) {
+      console.error('Stripe setup error:', error);
       toast.error(error.message);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only reset loading on error since successful case navigates away
     }
+    // Note: Don't reset loading on success since we're navigating away from the page
   };
 
   const handleLogout = async () => {
