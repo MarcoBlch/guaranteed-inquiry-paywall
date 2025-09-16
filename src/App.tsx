@@ -4,8 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import PaymentPage from "./pages/PaymentPage";
 import ResponsePage from "./pages/ResponsePage";
@@ -41,7 +43,8 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
         {/* Toast notifications */}
         <Toaster 
           position="top-right" 
@@ -66,6 +69,7 @@ const App = () => {
             {/* Authentification */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/confirm" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             
             {/* Dashboard utilisateur */}
             <Route path="/dashboard" element={<Dashboard />} />
@@ -103,7 +107,8 @@ const App = () => {
             } />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
