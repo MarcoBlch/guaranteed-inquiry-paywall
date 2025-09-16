@@ -498,3 +498,4 @@ Automated alerts configured for:
 - NEVER mention Claude or AI assistance in commits
 - Write commits as if made by human developer
 - Follow conventional commit format with clear descriptions
+- add to claude.md

@@ -142,7 +142,7 @@ const AuthForm = () => {
         navigate('/dashboard');
       } else {
         // SECURITY FIX: Add proper emailRedirectTo for signup
-        const redirectUrl = `${window.location.origin}/`;
+        const redirectUrl = `${window.location.origin}/auth`;
         const { error } = await supabase.auth.signUp({ 
           email, 
           password,

@@ -11,7 +11,7 @@ import PaymentPage from "./pages/PaymentPage";
 import ResponsePage from "./pages/ResponsePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
-import { supabase } from "./lib/supabase";
+import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
