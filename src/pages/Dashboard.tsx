@@ -85,7 +85,7 @@ const Dashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userFilter, setUserFilter] = useState('');
   const [dateRange, setDateRange] = useState('30');
-  const { user, session, loading } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -93,10 +93,10 @@ const Dashboard = () => {
     console.log('Dashboard mounted, searchParams:', Object.fromEntries(searchParams));
     console.log('Current user:', user?.id);
     console.log('Session:', session?.access_token?.substring(0, 20) + '...');
-    console.log('Auth loading:', loading); // Add this debug log
+    console.log('Auth loading:', authLoading); // Add this debug log
 
     // CRITICAL FIX: Don't run checkAuth until auth context has finished loading
-    if (loading) {
+    if (authLoading) {
       console.log('Auth still loading, waiting...');
       return; // Exit early if still loading
     }
@@ -124,7 +124,7 @@ const Dashboard = () => {
     } else if (setupStatus === 'refresh') {
       toast.info('Configuration Stripe en cours...');
     }
-  }, [navigate, searchParams, loading]); // Add 'loading' to dependency array
+  }, [navigate, searchParams, authLoading]); // Add 'authLoading' to dependency array
 
   const loadMessages = async () => {
     if (!user) return;
