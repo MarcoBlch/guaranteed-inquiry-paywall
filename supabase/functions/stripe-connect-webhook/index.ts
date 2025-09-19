@@ -20,9 +20,18 @@ serve(async (req) => {
     switch (event.type) {
       case 'account.updated':
         const account = event.data.object
-        
-        // Mettre à jour statut onboarding
-        if (account.details_submitted && account.charges_enabled && account.payouts_enabled) {
+
+        // Debug logging for webhook
+        console.log('Account updated webhook:', {
+          id: account.id,
+          details_submitted: account.details_submitted,
+          charges_enabled: account.charges_enabled,
+          payouts_enabled: account.payouts_enabled,
+          capabilities: account.capabilities
+        })
+
+        // More flexible condition - accept either charges or transfers capability
+        if (account.details_submitted && (account.charges_enabled || account.payouts_enabled)) {
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ stripe_onboarding_completed: true })
