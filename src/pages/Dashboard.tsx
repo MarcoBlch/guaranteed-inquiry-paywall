@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Card, 
@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Table,
   TableBody,
@@ -21,13 +20,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
+import {
   Mail,
   Euro,
-  Clock,
   CheckCircle,
-  AlertCircle,
-  Send,
   RefreshCw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,7 +67,6 @@ interface EscrowTransaction {
 
 const Dashboard = () => {
   const [price, setPrice] = useState(10);
-  const [stripeAccountId, setStripeAccountId] = useState('');
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [pendingFunds, setPendingFunds] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -88,43 +83,52 @@ const Dashboard = () => {
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const initialSetupCompleted = useRef(false);
 
   useEffect(() => {
     console.log('Dashboard mounted, searchParams:', Object.fromEntries(searchParams));
     console.log('Current user:', user?.id);
     console.log('Session:', session?.access_token?.substring(0, 20) + '...');
-    console.log('Auth loading:', authLoading); // Add this debug log
+    console.log('Auth loading:', authLoading);
 
-    // CRITICAL FIX: Don't run checkAuth until auth context has finished loading
-    if (authLoading) {
+    // Only run setup logic once when auth loading completes
+    if (!authLoading && !initialSetupCompleted.current) {
+      initialSetupCompleted.current = true;
+
+      // Run checkAuth when auth context has finished loading
+      checkAuth();
+
+      // Handle Stripe return flow
+      const setupStatus = searchParams.get('setup');
+      if (setupStatus === 'complete') {
+        toast.success('Configuration Stripe terminée !');
+
+        // Clean up URL parameters immediately
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('setup');
+        newSearchParams.delete('auth');
+        navigate({ search: newSearchParams.toString() }, { replace: true });
+
+        // Refresh profile data to update onboarding status
+        setTimeout(() => {
+          if (user) {
+            checkAuth();
+          }
+        }, 1000);
+      } else if (setupStatus === 'refresh') {
+        toast.info('Configuration Stripe en cours...');
+      }
+    } else if (authLoading) {
       console.log('Auth still loading, waiting...');
-      return; // Exit early if still loading
     }
 
-    // Now safe to check auth since loading is complete
-    checkAuth();
-
-    // Handle Stripe return flow
-    const setupStatus = searchParams.get('setup');
-    if (setupStatus === 'complete') {
-      toast.success('Configuration Stripe terminée !');
-
-      // Clean up URL parameters immediately
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete('setup');
-      newSearchParams.delete('auth');
-      navigate({ search: newSearchParams.toString() }, { replace: true });
-
-      // Refresh profile data to update onboarding status
-      setTimeout(() => {
-        if (user) { // Only checkAuth if user is available
-          checkAuth();
-        }
-      }, 1000);
-    } else if (setupStatus === 'refresh') {
-      toast.info('Configuration Stripe en cours...');
-    }
-  }, [navigate, searchParams, authLoading]); // Add 'authLoading' to dependency array
+    // Reset the flag when searchParams change (new navigation)
+    return () => {
+      if (searchParams.toString() !== new URLSearchParams(window.location.search).toString()) {
+        initialSetupCompleted.current = false;
+      }
+    };
+  }, [navigate, searchParams]); // Remove authLoading from dependency array
 
   const loadMessages = async () => {
     if (!user) return;
@@ -316,7 +320,6 @@ const Dashboard = () => {
       .single();
       
     if (profile) {
-      setStripeAccountId(profile.stripe_account_id || '');
       setStripeOnboarded(profile.stripe_onboarding_completed || false);
       setPrice(profile.price || 10);
       setIsAdmin(profile.is_admin || false);
