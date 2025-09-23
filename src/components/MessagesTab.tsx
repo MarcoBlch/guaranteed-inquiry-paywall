@@ -88,8 +88,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
 
     } catch (error: any) {
       console.error('Error in loadMessages:', error);
-      setError(error.message || 'Erreur lors du chargement');
-      toast.error('Erreur lors du chargement: ' + error.message);
+      setError(error.message || 'Loading error');
+      toast.error('Loading error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -100,27 +100,27 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
     const response = message.message_responses;
 
     if (!escrow) {
-      return <Badge variant="secondary">Aucun paiement</Badge>;
+      return <Badge variant="secondary">No payment</Badge>;
     }
 
     switch (escrow.status) {
       case 'held':
         if (response?.has_response) {
-          return <Badge className="bg-green-500">Répondu - Paiement en cours</Badge>;
+          return <Badge className="bg-green-500">Responded - Payment processing</Badge>;
         }
         const timeLeft = new Date(escrow.expires_at).getTime() - Date.now();
         if (timeLeft > 0) {
           const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
-          return <Badge className="bg-orange-500">En attente - {hoursLeft}h restantes</Badge>;
+          return <Badge className="bg-orange-500">Waiting - {hoursLeft}h remaining</Badge>;
         } else {
-          return <Badge className="bg-yellow-500">Expiré - Remboursement</Badge>;
+          return <Badge className="bg-yellow-500">Expired - Refunding</Badge>;
         }
       case 'released':
-        return <Badge className="bg-green-600">Payé - €{(escrow.amount * 0.75).toFixed(2)} reçus</Badge>;
+        return <Badge className="bg-green-600">Paid - €{(escrow.amount * 0.75).toFixed(2)} received</Badge>;
       case 'refunded':
-        return <Badge variant="destructive">Remboursé - Pas de réponse</Badge>;
+        return <Badge variant="destructive">Refunded - No response</Badge>;
       case 'pending_user_setup':
-        return <Badge className="bg-blue-500">En attente - Config Stripe requise</Badge>;
+        return <Badge className="bg-blue-500">Pending - Stripe setup required</Badge>;
       default:
         return <Badge variant="secondary">{escrow.status}</Badge>;
     }
@@ -139,7 +139,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Chargement des messages...</span>
+        <span className="ml-2">Loading messages...</span>
       </div>
     );
   }
@@ -148,7 +148,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
     return (
       <div className="p-4">
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <h3 className="text-red-800 font-medium">Erreur de chargement</h3>
+          <h3 className="text-red-800 font-medium">Loading error</h3>
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <Button 
             onClick={handleRefresh} 
@@ -156,7 +156,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
             size="sm" 
             className="mt-3"
           >
-            Réessayer
+            Retry
           </Button>
         </div>
       </div>
@@ -166,11 +166,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Messages Reçus</h3>
+        <h3 className="text-lg font-semibold">Received Messages</h3>
         <div className="flex gap-2">
           <Badge variant="outline">{messages.length} total</Badge>
           <Button onClick={handleRefresh} variant="outline" size="sm">
-            🔄 Actualiser
+            🔄 Refresh
           </Button>
         </div>
       </div>
@@ -178,9 +178,9 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
       {messages.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-gray-500">Aucun message reçu pour le moment</p>
+            <p className="text-gray-500">No messages received yet</p>
             <p className="text-sm text-gray-400 mt-2">
-              Partagez votre lien de paiement pour recevoir des messages garantis
+              Share your payment link to receive guaranteed messages
             </p>
           </CardContent>
         </Card>
@@ -192,10 +192,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-base">
-                      De: {message.sender_email}
+                      From: {message.sender_email}
                     </CardTitle>
                     <CardDescription>
-                      {new Date(message.created_at).toLocaleString('fr-FR')}
+                      {new Date(message.created_at).toLocaleString('en-US')}
                     </CardDescription>
                   </div>
                   <div className="text-right">
@@ -221,7 +221,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
                   {message.message_responses?.has_response && (
                     <div className="bg-green-50 p-3 rounded-md border-l-4 border-green-500">
                       <h4 className="font-medium text-sm mb-2 text-green-800">
-                        ✅ Votre réponse (envoyée le {new Date(message.message_responses.response_sent_at).toLocaleDateString('fr-FR')})
+                        ✅ Your response (sent on {new Date(message.message_responses.response_sent_at).toLocaleDateString('en-US')})
                       </h4>
                       <p className="text-sm text-green-700">
                         {message.message_responses.response_content}
@@ -238,11 +238,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
                             onClick={() => handleRespond(message.id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            🚀 Répondre (€{(message.escrow_transactions.amount * 0.75).toFixed(2)})
+                            🚀 Respond (€{(message.escrow_transactions.amount * 0.75).toFixed(2)})
                           </Button>
                         ) : (
                           <Button variant="outline" disabled>
-                            ⏰ Délai expiré
+                            ⏰ Deadline expired
                           </Button>
                         )}
                       </>
@@ -250,7 +250,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
                     
                     {message.escrow_transactions?.status === 'pending_user_setup' && (
                       <Button variant="outline" className="border-blue-500 text-blue-600">
-                        ⚙️ Configurer Stripe pour recevoir €{(message.escrow_transactions.amount * 0.75).toFixed(2)}
+                        ⚙️ Configure Stripe to receive €{(message.escrow_transactions.amount * 0.75).toFixed(2)}
                       </Button>
                     )}
                   </div>

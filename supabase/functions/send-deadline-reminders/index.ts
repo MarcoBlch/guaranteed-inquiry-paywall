@@ -117,7 +117,7 @@ serve(async (req) => {
             <div class="urgent">
                 <h2 style="margin: 0 0 15px 0; color: #92400E;">🚨 Plus que ${hoursLeft}h pour répondre!</h2>
                 <div style="font-size: 18px; font-weight: bold; color: #B45309;">
-                    Délai expire le ${expiresAt.toLocaleDateString('fr-FR')} à ${expiresAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    Deadline expires on ${expiresAt.toLocaleDateString('en-US')} at ${expiresAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </div>
             </div>
             

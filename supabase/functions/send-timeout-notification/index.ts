@@ -99,7 +99,7 @@ serve(async (req) => {
             <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin: 0 0 15px 0;">📧 The Message You Missed</h3>
                 <div style="font-size: 12px; color: #6B7280; margin-bottom: 10px;">
-                    From: ${message.sender_email} • Sent: ${new Date(message.created_at).toLocaleString('fr-FR')}
+                    From: ${message.sender_email} • Sent: ${new Date(message.created_at).toLocaleString('en-US')}
                 </div>
                 <div style="font-style: italic; color: #374151; background: white; padding: 15px; border-radius: 6px; max-height: 150px; overflow: hidden;">
                   ${message.content.substring(0, 400)}${message.content.length > 400 ? '...' : ''}
@@ -140,7 +140,7 @@ serve(async (req) => {
                 • Message ID: ${data.messageId}<br>
                 • Original Deadline: ${hoursRequested} hours<br>
                 • Overdue by: ${Math.floor(data.minutesOverdue / 60)}h ${data.minutesOverdue % 60}m<br>
-                • Refund Date: ${new Date().toLocaleString('fr-FR')}<br>
+                • Refund Date: ${new Date().toLocaleString('en-US')}<br>
                 • Lost Earnings: €${lostEarnings.toFixed(2)}
             </div>
         </div>

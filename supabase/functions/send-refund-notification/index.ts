@@ -123,7 +123,7 @@ serve(async (req) => {
                 • Message ID: ${data.messageId}<br>
                 • Deadline: ${hoursRequested} hours<br>
                 • Overdue by: ${Math.floor(data.minutesOverdue / 60)}h ${data.minutesOverdue % 60}m<br>
-                • Refund Date: ${new Date().toLocaleString('fr-FR')}
+                • Refund Date: ${new Date().toLocaleString('en-US')}
             </div>
         </div>
         

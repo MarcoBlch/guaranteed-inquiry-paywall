@@ -1,9 +1,10 @@
 # FASTPASS ESCROW SYSTEM - Claude Code Documentation
 
 ## Project Overview
-**Project Name**: Guaranteed Inquiry Paywall (Fastpass Escrow System)  
-**Type**: React + TypeScript web application with Supabase backend  
+**Project Name**: Guaranteed Inquiry Paywall (Fastpass Escrow System)
+**Type**: React + TypeScript web application with Supabase backend
 **Purpose**: Escrow payment system for guaranteed message responses with 75/25 revenue split
+**Language**: 100% English throughout the entire application (UI, emails, notifications, date formatting)
 
 ## Business Purpose & Context
 
@@ -125,6 +126,7 @@ The platform features a cohesive, modern design inspired by the PLATA fintech ap
 - Gradient backgrounds with CSS gradients
 - Custom component variants using class-variance-authority
 - Professional color palette with accessibility considerations
+- **Stripe Elements with English locale (`locale: 'en')` for consistent payment experience**
 
 **📱 Responsive Design System:**
 The platform is fully responsive and adaptive across all device types:
@@ -494,8 +496,48 @@ Automated alerts configured for:
 - to memorize  
 - last update
 
+## OAuth Authentication System
+
+### Google & LinkedIn OAuth Implementation
+The platform includes comprehensive OAuth authentication with proper session management:
+
+**🔧 OAuth Flow Architecture:**
+- **Initiation**: OAuth providers redirect to dedicated callback endpoint
+- **Callback Handling**: `/auth/callback` processes OAuth tokens and establishes session
+- **Session Recovery**: Enhanced AuthContext with async session restoration
+- **Error Handling**: Comprehensive error detection and user feedback
+
+**🛠️ Key Components:**
+- `AuthCallback.tsx` - Dedicated OAuth callback processor with error handling
+- Enhanced `AuthContext.tsx` - Proper session persistence and race condition fixes
+- Updated `AuthForm.tsx` - OAuth initiation with proper callback URLs
+- `Auth.tsx` - Fallback OAuth token detection and routing
+
+**⚙️ Configuration:**
+- **Supabase Config**: All necessary OAuth redirect URLs configured in `config.toml`
+- **Google OAuth**: Includes `access_type: 'offline'` and `prompt: 'consent'` for proper token handling
+- **LinkedIn OAuth**: Standard OAuth flow with callback processing
+- **Multiple Environments**: Supports localhost development and production domains
+
+**🔍 Session Management:**
+- Async session recovery on app load with mounted state tracking
+- Comprehensive auth state change logging for debugging
+- Proper cleanup and subscription management
+- Race condition prevention between auth listener and session check
+
+**📱 User Experience:**
+- Loading states during OAuth processing
+- Clear success/error messaging with toast notifications
+- Automatic redirect to dashboard after successful authentication
+- Profile setup detection for first-time OAuth users
+
+### Debugging OAuth Issues
+- Console logs track all auth events: `SIGNED_IN`, `SIGNED_OUT`, `TOKEN_REFRESHED`
+- Session state logged on initial load and state changes
+- Error parameters captured from OAuth callback URLs
+- AuthProvider properly wraps entire application for consistent auth state
+
 ## Git Commit Guidelines
 - NEVER mention Claude or AI assistance in commits
 - Write commits as if made by human developer
 - Follow conventional commit format with clear descriptions
-- add to claude.md

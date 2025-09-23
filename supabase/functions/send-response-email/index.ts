@@ -43,11 +43,11 @@ serve(async (req) => {
     // Template d'email de réponse professionnel
     const responseEmailHtml = `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastPass - Réponse Reçue</title>
+    <title>FastPass - Response Received</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -166,42 +166,42 @@ serve(async (req) => {
 <body>
     <div class="container">
         <div class="header">
-            <h1>✅ Réponse Reçue !</h1>
-            <div>Votre message FastPass a reçu une réponse</div>
-            <div class="success-badge">Mission accomplie</div>
+            <h1>✅ Response Received!</h1>
+            <div>Your FastPass message received a response</div>
+            <div class="success-badge">Mission accomplished</div>
         </div>
         
         <div class="content">
             <div class="responder-info">
-                <h3 style="margin: 0 0 10px 0; color: #0369a1;">👤 Réponse de</h3>
+                <h3 style="margin: 0 0 10px 0; color: #0369a1;">👤 Response from</h3>
                 <div style="font-size: 18px; font-weight: 600; color: #0c4a6e;">${responderEmail}</div>
                 <div style="font-size: 14px; color: #64748b; margin-top: 5px;">
-                    Répondu le ${new Date().toLocaleString('fr-FR')}
+                    Responded on ${new Date().toLocaleString('en-US')}
                 </div>
             </div>
             
             <div class="original-message">
-                <h3 style="margin: 0 0 15px 0; color: #475569;">📝 Votre message original</h3>
+                <h3 style="margin: 0 0 15px 0; color: #475569;">📝 Your original message</h3>
                 <div style="font-style: italic; color: #64748b;">
                     "${message.content.length > 200 ? message.content.substring(0, 200) + '...' : message.content}"
                 </div>
             </div>
             
             <div class="response-message">
-                <h3 style="margin: 0 0 20px 0; color: #065f46;">💬 Réponse reçue</h3>
+                <h3 style="margin: 0 0 20px 0; color: #065f46;">💬 Response received</h3>
                 <div style="font-size: 16px; line-height: 1.7; color: #064e3b;">
                     ${responseContent.replace(/\n/g, '<br>')}
                 </div>
             </div>
             
             <div class="payment-summary">
-                <h3 style="margin: 0 0 20px 0; color: #1e40af;">💰 Récapitulatif du paiement</h3>
+                <h3 style="margin: 0 0 20px 0; color: #1e40af;">💰 Payment summary</h3>
                 <div class="payment-row">
-                    <span>Montant payé:</span>
+                    <span>Amount paid:</span>
                     <span>€${amount.toFixed(2)}</span>
                 </div>
                 <div class="payment-row">
-                    <span>Reversé au répondeur (75%):</span>
+                    <span>Paid to responder (75%):</span>
                     <span style="color: #10b981;">€${responderEarnings.toFixed(2)}</span>
                 </div>
                 <div class="payment-row">
@@ -209,52 +209,52 @@ serve(async (req) => {
                     <span style="color: #64748b;">€${platformCommission.toFixed(2)}</span>
                 </div>
                 <div class="payment-row">
-                    <span>Statut:</span>
-                    <span style="color: #10b981;">✅ Paiement effectué</span>
+                    <span>Status:</span>
+                    <span style="color: #10b981;">✅ Payment completed</span>
                 </div>
             </div>
 
             <div class="rating-section">
-                <h4 style="margin: 0 0 15px 0; color: #92400e;">⭐ Évaluez votre expérience</h4>
+                <h4 style="margin: 0 0 15px 0; color: #92400e;">⭐ Rate your experience</h4>
                 <p style="margin: 0 0 15px 0; color: #92400e; font-size: 14px;">
-                    Votre avis nous aide à améliorer FastPass
+                    Your feedback helps us improve FastPass
                 </p>
                 <div style="margin: 15px 0;">
-                    <a href="mailto:feedback@votre-domaine.com?subject=Avis FastPass - Message ${messageId}&body=Ma note: ⭐⭐⭐⭐⭐%0D%0A%0D%0AMon commentaire:" 
+                    <a href="mailto:feedback@votre-domaine.com?subject=FastPass Feedback - Message ${messageId}&body=My rating: ⭐⭐⭐⭐⭐%0D%0A%0D%0AMy comment:" 
                        style="background: #f59e0b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px;">
-                        Donner mon avis
+                        Give feedback
                     </a>
                 </div>
             </div>
 
             <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #10b981;">
-                <h4 style="margin: 0 0 15px 0; color: #14532d;">✨ Comment FastPass a fonctionné pour vous</h4>
+                <h4 style="margin: 0 0 15px 0; color: #14532d;">✨ How FastPass worked for you</h4>
                 <ul style="margin: 10px 0; padding-left: 20px; color: #166534;">
-                    <li>Garantie de réponse respectée ✅</li>
-                    <li>Paiement sécurisé par Stripe ✅</li>
-                    <li>Réponse dans les délais convenus ✅</li>
-                    <li>Aucun risque - remboursement automatique en cas de non-réponse ✅</li>
+                    <li>Response guarantee honored ✅</li>
+                    <li>Payment secured by Stripe ✅</li>
+                    <li>Response within agreed timeframe ✅</li>
+                    <li>No risk - automatic refund if no response ✅</li>
                 </ul>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-                <h4 style="color: #4f46e5;">🚀 Besoin d'une autre réponse garantie ?</h4>
+                <h4 style="color: #4f46e5;">🚀 Need another guaranteed response?</h4>
                 <p style="color: #64748b; margin: 10px 0;">
-                    FastPass vous permet d'obtenir des réponses garanties de n'importe qui
+                    FastPass lets you get guaranteed responses from anyone
                 </p>
                 <a href="https://votre-domaine.com" 
                    style="background: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">
-                    Envoyer un nouveau message
+                    Send a new message
                 </a>
             </div>
         </div>
         
         <div class="footer">
             <div style="font-weight: 600; margin-bottom: 10px;">FastPass</div>
-            <div>Service de Messages avec Réponse Garantie</div>
+            <div>Guaranteed Response Message Service</div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
                 Transaction ID: ${messageId}<br>
-                Pour toute question: support@votre-domaine.com
+                For any questions: support@votre-domaine.com
             </div>
         </div>
     </div>
@@ -278,7 +278,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'FastPass <noreply@votre-domaine.com>',
         to: [senderEmail],
-        subject: `✅ Réponse reçue pour votre message FastPass (€${amount.toFixed(2)})`,
+        subject: `✅ Response received for your FastPass message (€${amount.toFixed(2)})`,
         html: responseEmailHtml,
         reply_to: responderEmail
       })
