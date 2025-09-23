@@ -47,11 +47,11 @@ serve(async (req) => {
     // 2. Template d'email HTML professionnel
     const emailHtml = `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastPass - Nouveau Message Payé</title>
+    <title>FastPass - New Paid Message</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -198,22 +198,22 @@ serve(async (req) => {
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 Nouveau Message Payé</h1>
+            <h1>💰 New Paid Message</h1>
             <div>Service FastPass</div>
             <div class="amount">€${emailData.amount.toFixed(2)} EUR</div>
         </div>
         
         <div class="content">
             <div class="sender-info">
-                <h3 style="margin: 0 0 10px 0; color: #4F46E5;">📧 Expéditeur</h3>
+                <h3 style="margin: 0 0 10px 0; color: #4F46E5;">📧 Sender</h3>
                 <div style="font-size: 18px; font-weight: 600;">${emailData.senderEmail}</div>
                 <div style="font-size: 14px; color: #64748b; margin-top: 5px;">
-                    Envoyé le ${new Date().toLocaleString('fr-FR')}
+                    Sent on ${new Date().toLocaleString('en-US')}
                 </div>
             </div>
             
             <div class="message-box">
-                <h3 style="margin: 0 0 15px 0; color: #1f2937;">Message reçu:</h3>
+                <h3 style="margin: 0 0 15px 0; color: #1f2937;">Received message:</h3>
                 <div style="font-size: 16px; line-height: 1.7; color: #374151;">
                     ${emailData.content.replace(/\n/g, '<br>')}
                 </div>
@@ -222,11 +222,11 @@ serve(async (req) => {
             <div class="stats">
                 <div class="stat">
                     <div class="stat-value">€${earnings.toFixed(2)}</div>
-                    <div class="stat-label">Vos gains (75%)</div>
+                    <div class="stat-label">Your earnings (75%)</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">${emailData.responseDeadlineHours}h</div>
-                    <div class="stat-label">Délai de réponse</div>
+                    <div class="stat-label">Response deadline</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">€${(emailData.amount * 0.25).toFixed(2)}</div>
@@ -235,48 +235,48 @@ serve(async (req) => {
             </div>
             
             <div class="deadline-box">
-                <h3 style="margin: 0 0 10px 0;">⏰ Délai de réponse</h3>
+                <h3 style="margin: 0 0 10px 0;">⏰ Response deadline</h3>
                 <div style="font-size: 18px; font-weight: bold;">
-                    Répondez avant le ${deadline.toLocaleDateString('fr-FR')} à ${deadline.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    Respond before ${deadline.toLocaleDateString('en-US')} at ${deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </div>
                 <div style="font-size: 14px; margin-top: 8px; opacity: 0.9;">
-                    Soit dans ${emailData.responseDeadlineHours} heures maximum
+                    Within ${emailData.responseDeadlineHours} hours maximum
                 </div>
             </div>
             
             <div style="text-align: center;">
                 <a href="${responseUrl}" class="cta-button">
-                    🚀 RÉPONDRE MAINTENANT
+                    🚀 RESPOND NOW
                 </a>
                 <div style="margin-top: 10px; font-size: 14px; color: #64748b;">
-                    Cliquez pour répondre et recevoir €${earnings.toFixed(2)}
+                    Click to respond and receive €${earnings.toFixed(2)}
                 </div>
             </div>
             
             <div class="info-box">
-                <h4>💡 Comment ça marche</h4>
+                <h4>💡 How it works</h4>
                 <ul>
-                    <li><strong>Répondez dans les délais</strong> → Vous recevez €${earnings.toFixed(2)} (75% du montant)</li>
-                    <li><strong>Pas de réponse à temps</strong> → Remboursement automatique à l'expéditeur</li>
-                    <li><strong>Paiement garanti</strong> → Sécurisé par Stripe, transfert immédiat après réponse</li>
-                    <li><strong>Réponse par email</strong> → L'expéditeur recevra votre réponse directement</li>
+                    <li><strong>Respond within deadline</strong> → You receive €${earnings.toFixed(2)} (75% of amount)</li>
+                    <li><strong>No timely response</strong> → Automatic refund to sender</li>
+                    <li><strong>Guaranteed payment</strong> → Secured by Stripe, immediate transfer after response</li>
+                    <li><strong>Email response</strong> → Sender will receive your response directly</li>
                 </ul>
             </div>
 
             <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
                 <h4 style="margin: 0 0 10px 0; color: #92400e;">⚠️ Important</h4>
                 <p style="margin: 0; color: #92400e; font-size: 14px;">
-                    Si vous ne pouvez pas répondre dans les délais, ignorez simplement cet email. 
-                    Le remboursement sera automatique et aucune pénalité ne vous sera appliquée.
+                    If you cannot respond within the deadline, simply ignore this email.
+                    Refund will be automatic and no penalty will be applied to you.
                 </p>
             </div>
         </div>
         
         <div class="footer">
             <div style="font-weight: 600; margin-bottom: 10px;">FastPass</div>
-            <div>Service de Messages avec Réponse Garantie</div>
+            <div>Guaranteed Response Message Service</div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                Vous recevez cet email car quelqu'un a payé pour obtenir une réponse garantie de votre part.
+                You are receiving this email because someone paid to get a guaranteed response from you.
             </div>
         </div>
     </div>
@@ -300,7 +300,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'FastPass <noreply@resend.dev>',
         to: [recipientEmail],
-        subject: `💰 Nouveau message payé (€${emailData.amount.toFixed(2)}) - ${emailData.responseDeadlineHours}h pour répondre`,
+        subject: `💰 New paid message (€${emailData.amount.toFixed(2)}) - ${emailData.responseDeadlineHours}h to respond`,
         html: emailHtml,
         reply_to: emailData.senderEmail
       })

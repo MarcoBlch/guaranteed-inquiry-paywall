@@ -79,15 +79,23 @@ const AuthForm = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
+      
       if (error) throw error;
-      // Supabase will handle the redirect
+      
+      console.log('Google OAuth initiated:', data);
+      // Supabase will handle the redirect to Google
     } catch (error: any) {
+      console.error('Google OAuth error:', error);
       toast.error('Google sign in failed: ' + error.message);
       setLoading(false);
     }
@@ -96,15 +104,19 @@ const AuthForm = () => {
   const handleLinkedInSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
+      
       if (error) throw error;
-      // Supabase will handle the redirect
+      
+      console.log('LinkedIn OAuth initiated:', data);
+      // Supabase will handle the redirect to LinkedIn
     } catch (error: any) {
+      console.error('LinkedIn OAuth error:', error);
       toast.error('LinkedIn sign in failed: ' + error.message);
       setLoading(false);
     }

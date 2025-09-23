@@ -12,7 +12,9 @@ if (!stripePublishableKey) {
   throw new Error('Missing Stripe publishable key. Please check your .env file.');
 }
 
-const stripePromise = loadStripe(stripePublishableKey);
+const stripePromise = loadStripe(stripePublishableKey, {
+  locale: 'en'
+});
 
 interface PaymentFormData {
   userId: string;
@@ -91,13 +93,13 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
 
       if (processError) throw processError;
 
-      toast.success('Paiement réussi ! Votre message a été envoyé.');
+      toast.success('Payment successful! Your message has been sent.');
       onSuccess();
 
     } catch (err: any) {
       console.error('Payment error:', err);
-      toast.error(err.message || 'Erreur lors du paiement');
-      onError(err.message || 'Erreur lors du paiement');
+      toast.error(err.message || 'Payment error');
+      onError(err.message || 'Payment error');
     } finally {
       setProcessing(false);
     }
@@ -126,7 +128,7 @@ const CheckoutForm = ({ paymentData, onSuccess, onError }: CheckoutFormProps) =>
         className="w-full" 
         disabled={!stripe || processing}
       >
-        {processing ? 'Traitement...' : `Payer ${paymentData.price.toFixed(2)}€`}
+        {processing ? 'Processing...' : `Pay €${paymentData.price.toFixed(2)}`}
       </Button>
     </form>
   );

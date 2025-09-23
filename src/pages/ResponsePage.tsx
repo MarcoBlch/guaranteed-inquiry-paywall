@@ -64,7 +64,7 @@ const ResponsePage = () => {
       setMessage(data);
       
     } catch (error: any) {
-      toast.error('Message non trouvé ou inaccessible');
+      toast.error('Message not found or inaccessible');
       console.error('Error loading message:', error);
     } finally {
       setLoading(false);
@@ -73,12 +73,12 @@ const ResponsePage = () => {
 
   const handleSubmitResponse = async () => {
     if (!response.trim()) {
-      toast.error('Veuillez saisir une réponse');
+      toast.error('Please enter a response');
       return;
     }
 
     if (response.length < 10) {
-      toast.error('La réponse doit contenir au moins 10 caractères');
+      toast.error('Response must contain at least 10 characters');
       return;
     }
 
@@ -86,7 +86,7 @@ const ResponsePage = () => {
     try {
       // 1. Vérifier si déjà répondu
       if (message?.message_responses?.some(r => r.has_response)) {
-        toast.error('Vous avez déjà répondu à ce message');
+        toast.error('You have already responded to this message');
         return;
       }
 
@@ -111,7 +111,7 @@ const ResponsePage = () => {
 
       if (releaseError) {
         console.error('Release funds error:', releaseError);
-        toast.error('Réponse sauvegardée mais erreur lors de la libération des fonds');
+        toast.error('Response saved but error releasing funds');
       }
 
       // 4. Envoyer la réponse par email (optionnel)
@@ -128,13 +128,13 @@ const ResponsePage = () => {
         // Ne pas faire échouer le processus pour ça
       }
 
-      toast.success('🎉 Réponse envoyée avec succès ! Vos fonds arrivent dans quelques minutes.');
+      toast.success('🎉 Response sent successfully! Your funds will arrive in a few minutes.');
       
       // Recharger le message pour voir les changements
       await loadMessage();
 
     } catch (error: any) {
-      toast.error("Erreur lors de l'envoi: " + error.message);
+      toast.error('Error sending: ' + error.message);
       console.error('Submit response error:', error);
     } finally {
       setSubmitting(false);
@@ -163,7 +163,7 @@ const ResponsePage = () => {
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p>Chargement du message...</p>
+            <p>Loading message...</p>
           </CardContent>
         </Card>
       </div>
@@ -175,12 +175,12 @@ const ResponsePage = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-4">Message non trouvé</h2>
+            <h2 className="text-xl font-semibold mb-4">Message not found</h2>
             <p className="text-gray-600 mb-4">
-              Ce message n'existe pas ou a été supprimé.
+              This message does not exist or has been deleted.
             </p>
             <Button onClick={() => navigate('/')}>
-              Retour à l'accueil
+              Back to home
             </Button>
           </CardContent>
         </Card>
@@ -202,19 +202,19 @@ const ResponsePage = () => {
           <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-2xl">💰 Message Payé FastPass</CardTitle>
+                <CardTitle className="text-2xl">💰 Paid Message FastPass</CardTitle>
                 <CardDescription className="text-blue-100 mt-2">
-                  De: <strong>{message.sender_email}</strong>
+                  From: <strong>{message.sender_email}</strong>
                 </CardDescription>
                 <div className="text-sm text-blue-100 mt-1">
-                  Reçu le {new Date(message.created_at).toLocaleString('fr-FR')}
+                  Received on {new Date(message.created_at).toLocaleString('en-US')}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-green-300">
                   €{earnings.toFixed(2)}
                 </div>
-                <div className="text-sm text-blue-200">vos gains (75%)</div>
+                <div className="text-sm text-blue-200">your earnings (75%)</div>
               </div>
             </div>
           </CardHeader>
@@ -227,7 +227,7 @@ const ResponsePage = () => {
                   <AlertDescription>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center">
-                        ⏰ <strong className="ml-2">Temps restant:</strong>
+                        ⏰ <strong className="ml-2">Time remaining:</strong>
                       </span>
                       <Badge className="bg-orange-500">
                         {timeLeft.hours}h {timeLeft.minutes}min
@@ -240,7 +240,7 @@ const ResponsePage = () => {
               {isExpired && !hasResponded && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertDescription className="text-red-800">
-                    ❌ <strong>Délai expiré</strong> - Le remboursement automatique a été effectué
+                    ❌ <strong>Deadline expired</strong> - Automatic refund has been processed
                   </AlertDescription>
                 </Alert>
               )}
@@ -248,7 +248,7 @@ const ResponsePage = () => {
               {hasResponded && (
                 <Alert className="border-green-200 bg-green-50">
                   <AlertDescription className="text-green-800">
-                    ✅ <strong>Réponse envoyée !</strong> Vos fonds ont été transférés.
+                    ✅ <strong>Response sent!</strong> Your funds have been transferred.
                   </AlertDescription>
                 </Alert>
               )}
@@ -256,7 +256,7 @@ const ResponsePage = () => {
               {escrow?.status === 'pending_user_setup' && (
                 <Alert className="border-blue-200 bg-blue-50">
                   <AlertDescription className="text-blue-800">
-                    ⚙️ <strong>Configuration requise</strong> - Complétez votre setup Stripe pour recevoir les fonds
+                    ⚙️ <strong>Configuration required</strong> - Complete your Stripe setup to receive funds
                   </AlertDescription>
                 </Alert>
               )}
@@ -266,7 +266,7 @@ const ResponsePage = () => {
             <Card className="bg-gray-50">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
-                  📝 Message reçu
+                  📝 Received message
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -274,8 +274,8 @@ const ResponsePage = () => {
                   {message.content}
                 </p>
                 <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                  <span>Délai demandé: {message.response_deadline_hours}h</span>
-                  <span>Montant payé: €{escrow?.amount.toFixed(2)}</span>
+                  <span>Deadline requested: {message.response_deadline_hours}h</span>
+                  <span>Amount paid: €{escrow?.amount.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -285,24 +285,24 @@ const ResponsePage = () => {
               <Card className="border-green-200">
                 <CardHeader>
                   <CardTitle className="text-lg text-green-700">
-                    ✍️ Votre réponse
+                    ✍️ Your response
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Label htmlFor="response" className="text-base font-medium">
-                    Rédigez votre réponse:
+                    Write your response:
                   </Label>
                   <Textarea
                     id="response"
                     value={response}
                     onChange={(e) => setResponse(e.target.value)}
-                    placeholder="Tapez votre réponse détaillée ici..."
+                    placeholder="Type your detailed response here..."
                     rows={8}
                     className="min-h-[200px]"
                   />
                   <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{response.length}/2000 caractères (minimum 10)</span>
-                    <span>Format: Texte libre</span>
+                    <span>{response.length}/2000 characters (minimum 10)</span>
+                    <span>Format: Free text</span>
                   </div>
                   
                   <Button 
@@ -314,10 +314,10 @@ const ResponsePage = () => {
                     {submitting ? (
                       <div className="flex items-center">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Envoi en cours...
+                        Sending...
                       </div>
                     ) : (
-                      `🚀 Envoyer la Réponse et Recevoir €${earnings.toFixed(2)}`
+                      `🚀 Send Response and Receive €${earnings.toFixed(2)}`
                     )}
                   </Button>
                 </CardContent>
@@ -329,16 +329,16 @@ const ResponsePage = () => {
               <Card className="border-green-200 bg-green-50">
                 <CardHeader>
                   <CardTitle className="text-lg text-green-700">
-                    ✅ Votre réponse envoyée
+                    ✅ Your response sent
                   </CardTitle>
                   <CardDescription>
-                    Réponse confirmée le {message.message_responses?.find(r => r.response_received_at)?.response_received_at &&
-                      new Date(message.message_responses.find(r => r.response_received_at)!.response_received_at!).toLocaleString('fr-FR')}
+                    Response confirmed on {message.message_responses?.find(r => r.response_received_at)?.response_received_at &&
+                      new Date(message.message_responses.find(r => r.response_received_at)!.response_received_at!).toLocaleString('en-US')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-green-800">
-                    Votre réponse a été envoyée avec succès et vos fonds ont été transférés.
+                    Your response has been sent successfully and your funds have been transferred.
                   </p>
                 </CardContent>
               </Card>
@@ -346,12 +346,12 @@ const ResponsePage = () => {
 
             {/* Footer informatif */}
             <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
-              <h4 className="font-medium mb-2">💡 Comment ça marche:</h4>
+              <h4 className="font-medium mb-2">💡 How it works:</h4>
               <ul className="space-y-1">
-                <li>• Répondez dans les délais → Vous recevez 75% du montant payé</li>
-                <li>• Pas de réponse → Remboursement automatique à l'expéditeur</li>
-                <li>• Paiement sécurisé et garanti par Stripe</li>
-                <li>• Commission FastPass: 25% (frais de traitement et garantie)</li>
+                <li>• Respond within deadline → You receive 75% of amount paid</li>
+                <li>• No response → Automatic refund to sender</li>
+                <li>• Secure payment guaranteed by Stripe</li>
+                <li>• FastPass commission: 25% (processing fees and guarantee)</li>
               </ul>
             </div>
           </CardContent>

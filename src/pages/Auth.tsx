@@ -10,14 +10,25 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleEmailConfirmation = async () => {
+    const handleAuthFlow = async () => {
       const token = searchParams.get('token');
       const type = searchParams.get('type');
       const redirectTo = searchParams.get('redirect_to');
+      
+      // Check for OAuth session (access_token and refresh_token in URL)
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      
+      if (accessToken && refreshToken) {
+        console.log('OAuth tokens found in URL, redirecting to callback handler...');
+        navigate('/auth/callback');
+        return;
+      }
 
+      // Handle email confirmation
       if (token && type === 'signup') {
         try {
-          const { data, error } = await supabase.auth.verifyOtp({
+          const { error } = await supabase.auth.verifyOtp({
             token_hash: token,
             type: 'signup'
           });
@@ -37,7 +48,7 @@ const AuthPage = () => {
       }
     };
 
-    handleEmailConfirmation();
+    handleAuthFlow();
   }, [searchParams, navigate]);
 
   return (
