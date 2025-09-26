@@ -69,7 +69,7 @@ serve(async (req) => {
     if (typeof responseDeadlineHours !== 'number' || 
         responseDeadlineHours < 1 || 
         responseDeadlineHours > 168) {
-      throw new Error('Délai de réponse invalide (doit être entre 1 et 168 heures)')
+      throw new Error('Invalid response deadline (must be between 1 and 168 hours)')
     }
     
     // Validate userId format (should be UUID)

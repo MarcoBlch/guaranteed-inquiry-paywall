@@ -22,22 +22,22 @@ const PaymentSuccess = () => {
           <div className="flex justify-center mb-4">
             <CheckCircle className="h-16 w-16 text-green-500" />
           </div>
-          <CardTitle>Paiement réussi !</CardTitle>
+          <CardTitle>Payment Successful!</CardTitle>
           <CardDescription>
-            Votre message a été envoyé avec succès
+            Your message has been sent successfully
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p>
-            Le destinataire répondra à votre message dans les délais convenus.
-            Si vous ne recevez pas de réponse dans les temps, vous serez automatiquement remboursé intégralement.
+            The recipient will respond to your message within the agreed timeframes.
+            If you don't receive a response within the deadline, you will be automatically refunded in full.
           </p>
           <p className="text-sm text-muted-foreground">
-            Une confirmation a été envoyée à votre adresse email.
+            A confirmation has been sent to your email address.
           </p>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button onClick={() => navigate('/')}>Retour à l'accueil</Button>
+          <Button onClick={() => navigate('/')}>Back to Home</Button>
         </CardFooter>
       </Card>
     </div>

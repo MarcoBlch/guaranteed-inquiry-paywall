@@ -56,20 +56,20 @@ export const useResponseTimeOptions = (userId: string | undefined) => {
             {
               hours: 24,
               price: basePrice * 1.5, // 50% premium for fastest
-              label: '24 heures',
-              description: 'Réponse rapide garantie'
+              label: '24 hours',
+              description: 'Fast guaranteed response'
             },
             {
               hours: 48,
               price: basePrice * 1.2, // 20% premium for medium
-              label: '48 heures',
-              description: 'Réponse sous 2 jours'
+              label: '48 hours',
+              description: 'Response within 2 days'
             },
             {
               hours: 72,
               price: basePrice, // Base price for longest
-              label: '72 heures',
-              description: 'Réponse sous 3 jours'
+              label: '72 hours',
+              description: 'Response within 3 days'
             }
           ];
           setOptions(defaultOptions);
@@ -90,18 +90,18 @@ export const useResponseTimeOptions = (userId: string | undefined) => {
 
 const getTimeLabel = (hours: number): string => {
   switch (hours) {
-    case 24: return '24 heures';
-    case 48: return '48 heures';
-    case 72: return '72 heures';
-    default: return `${hours} heures`;
+    case 24: return '24 hours';
+    case 48: return '48 hours';
+    case 72: return '72 hours';
+    default: return `${hours} hours`;
   }
 };
 
 const getTimeDescription = (hours: number): string => {
   switch (hours) {
-    case 24: return 'Réponse rapide garantie';
-    case 48: return 'Réponse sous 2 jours';
-    case 72: return 'Réponse sous 3 jours';
-    default: return `Réponse sous ${Math.ceil(hours / 24)} jour(s)`;
+    case 24: return 'Fast guaranteed response';
+    case 48: return 'Response within 2 days';
+    case 72: return 'Response within 3 days';
+    default: return `Response within ${Math.ceil(hours / 24)} day(s)`;
   }
 };

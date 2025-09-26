@@ -21,7 +21,7 @@ const ResponseTimeSelector = ({ options, selectedOption, onSelect }: ResponseTim
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-4">
         <Clock className="h-5 w-5 text-gray-600" />
-        <h3 className="font-medium">Choisissez le délai de réponse</h3>
+        <h3 className="font-medium">Choose response timeframe</h3>
       </div>
       
       <div className="grid gap-3">
@@ -46,7 +46,7 @@ const ResponseTimeSelector = ({ options, selectedOption, onSelect }: ResponseTim
                     {option.price.toFixed(2)}€
                   </div>
                   <div className="text-xs text-gray-500">
-                    Garantie {option.hours}h
+                    {option.hours}h guarantee
                   </div>
                 </div>
               </div>
@@ -58,10 +58,10 @@ const ResponseTimeSelector = ({ options, selectedOption, onSelect }: ResponseTim
       {selectedOption && (
         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
           <div className="text-sm text-blue-800">
-            <strong>Délai sélectionné :</strong> {selectedOption.label}
+            <strong>Selected timeframe:</strong> {selectedOption.label}
           </div>
           <div className="text-sm text-blue-600 mt-1">
-            Réponse garantie sous {selectedOption.hours}h ou remboursement intégral
+            Guaranteed response within {selectedOption.hours}h or full refund
           </div>
         </div>
       )}
