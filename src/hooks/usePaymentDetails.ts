@@ -42,20 +42,32 @@ export const usePaymentDetails = (userId: string | undefined) => {
           .select('price, stripe_account_id, stripe_onboarding_completed')
           .eq('id', userId)
           .maybeSingle();
-          
+
         console.log('Profile query result:', { profile, profileError });
-        
+        console.log('UserId being queried:', userId);
+
         if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          throw new Error('Could not find user');
+          console.error('Database error fetching profile:', profileError);
+          throw new Error(`Database error: ${profileError.message}`);
         }
-        
+
         if (!profile) {
-          throw new Error('User not found');
+          console.error('No profile found for userId:', userId);
+          throw new Error(`No profile found for user ID: ${userId}`);
         }
-        
-        if (!profile.price || !profile.stripe_onboarding_completed) {
-          throw new Error('This user has not completed Stripe setup yet');
+
+        console.log('Profile details:', {
+          price: profile.price,
+          stripe_onboarding_completed: profile.stripe_onboarding_completed,
+          stripe_account_id: profile.stripe_account_id
+        });
+
+        if (!profile.price) {
+          throw new Error('This user has not set their pricing yet');
+        }
+
+        if (!profile.stripe_onboarding_completed) {
+          throw new Error('This user has not completed Stripe Connect setup yet');
         }
         
         setDetails({
