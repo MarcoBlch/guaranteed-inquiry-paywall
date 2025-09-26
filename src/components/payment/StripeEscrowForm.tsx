@@ -60,7 +60,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
     setProcessing(true);
 
     try {
-      // 1. Créer PaymentIntent avec escrow
+      // 1. Create PaymentIntent with escrow
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-stripe-payment', {
         body: {
           price: selectedResponseTime.price,
@@ -103,13 +103,13 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       if (escrowError) throw escrowError;
 
-      toast.success('Paiement réussi ! Votre message a été envoyé.');
+      toast.success('Payment successful! Your message has been sent.');
       onSuccess();
 
     } catch (err: any) {
       console.error('Payment error:', err);
-      toast.error(err.message || 'Erreur lors du paiement');
-      onError(err.message || 'Erreur lors du paiement');
+      toast.error(err.message || 'Payment error');
+      onError(err.message || 'Payment error');
     } finally {
       setProcessing(false);
     }
@@ -119,7 +119,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Chargement des options...</span>
+        <span className="ml-2">Loading options...</span>
       </div>
     );
   }
@@ -127,7 +127,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
   if (error) {
     return (
       <div className="bg-red-50 p-4 rounded-md">
-        <p className="text-red-800">Erreur: {error}</p>
+        <p className="text-red-800">Error: {error}</p>
       </div>
     );
   }
@@ -136,40 +136,40 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Email */}
       <div className="space-y-2">
-        <Label htmlFor="email">Votre email *</Label>
+        <Label htmlFor="email">Your email *</Label>
         <Input
           id="email"
           type="email"
           value={customerEmail}
           onChange={(e) => setCustomerEmail(e.target.value)}
-          placeholder="votre@email.com"
+          placeholder="your@email.com"
           required
         />
         <p className="text-xs text-gray-500">
-          Vous recevrez la réponse à cette adresse
+          You will receive the response at this address
         </p>
       </div>
 
       {/* Message */}
       <div className="space-y-2">
-        <Label htmlFor="message">Votre message *</Label>
+        <Label htmlFor="message">Your message *</Label>
         <Textarea
           id="message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Décrivez votre demande en détail..."
+          placeholder="Describe your request in detail..."
           minLength={10}
           rows={4}
           required
         />
         <p className="text-xs text-gray-500">
-          {message.length}/2000 caractères (minimum 10)
+          {message.length}/2000 characters (minimum 10)
         </p>
       </div>
 
       {/* Response Time Options */}
       <div className="space-y-3">
-        <Label>Délai de réponse garantie *</Label>
+        <Label>Guaranteed response time *</Label>
         <div className="grid gap-3">
           {options.map((option) => (
             <Card 
@@ -191,7 +191,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
                     <div className="text-xl font-bold text-blue-600">
                       {option.price.toFixed(2)}€
                     </div>
-                    <div className="text-xs text-gray-500">Garantie ou remboursé</div>
+                    <div className="text-xs text-gray-500">Guaranteed or refunded</div>
                   </div>
                 </div>
               </CardContent>
@@ -199,13 +199,13 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           ))}
         </div>
         {!selectedResponseTime && (
-          <p className="text-xs text-red-500">Sélectionnez un délai de réponse</p>
+          <p className="text-xs text-red-500">Select a response time</p>
         )}
       </div>
 
       {/* Stripe Card Element */}
       <div className="space-y-2">
-        <Label>Informations de paiement *</Label>
+        <Label>Payment information *</Label>
         <div className="p-4 border-2 border-gray-200 rounded-md bg-white focus-within:border-blue-500">
           <CardElement
             options={{
@@ -226,26 +226,26 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           />
         </div>
         <p className="text-xs text-gray-500">
-          Paiement sécurisé par Stripe. Vos données sont protégées.
+          Secure payment by Stripe. Your data is protected.
         </p>
       </div>
 
       {/* Summary */}
       {selectedResponseTime && (
         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
-          <h3 className="font-medium mb-3 text-blue-900">Récapitulatif</h3>
+          <h3 className="font-medium mb-3 text-blue-900">Summary</h3>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
-              <span>Délai de réponse:</span>
+              <span>Response time:</span>
               <span className="font-medium">{selectedResponseTime.label}</span>
             </div>
             <div className="flex justify-between">
-              <span>Prix total:</span>
+              <span>Total price:</span>
               <span className="font-medium">{selectedResponseTime.price.toFixed(2)}€</span>
             </div>
             <div className="border-t border-blue-200 pt-2 mt-2">
               <div className="flex justify-between text-base font-medium">
-                <span>À payer maintenant:</span>
+                <span>Pay now:</span>
                 <span className="text-blue-600">{selectedResponseTime.price.toFixed(2)}€</span>
               </div>
             </div>
@@ -263,20 +263,20 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
         {processing ? (
           <div className="flex items-center">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            Traitement en cours...
+            Processing...
           </div>
         ) : (
-          `Payer ${selectedResponseTime?.price?.toFixed(2) || basePrice.toFixed(2)}€`
+          `Pay ${selectedResponseTime?.price?.toFixed(2) || basePrice.toFixed(2)}€`
         )}
       </Button>
 
       {/* Disclaimer */}
       <div className="text-xs text-gray-500 text-center space-y-1">
         <p>
-          ✅ <strong>Garantie:</strong> Réponse dans les délais ou remboursement intégral automatique
+          ✅ <strong>Guarantee:</strong> Response within deadline or automatic full refund
         </p>
         <p>
-          🔒 <strong>Sécurisé:</strong> Paiement traité par Stripe, leader mondial des paiements
+          🔒 <strong>Secure:</strong> Payment processed by Stripe, global payment leader
         </p>
       </div>
     </form>

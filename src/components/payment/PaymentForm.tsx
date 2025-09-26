@@ -137,21 +137,21 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
             disabled={!customerEmail || message.length < 5 || !selectedResponseTime}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Continuer vers le paiement ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)
+            Continue to payment ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)
           </button>
           
-          {/* Debug info - À supprimer après test */}
+          {/* Debug info - Remove after test */}
           <div className="text-xs text-gray-500 mt-2">
-            Debug: Email={customerEmail ? 'OK' : 'MANQUE'}, Message={message.length}chars, Délai={selectedResponseTime ? 'OK' : 'MANQUE'}
+            Debug: Email={customerEmail ? 'OK' : 'MISSING'}, Message={message.length}chars, Time={selectedResponseTime ? 'OK' : 'MISSING'}
           </div>
         </>
       ) : (
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium mb-2">Récapitulatif</h3>
+            <h3 className="font-medium mb-2">Summary</h3>
             <div className="text-sm space-y-1">
-              <div><strong>Délai:</strong> {selectedResponseTime?.label}</div>
-              <div><strong>Prix:</strong> {selectedResponseTime?.price.toFixed(2)}€</div>
+              <div><strong>Response time:</strong> {selectedResponseTime?.label}</div>
+              <div><strong>Price:</strong> {selectedResponseTime?.price.toFixed(2)}€</div>
               <div><strong>Email:</strong> {customerEmail}</div>
             </div>
           </div>
