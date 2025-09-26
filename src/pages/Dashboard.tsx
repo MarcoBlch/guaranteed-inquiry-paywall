@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Card, 
@@ -83,7 +83,7 @@ const Dashboard = () => {
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initialSetupCompleted = useRef(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
     console.log('Dashboard mounted, searchParams:', Object.fromEntries(searchParams));
@@ -91,9 +91,9 @@ const Dashboard = () => {
     console.log('Session:', session?.access_token?.substring(0, 20) + '...');
     console.log('Auth loading:', authLoading);
 
-    // Only run setup logic once when auth loading completes
-    if (!authLoading && !initialSetupCompleted.current) {
-      initialSetupCompleted.current = true;
+    // Only run setup logic once when auth loading completes and not yet initialized
+    if (!authLoading && !hasInitialized) {
+      setHasInitialized(true);
 
       // Run checkAuth when auth context has finished loading
       checkAuth();
@@ -121,14 +121,12 @@ const Dashboard = () => {
     } else if (authLoading) {
       console.log('Auth still loading, waiting...');
     }
+  }, [navigate, searchParams, authLoading, hasInitialized]); // Include all dependencies
 
-    // Reset the flag when searchParams change (new navigation)
-    return () => {
-      if (searchParams.toString() !== new URLSearchParams(window.location.search).toString()) {
-        initialSetupCompleted.current = false;
-      }
-    };
-  }, [navigate, searchParams]); // Remove authLoading from dependency array
+  // Reset initialization flag when route changes
+  useEffect(() => {
+    setHasInitialized(false);
+  }, [searchParams.get('setup')]); // Reset only when relevant search params change
 
   const loadMessages = async () => {
     if (!user) return;
