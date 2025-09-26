@@ -315,9 +315,59 @@ RESEND_WEBHOOK_SECRET=whsec_... # For email reply detection
 - Error logging and failure notifications
 
 ### Security
+
+#### Authentication Architecture Security Fix (September 26, 2025)
+**CRITICAL VULNERABILITY RESOLVED**: Fixed authentication bleeding where anonymous payment senders could access receiver dashboards.
+
+**🚨 Original Problem:**
+- Global `AuthProvider` wrapped entire application, causing session bleeding
+- Anonymous users visiting payment links inherited receiver authentication state
+- Senders could access receiver dashboards via URL manipulation (e.g., `/dashboard`)
+- Payment flow failed in truly anonymous browsers due to authentication dependencies
+
+**✅ Solution Implemented:**
+1. **Route-Based Authentication Separation:**
+   - Split routes into anonymous and protected groups in `App.tsx`
+   - Removed global `AuthProvider` wrapper
+   - Applied `AuthProvider` only to protected routes (`/dashboard`, `/respond`, etc.)
+
+2. **Created ProtectedRoute Component:**
+   - Authentication guard with session validation
+   - Loading states for authentication checks
+   - Automatic redirect to `/auth` for unauthenticated users
+   - Located: `src/components/auth/ProtectedRoute.tsx`
+
+3. **Anonymous Profile Access Solution:**
+   - Created `get-payment-profile` Edge Function to bypass RLS for payment data
+   - Uses service role key to securely fetch profile information
+   - Returns only necessary data: price, setup status, generic user name
+   - Updated `usePaymentDetails` hook to use Edge Function instead of direct queries
+
+**🔧 Technical Changes:**
+- **App.tsx**: Route architecture completely restructured for security isolation
+- **ProtectedRoute.tsx**: New component with robust authentication checks
+- **PaymentSuccess.tsx**: Removed navigation that could lead to protected areas
+- **usePaymentDetails.ts**: Replaced direct database queries with secure Edge Function calls
+- **get-payment-profile**: New Edge Function for anonymous profile access
+
+**🛡️ Security Benefits:**
+- Complete isolation between anonymous payment flows and authenticated user sessions
+- Prevents session hijacking and unauthorized dashboard access
+- Maintains payment functionality while enforcing strict authentication boundaries
+- No sensitive information exposed to anonymous users
+
+**📋 Testing Results:**
+- ✅ Anonymous browsers can access payment links without authentication
+- ✅ Payment flow works independently of receiver authentication state
+- ✅ Protected routes properly redirect unauthenticated users
+- ✅ No session bleeding between different user contexts
+
+#### Additional Security Measures
 - Row Level Security (RLS) enabled on all tables
 - JWT verification for protected endpoints
 - Secure webhook handling for Stripe events
+- Rate limiting on Edge Functions
+- Input validation and sanitization
 
 ## Development Patterns
 ### Code Style
