@@ -38,11 +38,13 @@ export const usePaymentDetails = (userId: string | undefined) => {
         }
 
         // Use Edge Function to get profile information (bypasses RLS for anonymous users)
-        const functionUrl = `${supabase.supabaseUrl}/functions/v1/get-payment-profile?userId=${encodeURIComponent(userId)}`;
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const functionUrl = `${supabaseUrl}/functions/v1/get-payment-profile?userId=${encodeURIComponent(userId)}`;
         const response = await fetch(functionUrl, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${supabase.supabaseKey}`,
+            'Authorization': `Bearer ${supabaseKey}`,
             'Content-Type': 'application/json',
           }
         });
