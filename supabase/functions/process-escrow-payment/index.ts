@@ -120,15 +120,32 @@ serve(async (req) => {
 
     if (responseError) throw responseError
 
-    // Send email notification to recipient
-    await supabase.functions.invoke('send-email-notification', {
+    // Get recipient email address from profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', messageData.userId)
+      .single()
+
+    if (profileError || !profile?.email) {
+      throw new Error('Recipient profile or email not found')
+    }
+
+    // Format response deadline
+    const responseDeadline = messageData.responseDeadlineHours === 24 ? '24 hours' :
+                             messageData.responseDeadlineHours === 48 ? '48 hours' :
+                             messageData.responseDeadlineHours === 72 ? '72 hours' :
+                             `${messageData.responseDeadlineHours} hours`
+
+    // Send email to recipient using our new email system
+    await supabase.functions.invoke('send-message-email', {
       body: {
-        recipientUserId: messageData.userId,
         senderEmail: messageData.senderEmail,
-        content: messageData.content,
-        responseDeadlineHours: messageData.responseDeadlineHours,
-        amount: messageData.price,
-        messageId: message.id
+        senderMessage: sanitizedContent,
+        responseDeadline: responseDeadline,
+        paymentAmount: messageData.price,
+        messageId: message.id,
+        recipientEmail: profile.email
       }
     })
 
