@@ -37,37 +37,44 @@ A pay-to-contact platform that filters serious inquiries through micropayments a
 - **48h response** - Medium price tier (standard)
 - **72h response** - Lower price tier (less urgent)
 
-### Complete User Journey
-**Sender Side (Entrepreneur):**
-1. Finds investor profile on LinkedIn
-2. Gets investor's email from their profile  
-3. Visits FastPass platform
-4. Sees investor's message explaining why they use the service
-5. Chooses response timeframe (24h/48h/72h) and pays accordingly (e.g., $15 for 48h)
-6. Sends message through platform
-7. Receives payment confirmation - money held in escrow
-8. Waits for response within guaranteed timeframe
+## 🎯 **CORRECTED ARCHITECTURE: Receiver-Only Platform**
 
-**Recipient Side (Investor):**
-1. Receives email notification of paid message
-2. Sees 48h countdown timer for guaranteed response
-3. Reviews message content and sender details
-4. At halfway point (24h) - receives reminder if no response yet
-5. Responds within timeframe OR lets it expire
+### **Core Design Principle**
+- **Receivers (Revenue Generators)**: Have accounts, profiles, dashboards
+- **Senders (Anonymous Customers)**: No accounts needed, visit public payment links
+
+### **Corrected User Journey**
+**Sender Side (Anonymous Visitor):**
+1. Receives `/pay/[receiverId]` link from receiver (shared publicly)
+2. Visits link in any browser without login/registration required
+3. Fills form: their email, message subject, message body, payment details
+4. Pays via Stripe (completely sessionless transaction)
+5. Sees "Message sent, you'll receive response via email" confirmation
+6. Receives response directly to their email address
+7. **Optional**: 24h after response, gets quality rating request email
+
+**Receiver Side (Platform User):**
+1. Shares their `/pay/[receiverId]` link publicly (LinkedIn, email signature, etc.)
+2. Receives actual email notification with sender's message content
+3. Reads message in their email client (Gmail, Outlook, etc.)
+4. Responds directly via email reply to sender's address
+5. System detects response via webhook → releases 75% payment
+6. Views earnings/stats in dashboard (message subjects only, no body content)
 
 **Resolution Scenarios:**
-- **SUCCESS**: Response delivered within 48h → 75% released to investor, 25% to platform
-- **TIMEOUT**: No response within 48h → Full refund to sender automatically
-- **NO FOLLOW-UP**: Platform only handles initial contact - no ongoing conversation management
+- **SUCCESS**: Email response detected within deadline → 75% to receiver, 25% platform
+- **TIMEOUT**: No response detected → Full automatic refund to sender
+- **DISPUTE**: Manual admin review for edge cases and quality issues
 
 ### Key System Features
-- **Multi-channel response detection** - Web interface + email reply webhooks
-- **Smart deadline reminders** at 50% of deadline with beautiful HTML templates
-- **Strict time enforcement** with 5-minute grace period for late responses
-- **Enhanced email notification system** with Resend API integration
-- **Escrow transparency** - recipients see locked funds status
-- **Precision timeout checking** - 10-minute intervals with audit logging
-- **One-time contact model** - no ongoing relationship management
+- **Anonymous payment flow** - No sender authentication required
+- **Email-first communication** - Actual email delivery with branded templates
+- **Resend webhook response detection** - Automatic reply tracking
+- **Privacy-focused design** - No message body storage in dashboard
+- **Quality control system** - Sender rating + dispute resolution
+- **Hybrid deadline tracking** - Automatic detection with manual review fallback
+- **15-minute grace period** - Buffer for email delivery delays
+- **One-time contact model** - Platform facilitates initial connection only
 
 ### Market Position
 - **First-mover advantage** - No direct competitors identified
@@ -537,7 +544,103 @@ The platform includes comprehensive OAuth authentication with proper session man
 - Error parameters captured from OAuth callback URLs
 - AuthProvider properly wraps entire application for consistent auth state
 
-## Git Commit Guidelines
+## 🚀 **ARCHITECTURE REFACTOR IMPLEMENTATION PLAN**
+
+### **Current Critical Issues Identified**
+1. **Authentication Dependency Bug**: Payment links fail in different browsers due to sender authentication requirements
+2. **User Session Confusion**: Senders incorrectly need user accounts/sessions
+3. **Communication Method Wrong**: Web interface responses instead of actual email communication
+4. **Privacy Issues**: Message body content stored and displayed in dashboard
+5. **Security Vulnerability**: Sender can access receiver dashboard via URL manipulation
+
+### **Implementation Phases**
+
+#### **Phase 1: Critical Fix - Anonymous Payment Flow**
+**Priority**: URGENT - Fixes browser compatibility and core functionality
+- Remove all sender authentication requirements from `/pay/[receiverId]` routes
+- Make payment flow completely sessionless for anonymous visitors
+- Fix "User not found" errors across different browsers/devices
+- Remove sender profile dependencies from payment components
+- Update PaymentSuccess page (remove "Back to Home" button)
+
+#### **Phase 2: Email-First Communication System**
+**Priority**: HIGH - Core functionality alignment
+- Design branded FastPass email template with visual identity
+- Implement actual email sending with sender message content to receiver
+- Configure Resend inbound parsing webhook for response detection
+- Remove message body content from dashboard display (privacy)
+- Update dashboard to show only: sender email, subject, timestamp, payment status
+
+#### **Phase 3: Hybrid Response Tracking System**
+**Priority**: HIGH - Revenue protection and quality control
+- **Automatic Detection**: Resend webhook catches receiver email replies in real-time
+- **Grace Period**: 15-minute buffer for email delivery delays
+- **Quality Control**: Manual admin review system for disputed cases
+- **Deadline Enforcement**: Original countdown with webhook override capability
+
+#### **Phase 4: Quality Control & Rating System**
+**Priority**: MEDIUM - Platform quality assurance
+- Implement sender rating system (24h post-response delay)
+- Add meaningful response quality checks and validation
+- Create dispute resolution process for low-quality responses
+- Email automation for rating requests to senders
+
+#### **Phase 5: Security & Privacy Hardening**
+**Priority**: MEDIUM - Data protection and security
+- Complete separation of sender/receiver data access
+- Secure receiver-only dashboard with proper authentication
+- Remove all message body storage for privacy compliance
+- Audit and fix any remaining session bleeding issues
+
+### **Technical Implementation Details**
+
+#### **Response Detection: Resend Webhooks + Manual Dispute Hybrid**
+- **Primary Method**: Resend inbound parsing webhook for automatic reply detection
+- **Backup Method**: Manual admin review for edge cases and disputes
+- **Quality Assurance**: Sender rating system to ensure meaningful responses
+- **Grace Period**: 15-minute buffer to handle email delivery delays
+- **Dispute Process**: Admin dashboard for reviewing contested cases
+
+#### **Email Template Design Requirements**
+- Branded FastPass visual identity consistent with platform
+- Professional template that clearly identifies platform origin
+- Include sender message content inline with proper formatting
+- Clear call-to-action for receiver to respond via email
+- Responsive design for mobile and desktop email clients
+
+#### **Privacy & Security Specifications**
+- **No Message Body Storage**: Dashboard shows subjects only, never content
+- **Complete Anonymity**: Senders require no accounts, profiles, or sessions
+- **Session Separation**: Zero access bleeding between sender/receiver contexts
+- **Data Minimization**: Store only necessary transaction and contact metadata
+
+### **Success Metrics**
+- ✅ Payment links work in any browser without authentication
+- ✅ Receivers get actual emails with sender messages
+- ✅ Response detection works reliably via email webhooks
+- ✅ Dashboard shows earnings data only (no private message content)
+- ✅ Quality control maintains meaningful response standards
+- ✅ Complete security separation between senders and receivers
+
+## Git Workflow Guidelines
+
+### **Branching Strategy**
+- **ALWAYS work on feature branches** for any fix, debug, or new function
+- **Branch naming convention**: `fix/description` or `feature/description` or `debug/issue-name`
+- **One branch per task**: Each fix or feature gets its own dedicated branch
+- **Merge when complete**: Only merge to main when task is fully complete and tested
+- **Clean workflow**: Switch tasks = create new branch
+
+### **Branch Workflow Process**
+1. **Start new task**: `git checkout -b fix/authentication-dependency`
+2. **Work on changes**: Make commits with clear descriptions
+3. **Complete task**: Test and verify functionality
+4. **Push branch**: `git push origin branch-name`
+5. **Create PR**: Merge via pull request when ready
+6. **Switch tasks**: Create new branch for next task
+
+### **Commit Guidelines**
 - NEVER mention Claude or AI assistance in commits
 - Write commits as if made by human developer
 - Follow conventional commit format with clear descriptions
+- Use descriptive branch names that explain the work being done
