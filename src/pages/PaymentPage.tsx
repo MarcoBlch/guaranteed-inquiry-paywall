@@ -10,7 +10,9 @@ import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 
 // Stripe publishable key - safe to store in code
-const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMLBBwEwv3hzswFpxx99iToSwtF1R0ouwbFHQygddjv7ABOuKELDjgO0e7tL9DkZiYVINdStjS00OQpDFGqR');
+const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMLBBwEwv3hzswFpxx99iToSwtF1R0ouwbFHQygddjv7ABOuKELDjgO0e7tL9DkZiYVINdStjS00OQpDFGqR', {
+  locale: 'en'
+});
 
 const PaymentPage = () => {
   const { userId } = useParams();

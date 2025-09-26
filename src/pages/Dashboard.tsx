@@ -101,7 +101,7 @@ const Dashboard = () => {
       // Handle Stripe return flow
       const setupStatus = searchParams.get('setup');
       if (setupStatus === 'complete') {
-        toast.success('Configuration Stripe terminée !');
+        toast.success('Stripe configuration completed!');
 
         // Clean up URL parameters immediately
         const newSearchParams = new URLSearchParams(searchParams);
@@ -116,7 +116,7 @@ const Dashboard = () => {
           }
         }, 1000);
       } else if (setupStatus === 'refresh') {
-        toast.info('Configuration Stripe en cours...');
+        toast.info('Stripe configuration in progress...');
       }
     } else if (authLoading) {
       console.log('Auth still loading, waiting...');
@@ -266,7 +266,7 @@ const Dashboard = () => {
         
       if (error) throw error;
       
-      // Mettre à jour l'état local
+      // Update local state
       setMessages(prev => prev.map(msg => 
         msg.id === messageId ? { ...msg, read: true } : msg
       ));
@@ -277,7 +277,7 @@ const Dashboard = () => {
 
   const sendResponse = async () => {
     if (!selectedMessage || !responseText.trim()) {
-      toast.error('Veuillez saisir une réponse');
+      toast.error('Please enter a response');
       return;
     }
 
@@ -292,12 +292,12 @@ const Dashboard = () => {
 
       if (error) throw error;
 
-      toast.success('Réponse envoyée avec succès !');
+      toast.success('Response sent successfully!');
       setResponseText('');
       setSelectedMessage(null);
       await refreshData();
     } catch (error: any) {
-      toast.error('Erreur lors de l\'envoi: ' + error.message);
+      toast.error('Error sending: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -323,7 +323,7 @@ const Dashboard = () => {
       setIsAdmin(profile.is_admin || false);
     }
 
-    // Calculer fonds en attente
+    // Calculate pending funds
     const { data: pendingTransactions } = await supabase
       .from('escrow_transactions')
       .select('amount')

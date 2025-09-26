@@ -35,25 +35,25 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
     
     // Rate limiting check
     if (!checkRateLimit('stripe-payment', 3, 60000)) {
-      toast.error('Trop de tentatives. Veuillez attendre avant de réessayer.');
+      toast.error('Too many attempts. Please wait before trying again.');
       return;
     }
 
     // Validate inputs with security checks
     const emailValidation = validateEmail(customerEmail);
     if (!emailValidation.isValid) {
-      toast.error(emailValidation.error || 'Email invalide');
+      toast.error(emailValidation.error || 'Invalid email');
       return;
     }
 
     const messageValidation = validateMessage(message);
     if (!messageValidation.isValid) {
-      toast.error(messageValidation.error || 'Message invalide');
+      toast.error(messageValidation.error || 'Invalid message');
       return;
     }
 
     if (!selectedResponseTime) {
-      toast.error('Veuillez sélectionner un délai de réponse');
+      toast.error('Please select a response timeframe');
       return;
     }
 
@@ -71,7 +71,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       if (paymentError) throw paymentError;
 
-      // 2. Confirmer le paiement (autorisation seulement, pas de capture)
+      // 2. Confirm payment (authorization only, no capture)
       const { error: confirmError } = await stripe.confirmCardPayment(
         paymentData.clientSecret,
         {
@@ -86,7 +86,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       if (confirmError) throw new Error(confirmError.message);
 
-      // 3. Créer message et transaction escrow
+      // 3. Create message and escrow transaction
       const { error: escrowError } = await supabase.functions.invoke('process-escrow-payment', {
         body: {
           paymentIntentId: paymentData.paymentIntentId,

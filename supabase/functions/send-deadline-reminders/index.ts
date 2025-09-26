@@ -95,7 +95,7 @@ serve(async (req) => {
 <html>
 <head>
     <meta charset="utf-8">
-    <title>FastPass - Rappel de Délai</title>
+    <title>FastPass - Deadline Reminder</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
@@ -109,22 +109,22 @@ serve(async (req) => {
 <body>
     <div class="container">
         <div class="header">
-            <h1>⏰ Rappel Urgent</h1>
-            <div>Message FastPass en attente de réponse</div>
+            <h1>⏰ Urgent Reminder</h1>
+            <div>FastPass message awaiting your response</div>
         </div>
         
         <div class="content">
             <div class="urgent">
-                <h2 style="margin: 0 0 15px 0; color: #92400E;">🚨 Plus que ${hoursLeft}h pour répondre!</h2>
+                <h2 style="margin: 0 0 15px 0; color: #92400E;">🚨 Only ${hoursLeft}h left to respond!</h2>
                 <div style="font-size: 18px; font-weight: bold; color: #B45309;">
                     Deadline expires on ${expiresAt.toLocaleDateString('en-US')} at ${expiresAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </div>
             </div>
             
             <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin: 0 0 15px 0;">💰 Rappel de votre gain</h3>
+                <h3 style="margin: 0 0 15px 0;">💰 Your earnings reminder</h3>
                 <div style="font-size: 24px; font-weight: bold; color: #4F46E5;">€${earnings.toFixed(2)}</div>
-                <div>vous attendent en échange de votre réponse</div>
+                <div>await you in exchange for your response</div>
             </div>
             
             <div style="background: #EFF6FF; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -136,25 +136,25 @@ serve(async (req) => {
             
             <div style="text-align: center;">
                 <a href="${responseUrl}" class="cta-button">
-                    ⚡ RÉPONDRE MAINTENANT
+                    ⚡ RESPOND NOW
                 </a>
                 <div style="margin-top: 15px; font-size: 14px; color: #64748b;">
-                    Ne perdez pas cette opportunité de gagner €${earnings.toFixed(2)} !
+                    Don't miss this opportunity to earn €${earnings.toFixed(2)}!
                 </div>
             </div>
             
             <div style="background: #FEF2F2; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #EF4444;">
-                <h4 style="margin: 0 0 10px 0; color: #B91C1C;">⚠️ Que se passe-t-il si je ne réponds pas?</h4>
+                <h4 style="margin: 0 0 10px 0; color: #B91C1C;">⚠️ What happens if I don't respond?</h4>
                 <p style="margin: 0; color: #B91C1C; font-size: 14px;">
-                    Le montant sera automatiquement remboursé à l'expéditeur et vous ne recevrez aucun paiement.
+                    The amount will be automatically refunded to the sender and you will receive no payment.
                 </p>
             </div>
         </div>
         
         <div class="footer">
-            <div>FastPass - Service de Messages avec Réponse Garantie</div>
+            <div>FastPass - Guaranteed Response Message Service</div>
             <div style="margin-top: 10px;">
-                Ceci est un rappel automatique. Temps restant: ${hoursLeft}h
+                This is an automatic reminder. Time remaining: ${hoursLeft}h
             </div>
         </div>
     </div>

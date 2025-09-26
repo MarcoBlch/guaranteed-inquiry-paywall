@@ -41,31 +41,31 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
   const handleContinueToPayment = () => {
     // Rate limiting check
     if (!checkRateLimit('payment-form', 3, 60000)) {
-      toast.error('Trop de tentatives. Veuillez attendre avant de réessayer.');
+      toast.error('Too many attempts. Please wait before trying again.');
       return;
     }
 
     // Validate inputs with security checks
     const emailValidation = validateEmail(customerEmail);
     if (!emailValidation.isValid) {
-      toast.error(emailValidation.error || 'Email invalide');
+      toast.error(emailValidation.error || 'Invalid email');
       return;
     }
 
     const messageValidation = validateMessage(message);
     if (!messageValidation.isValid) {
-      toast.error(messageValidation.error || 'Message invalide');
+      toast.error(messageValidation.error || 'Invalid message');
       return;
     }
 
     const fileValidation = validateFiles(attachments);
     if (!fileValidation.isValid) {
-      toast.error(`Fichiers invalides: ${fileValidation.errors?.join(', ')}`);
+      toast.error(`Invalid files: ${fileValidation.errors?.join(', ')}`);
       return;
     }
 
     if (!selectedResponseTime) {
-      toast.error('Veuillez choisir un délai de réponse');
+      toast.error('Please choose a response timeframe');
       return;
     }
 
@@ -170,7 +170,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
             }}
             className="w-full text-gray-600 py-2 hover:text-gray-800"
           >
-            ← Retour aux détails
+            ← Back to details
           </button>
         </div>
       )}
