@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
@@ -13,6 +14,8 @@ import PaymentPage from "./pages/PaymentPage";
 import ResponsePage from "./pages/ResponsePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
+import EmailPreview from "./pages/EmailPreview";
+import EmailTest from "./pages/EmailTest";
 import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -43,13 +46,12 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
+      <TooltipProvider>
         {/* Toast notifications */}
-        <Toaster 
-          position="top-right" 
-          richColors 
-          expand 
+        <Toaster
+          position="top-right"
+          richColors
+          expand
           closeButton
           toastOptions={{
             duration: 5000,
@@ -60,55 +62,73 @@ const App = () => {
             },
           }}
         />
-        
+
         <BrowserRouter>
           <Routes>
-            {/* Page d'accueil */}
+            {/* ANONYMOUS ROUTES - No authentication required */}
             <Route path="/" element={<Index />} />
-            
-            {/* Authentification */}
+            <Route path="/pay/:userId" element={<PaymentPage />} />
+            <Route path="/payment/:userId" element={<PaymentPage />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/email-preview" element={<EmailPreview />} />
+            <Route path="/email-test" element={<EmailTest />} />
+
+            {/* AUTHENTICATION ROUTES - For login/signup only */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/confirm" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            
-            {/* Dashboard utilisateur */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            
-            {/* Page de paiement */}
-            <Route path="/pay/:userId" element={<PaymentPage />} />
-            
-            {/* Page de réponse pour les utilisateurs */}
-            <Route path="/respond/:messageId" element={<ResponsePage />} />
-            
-            {/* Page de succès après paiement */}
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            
-            {/* Admin setup page */}
-            <Route path="/admin-setup" element={<AdminSetup />} />
-            
-            {/* Routes alternatives/legacy (optionnel) */}
-            <Route path="/payment/:userId" element={<PaymentPage />} />
-            <Route path="/message/:messageId" element={<ResponsePage />} />
-            
+
+            {/* PROTECTED ROUTES - Authentication required */}
+            <Route path="/dashboard" element={
+              <AuthProvider>
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/respond/:messageId" element={
+              <AuthProvider>
+                <ProtectedRoute>
+                  <ResponsePage />
+                </ProtectedRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/message/:messageId" element={
+              <AuthProvider>
+                <ProtectedRoute>
+                  <ResponsePage />
+                </ProtectedRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/admin-setup" element={
+              <AuthProvider>
+                <ProtectedRoute>
+                  <AdminSetup />
+                </ProtectedRoute>
+              </AuthProvider>
+            } />
+
             {/* Route 404 - Fallback */}
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
                 <div className="text-center p-8">
                   <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
-                  <p className="text-gray-600 mb-6">Page non trouvée</p>
-                  <a 
-                    href="/" 
+                  <p className="text-gray-600 mb-6">Page not found</p>
+                  <a
+                    href="/"
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    Retour à l'accueil
+                    Back to Home
                   </a>
                 </div>
               </div>
             } />
           </Routes>
         </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };

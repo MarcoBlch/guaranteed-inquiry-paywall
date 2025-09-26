@@ -140,9 +140,9 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
             Continue to payment ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)
           </button>
           
-          {/* Debug info - À supprimer après test */}
+          {/* Debug info - Remove after test */}
           <div className="text-xs text-gray-500 mt-2">
-            Debug: Email={customerEmail ? 'OK' : 'MISSING'}, Message={message.length}chars, Timeframe={selectedResponseTime ? 'OK' : 'MISSING'}
+            Debug: Email={customerEmail ? 'OK' : 'MISSING'}, Message={message.length}chars, Time={selectedResponseTime ? 'OK' : 'MISSING'}
           </div>
         </>
       ) : (
@@ -150,7 +150,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
           <div className="p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium mb-2">Summary</h3>
             <div className="text-sm space-y-1">
-              <div><strong>Timeframe:</strong> {selectedResponseTime?.label}</div>
+              <div><strong>Response time:</strong> {selectedResponseTime?.label}</div>
               <div><strong>Price:</strong> {selectedResponseTime?.price.toFixed(2)}€</div>
               <div><strong>Email:</strong> {customerEmail}</div>
             </div>

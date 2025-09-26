@@ -42,16 +42,30 @@ export const useResponseTimeOptions = (userId: string | undefined) => {
           }));
           setOptions(customOptions);
         } else {
-          // Fall back to user's general price for all tiers
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('price')
-            .eq('id', userId)
-            .single();
+          // Fall back to user's general price for all tiers using Edge Function
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          const functionUrl = `${supabaseUrl}/functions/v1/get-payment-profile?userId=${encodeURIComponent(userId)}`;
 
-          if (profileError) throw profileError;
+          const response = await fetch(functionUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+            }
+          });
 
-          const basePrice = Number(profile.price) || 10;
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (!data?.success) {
+            throw new Error(data?.error || 'Failed to load profile');
+          }
+
+          const basePrice = Number(data.profile.price) || 10;
           const defaultOptions: ResponseTimeOption[] = [
             {
               hours: 24,

@@ -11,7 +11,7 @@ export const usePaymentDetails = (userId: string | undefined) => {
   const [details, setDetails] = useState<PaymentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const loadUserProfile = async () => {
       if (!userId) {
@@ -19,10 +19,10 @@ export const usePaymentDetails = (userId: string | undefined) => {
         setLoading(false);
         return;
       }
-      
+
       try {
         console.log('Fetching profile for userId:', userId);
-        
+
         // Create message_attachments bucket if it doesn't exist
         try {
           const { data: buckets } = await supabase.storage.listBuckets();
@@ -36,33 +36,44 @@ export const usePaymentDetails = (userId: string | undefined) => {
           console.log('Storage bucket check error, continuing anyway');
           // Continue even if this fails
         }
-        
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('price, stripe_account_id, stripe_onboarding_completed')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        console.log('Profile query result:', { profile, profileError });
-        
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          throw new Error('Could not find user');
+
+        // Use Edge Function to get profile information (bypasses RLS for anonymous users)
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const functionUrl = `${supabaseUrl}/functions/v1/get-payment-profile?userId=${encodeURIComponent(userId)}`;
+        const response = await fetch(functionUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        if (!profile) {
-          throw new Error('User not found');
+
+        const data = await response.json();
+        console.log('Edge function response:', data);
+
+        if (!data?.success) {
+          console.error('Edge function returned error:', data?.error);
+          throw new Error(data?.error || 'Failed to load profile');
         }
-        
-        if (!profile.price || !profile.stripe_onboarding_completed) {
-          throw new Error('This user has not completed Stripe setup yet');
-        }
-        
+
+        const profile = data.profile;
+
+        console.log('Profile details from function:', {
+          price: profile.price,
+          stripeOnboardingCompleted: profile.stripeOnboardingCompleted,
+          userName: profile.userName
+        });
+
         setDetails({
           price: profile.price,
-          userName: 'this user'
+          userName: profile.userName
         });
-        
+
       } catch (err: any) {
         console.error('Payment details error:', err);
         setError(err.message || 'Failed to load payment details');
@@ -70,9 +81,9 @@ export const usePaymentDetails = (userId: string | undefined) => {
         setLoading(false);
       }
     };
-    
+
     loadUserProfile();
   }, [userId]);
-  
+
   return { details, loading, error };
 };

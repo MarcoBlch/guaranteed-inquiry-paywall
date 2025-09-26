@@ -142,7 +142,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           type="email"
           value={customerEmail}
           onChange={(e) => setCustomerEmail(e.target.value)}
-          placeholder="votre@email.com"
+          placeholder="your@email.com"
           required
         />
         <p className="text-xs text-gray-500">
@@ -169,7 +169,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       {/* Response Time Options */}
       <div className="space-y-3">
-        <Label>Guaranteed response timeframe *</Label>
+        <Label>Guaranteed response time *</Label>
         <div className="grid gap-3">
           {options.map((option) => (
             <Card 
@@ -199,7 +199,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           ))}
         </div>
         {!selectedResponseTime && (
-          <p className="text-xs text-red-500">Select a response timeframe</p>
+          <p className="text-xs text-red-500">Select a response time</p>
         )}
       </div>
 
@@ -236,7 +236,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           <h3 className="font-medium mb-3 text-blue-900">Summary</h3>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
-              <span>Response timeframe:</span>
+              <span>Response time:</span>
               <span className="font-medium">{selectedResponseTime.label}</span>
             </div>
             <div className="flex justify-between">
@@ -245,7 +245,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
             </div>
             <div className="border-t border-blue-200 pt-2 mt-2">
               <div className="flex justify-between text-base font-medium">
-                <span>Amount to pay now:</span>
+                <span>Pay now:</span>
                 <span className="text-blue-600">{selectedResponseTime.price.toFixed(2)}€</span>
               </div>
             </div>
@@ -266,7 +266,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
             Processing...
           </div>
         ) : (
-          `Payer ${selectedResponseTime?.price?.toFixed(2) || basePrice.toFixed(2)}€`
+          `Pay ${selectedResponseTime?.price?.toFixed(2) || basePrice.toFixed(2)}€`
         )}
       </Button>
 
