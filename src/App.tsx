@@ -14,6 +14,8 @@ import PaymentPage from "./pages/PaymentPage";
 import ResponsePage from "./pages/ResponsePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
+import EmailPreview from "./pages/EmailPreview";
+import EmailTest from "./pages/EmailTest";
 import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -68,6 +70,8 @@ const App = () => {
             <Route path="/pay/:userId" element={<PaymentPage />} />
             <Route path="/payment/:userId" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/email-preview" element={<EmailPreview />} />
+            <Route path="/email-test" element={<EmailTest />} />
 
             {/* AUTHENTICATION ROUTES - For login/signup only */}
             <Route path="/auth" element={<Auth />} />
