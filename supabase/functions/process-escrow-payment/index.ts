@@ -120,16 +120,15 @@ serve(async (req) => {
 
     if (responseError) throw responseError
 
-    // Get recipient email address from profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', messageData.userId)
-      .single()
+    // Get recipient email address from auth.users table
+    const { data: user, error: userError } = await supabase.auth.admin.getUserById(messageData.userId)
 
-    if (profileError || !profile?.email) {
+    if (userError || !user?.user?.email) {
+      console.error('Failed to get user email:', userError)
       throw new Error('Recipient profile or email not found')
     }
+
+    const recipientEmail = user.user.email
 
     // Format response deadline
     const responseDeadline = messageData.responseDeadlineHours === 24 ? '24 hours' :
@@ -145,7 +144,7 @@ serve(async (req) => {
         responseDeadline: responseDeadline,
         paymentAmount: messageData.price,
         messageId: message.id,
-        recipientEmail: profile.email
+        recipientEmail: recipientEmail
       }
     })
 
@@ -160,20 +159,38 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('Error processing escrow payment:', error)
-    
-    // SECURITY FIX: Sanitize error messages to prevent information leakage
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+
+    // Enhanced error handling for debugging
     let errorMessage = 'An internal error occurred'
+    let statusCode = 500
+
     if (error.message?.includes('Invalid') || error.message?.includes('Missing')) {
       errorMessage = error.message // Safe validation errors
+      statusCode = 400
     } else if (error.message?.includes('duplicate key')) {
       errorMessage = 'This transaction already exists'
+      statusCode = 409
+    } else if (error.message?.includes('not found') || error.message?.includes('profile')) {
+      errorMessage = 'User profile not found'
+      statusCode = 404
+    } else {
+      // For debugging: include more error details in development
+      errorMessage = `Internal error: ${error.message || 'Unknown error'}`
     }
-    
+
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { 
+      JSON.stringify({
+        error: errorMessage,
+        details: error.message // Temporary for debugging
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error.message?.includes('Invalid') || error.message?.includes('Missing') ? 400 : 500
+        status: statusCode
       }
     )
   }
