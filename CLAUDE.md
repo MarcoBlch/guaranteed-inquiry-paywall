@@ -191,9 +191,11 @@ supabase stop           # Stop local Supabase
 supabase functions deploy [function-name]  # Deploy Edge Function to production
 supabase functions deploy --project-ref [ref]  # Deploy to specific project
 
-# Deployment
-vercel                  # Deploy frontend to Vercel
-vercel --prod           # Deploy to production
+# Deployment (Critical: Must push to GitHub first!)
+git push origin [branch]           # Push changes to GitHub
+# Then merge to main to trigger Vercel auto-deployment
+vercel                  # Manual deploy (alternative)
+vercel --prod           # Manual production deploy
 
 # Testing & Monitoring
 curl [supabase-url]/functions/v1/escrow-health-check     # System health check
@@ -426,9 +428,26 @@ RESEND_WEBHOOK_SECRET=whsec_... # For email reply detection
 ## Deployment
 - **Frontend**: Vercel deployment with Vite optimized production bundles
 - **Backend**: Supabase Edge Functions and database infrastructure
-- **Commands**: Use `supabase functions deploy [function-name]` for Edge Functions
 - **Environment**: Production environment variables configured in Vercel and Supabase
 - **Database**: Supabase hosted PostgreSQL with RLS policies
+
+### **Critical Deployment Workflow**
+**⚠️ IMPORTANT**: Changes must be pushed to GitHub AND merged to trigger Vercel deployment
+
+**Complete Deployment Process:**
+1. **Edge Functions**: Deploy directly via `supabase functions deploy [function-name]`
+2. **Frontend Changes**: MUST push to GitHub → merge to main → triggers Vercel deployment
+3. **Without GitHub push/merge**: Frontend changes remain local and won't be visible to users
+
+**Commands for Full Deployment:**
+```bash
+# Deploy Edge Functions (immediate)
+supabase functions deploy [function-name]
+
+# Deploy Frontend (requires GitHub workflow)
+git push origin [branch-name]
+# Then merge to main branch to trigger Vercel deployment
+```
 
 ## Key Files to Know
 
