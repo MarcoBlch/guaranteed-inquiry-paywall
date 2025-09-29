@@ -18,6 +18,15 @@ dist-ssr
 .env.development
 .env.production
 
+# Supabase CLI binary (contains embedded secrets)
+supabase-bin
+supabase
+supabase-cli*
+
+# Other binaries and sensitive files
+*.tar.gz
+*.zip
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
