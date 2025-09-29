@@ -178,16 +178,22 @@ The platform is fully responsive and adaptive across all device types:
 
 ## Development Commands
 ```bash
-# Development
+# Frontend Development
 npm run dev              # Start dev server with hot reload
-npm run build           # Production build
+npm run build           # Production build for Vercel
 npm run build:dev       # Development build
 npm run preview         # Preview production build
 npm run lint            # Run ESLint
 
-# Database
+# Supabase Backend
 supabase start          # Start local Supabase
 supabase stop           # Stop local Supabase
+supabase functions deploy [function-name]  # Deploy Edge Function to production
+supabase functions deploy --project-ref [ref]  # Deploy to specific project
+
+# Deployment
+vercel                  # Deploy frontend to Vercel
+vercel --prod           # Deploy to production
 
 # Testing & Monitoring
 curl [supabase-url]/functions/v1/escrow-health-check     # System health check
@@ -418,10 +424,11 @@ RESEND_WEBHOOK_SECRET=whsec_... # For email reply detection
 - Manual testing workflows documented in README.md
 
 ## Deployment
-- Built with Vite for optimized production bundles
-- Deployed via Lovable platform
-- Supabase for backend infrastructure
-- Environment-specific builds supported
+- **Frontend**: Vercel deployment with Vite optimized production bundles
+- **Backend**: Supabase Edge Functions and database infrastructure
+- **Commands**: Use `supabase functions deploy [function-name]` for Edge Functions
+- **Environment**: Production environment variables configured in Vercel and Supabase
+- **Database**: Supabase hosted PostgreSQL with RLS policies
 
 ## Key Files to Know
 

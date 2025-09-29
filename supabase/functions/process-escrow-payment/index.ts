@@ -4,8 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // SECURITY FIX: Restrict CORS to specific domains in production
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ENVIRONMENT') === 'production' 
-    ? 'https://your-domain.com' 
+  'Access-Control-Allow-Origin': Deno.env.get('ENVIRONMENT') === 'production'
+    ? 'https://fastpass.email'
     : '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Max-Age': '86400',
@@ -99,7 +99,7 @@ serve(async (req) => {
         message_id: message.id,
         stripe_payment_intent_id: paymentIntentId,
         amount: messageData.price,
-        status: 'held', // Fonds en escrow
+        status: 'held', // Funds in escrow
         recipient_user_id: messageData.userId,
         sender_email: messageData.senderEmail,
         expires_at: expiresAt.toISOString()
@@ -162,11 +162,11 @@ serve(async (req) => {
     console.error('Error processing escrow payment:', error)
     
     // SECURITY FIX: Sanitize error messages to prevent information leakage
-    let errorMessage = 'Une erreur interne s\'est produite'
+    let errorMessage = 'An internal error occurred'
     if (error.message?.includes('Invalid') || error.message?.includes('Missing')) {
       errorMessage = error.message // Safe validation errors
     } else if (error.message?.includes('duplicate key')) {
-      errorMessage = 'Cette transaction existe déjà'
+      errorMessage = 'This transaction already exists'
     }
     
     return new Response(
