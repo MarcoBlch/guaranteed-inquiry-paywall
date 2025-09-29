@@ -1,106 +1,182 @@
-# FASTPASS Escrow System
+# Supabase CLI (v1)
 
-A premium contact platform that allows busy professionals to get paid for responding to messages with guaranteed response times.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main)
 
-## 🚀 Quick Start
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-### Local Development
+This repository contains all the functionality for Supabase CLI.
+
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+
+## Getting started
+
+### Install the CLI
+
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+
 ```bash
-npm install
-npm run dev
+npm i supabase --save-dev
 ```
 
-### Production Build
+To install the beta release channel:
+
 ```bash
-npm run build
-npm run preview
+npm i supabase@beta --save-dev
 ```
 
-## 📦 Deployment
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-### Vercel Deployment (Recommended)
-1. Install Vercel CLI: `npm i -g vercel`
-2. Login: `vercel login`
-3. Deploy: `vercel --prod`
-
-### Manual Vercel Setup
-1. Go to [vercel.com](https://vercel.com)
-2. Connect your GitHub repository
-3. Set environment variables in Settings > Environment Variables
-4. Deploy automatically from main branch
-
-### Environment Variables
-Set these in your deployment platform:
-- `VITE_SUPABASE_URL=https://znncfayiwfamujvrprvf.supabase.co`
-- `VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpubmNmYXlpd2ZhbXVqdnJwcnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3OTY5MDQsImV4cCI6MjA2MDM3MjkwNH0.NcM9yKGoQsttzE4cYfqhyV1aG7fvt-lQCHZKy5CPHCk`
-- `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51RiErSRrgEEFpaiMLBBwEwv3hzswFpxx99iToSwtF1R0ouwbFHQygddjv7ABOuKELDjgO0e7tL9DkZiYVINdStjS00OQpDFGqR`
-
-## 🏗️ Tech Stack
-- **Frontend**: React 18 + TypeScript + Vite
-- **UI**: shadcn/ui + Tailwind CSS
-- **Backend**: Supabase (Auth + Database + Edge Functions)
-- **Payment**: Stripe + Stripe Connect
-- **Email**: Resend API
-- **State Management**: React Query
-
-## 🔧 Project Structure
 ```
-src/
-├── components/       # Reusable UI components
-├── pages/           # Main application pages
-├── contexts/        # React contexts
-├── hooks/          # Custom React hooks
-├── lib/            # Utility functions
-└── integrations/   # External service integrations
-
-supabase/
-├── functions/      # Edge functions
-├── migrations/     # Database migrations
-└── config.toml     # Supabase configuration
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
-## 📱 Key Features
-- **Escrow Payment System** - 75/25 revenue split
-- **Response Guarantees** - 24h/48h/72h response times
-- **Admin Dashboard** - Analytics and user management
-- **Email Notifications** - Deadline reminders and notifications
-- **Stripe Connect** - Automatic payouts to users
-- **Mobile Responsive** - Works on all devices
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-## 🔐 Admin Access
-- Admin setup available at `/admin-setup`
-- Requires admin privileges granted via database migration
-- Full analytics and user management capabilities
+<details>
+  <summary><b>macOS</b></summary>
 
-## 🌐 Live App
-- **Production**: https://fastpass.email/
-- **Admin Panel**: https://fastpass.email/admin-setup
+  Available via [Homebrew](https://brew.sh). To install:
 
-## 📚 Architecture Overview
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-### Payment Flow (75/25 Split)
-1. **Payment** → Escrow on main account (status: 'held')
-2. **Message sent** → Timer based on chosen deadline (24h/48h/72h)
-3. **Response received** → Auto-capture + Distribution:
-   - 75% → Transfer to user (if Stripe Connect configured)
-   - 25% → Remains on main account (commission)
-4. **No response** → Auto-cancel + Refund
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-### Transaction Status
-- `held` → Funds in escrow, awaiting response
-- `released` → Response received, funds distributed
-- `pending_user_setup` → Response received but user hasn't set up Stripe
-- `refunded` → Timeout, funds refunded
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-### Monitoring
-- **Health Check**: `/functions/v1/escrow-health-check`
-- **Cron Jobs**: GitHub Actions checking timeouts every 10 minutes
-- **Admin Analytics**: Comprehensive KPIs and metrics
+<details>
+  <summary><b>Windows</b></summary>
 
-## 🔒 Security
-- **Row Level Security (RLS)** enabled on all tables
-- **JWT verification** for protected endpoints
-- **Stripe Connect** for secure fund distribution
-- **Automatic timeouts** with refund protection
+  Available via [Scoop](https://scoop.sh). To install:
 
-See `CLAUDE.md` for comprehensive technical documentation.
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```
