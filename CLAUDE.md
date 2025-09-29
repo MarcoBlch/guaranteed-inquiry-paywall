@@ -188,8 +188,20 @@ npm run lint            # Run ESLint
 # Supabase Backend
 supabase start          # Start local Supabase
 supabase stop           # Stop local Supabase
+supabase functions list # List all deployed Edge Functions with versions
 supabase functions deploy [function-name]  # Deploy Edge Function to production
 supabase functions deploy --project-ref [ref]  # Deploy to specific project
+
+# Supabase CLI Installation (if not available)
+npx supabase --help     # Use Supabase CLI via npx (no installation required)
+brew install supabase/tap/supabase  # Install via Homebrew (macOS/Linux)
+# Alternative: Download .deb/.rpm from https://github.com/supabase/cli/releases
+
+# Production Edge Function Management
+npx supabase functions list  # Check deployment status and versions
+npx supabase functions deploy process-escrow-payment  # Deploy payment processing
+npx supabase functions deploy send-message-email      # Deploy email system
+npx supabase functions deploy capture-stripe-payment  # Deploy payment capture
 
 # Deployment (Critical: Must push to GitHub first!)
 git push origin [branch]           # Push changes to GitHub
@@ -759,7 +771,15 @@ The platform includes comprehensive OAuth authentication with proper session man
 6. **Switch tasks**: Create new branch for next task
 
 ### **Commit Guidelines**
-- NEVER mention Claude or AI assistance in commits
-- Write commits as if made by human developer
+- **NEVER mention Claude or AI assistance in commits** - Write commits as if made by human developer
+- **NEVER include AI attribution** in commit messages, PR descriptions, or merge commits
 - Follow conventional commit format with clear descriptions
 - Use descriptive branch names that explain the work being done
+- **GitHub merge flow must exclude all AI references** - Maintain professional commit history
+
+### **Merge & Pull Request Guidelines**
+- **PR titles and descriptions**: Professional, technical language only
+- **Merge commit messages**: No AI assistance mentions
+- **Code review comments**: Focus on technical merits, not AI involvement
+- **Commit history**: Should read as if written entirely by human developers
+- **Branch protection**: Ensure main branch requires PR approval and status checks
