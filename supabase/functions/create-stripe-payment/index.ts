@@ -4,8 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // SECURITY FIX: Restrict CORS in production
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ENVIRONMENT') === 'production' 
-    ? 'https://your-domain.com' 
+  'Access-Control-Allow-Origin': Deno.env.get('ENVIRONMENT') === 'production'
+    ? 'https://fastpass.email'
     : '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Max-Age': '86400',
@@ -42,10 +42,10 @@ serve(async (req) => {
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     if (!checkRateLimit(clientIP)) {
       return new Response(
-        JSON.stringify({ error: 'Trop de tentatives. Veuillez réessayer dans une minute.' }),
-        { 
+        JSON.stringify({ error: 'Too many attempts. Please try again in one minute.' }),
+        {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 429 
+          status: 429
         }
       );
     }
@@ -57,12 +57,12 @@ serve(async (req) => {
     
     // SECURITY FIX: Comprehensive input validation
     if (!price || !responseDeadlineHours || !userId) {
-      throw new Error('Paramètres requis manquants')
+      throw new Error('Missing required parameters')
     }
     
     // Validate price
     if (typeof price !== 'number' || price <= 0 || price > 100000) {
-      throw new Error('Prix invalide (doit être entre 0 et 100 000€)')
+      throw new Error('Invalid price (must be between 0 and 100,000€)')
     }
     
     // Validate response deadline
@@ -75,7 +75,7 @@ serve(async (req) => {
     // Validate userId format (should be UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (typeof userId !== 'string' || !uuidRegex.test(userId)) {
-      throw new Error('ID utilisateur invalide')
+      throw new Error('Invalid user ID')
     }
 
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
@@ -130,17 +130,17 @@ serve(async (req) => {
     console.error('Error creating Stripe payment:', error)
     
     // SECURITY FIX: Sanitize error messages to prevent information leakage
-    let errorMessage = 'Une erreur interne s\'est produite';
+    let errorMessage = 'An internal error occurred';
     let statusCode = 500;
-    
-    if (error.message?.includes('invalide') || error.message?.includes('manquants')) {
+
+    if (error.message?.includes('Invalid') || error.message?.includes('Missing')) {
       errorMessage = error.message; // Safe validation errors
       statusCode = 400;
     } else if (error.message?.includes('Stripe API error')) {
-      errorMessage = 'Erreur de paiement. Veuillez réessayer.';
+      errorMessage = 'Payment error. Please try again.';
       statusCode = 400;
     } else if (error.message?.includes('not configured')) {
-      errorMessage = 'Service temporairement indisponible';
+      errorMessage = 'Service temporarily unavailable';
       statusCode = 503;
     }
     
