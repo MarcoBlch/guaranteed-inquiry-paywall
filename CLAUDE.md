@@ -716,11 +716,12 @@ The platform includes comprehensive OAuth authentication with proper session man
 ## Git Workflow Guidelines
 
 ### **Branching Strategy**
-- **ALWAYS work on feature branches** for any fix, debug, or new function
+- **MANDATORY RULE**: **ALWAYS work on feature branches** for any fix, debug, or new function - NEVER work directly on main
 - **Branch naming convention**: `fix/description` or `feature/description` or `debug/issue-name`
 - **One branch per task**: Each fix or feature gets its own dedicated branch
 - **Merge when complete**: Only merge to main when task is fully complete and tested
 - **Clean workflow**: Switch tasks = create new branch
+- **Before ANY development work**: Create new branch first, then implement changes
 
 ### **Branch Workflow Process**
 1. **Start new task**: `git checkout -b fix/authentication-dependency`
