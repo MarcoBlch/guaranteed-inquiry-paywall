@@ -96,6 +96,9 @@ verify_jwt = true
 [functions.send-deadline-reminder]
 verify_jwt = true
 
+[functions.get-payment-profile]
+verify_jwt = false
+
 [functions.escrow-health-check]
 verify_jwt = false
 

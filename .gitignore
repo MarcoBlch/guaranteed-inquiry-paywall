@@ -20,8 +20,9 @@ dist-ssr
 
 # Supabase CLI binary (contains embedded secrets)
 supabase-bin
-supabase
 supabase-cli*
+# Keep supabase/ directory but exclude binaries in it
+supabase/supabase*
 
 # Other binaries and sensitive files
 *.tar.gz
