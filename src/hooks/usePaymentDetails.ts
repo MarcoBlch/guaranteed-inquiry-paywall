@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentDetails {
   userName: string;
@@ -22,20 +21,6 @@ export const usePaymentDetails = (userId: string | undefined) => {
 
       try {
         console.log('Fetching profile for userId:', userId);
-
-        // Create message_attachments bucket if it doesn't exist
-        try {
-          const { data: buckets } = await supabase.storage.listBuckets();
-          if (!buckets?.find(b => b.name === 'message_attachments')) {
-            console.log('Creating message_attachments bucket');
-            await supabase.storage.createBucket('message_attachments', {
-              public: true
-            });
-          }
-        } catch (storageError) {
-          console.log('Storage bucket check error, continuing anyway');
-          // Continue even if this fails
-        }
 
         // Use Edge Function to get profile information (bypasses RLS for anonymous users)
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
