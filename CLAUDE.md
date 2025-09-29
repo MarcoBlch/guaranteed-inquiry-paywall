@@ -200,8 +200,13 @@ brew install supabase/tap/supabase  # Install via Homebrew (macOS/Linux)
 # Production Edge Function Management
 npx supabase functions list  # Check deployment status and versions
 npx supabase functions deploy process-escrow-payment  # Deploy payment processing
-npx supabase functions deploy send-message-email      # Deploy email system
+npx supabase functions deploy send-message-email      # Deploy email system (Resend)
 npx supabase functions deploy capture-stripe-payment  # Deploy payment capture
+
+# Phase 3: Postmark Migration Functions
+npx supabase functions deploy postmark-send-message   # NEW: Postmark outbound emails
+npx supabase functions deploy postmark-inbound-webhook # NEW: Response detection
+npx supabase functions deploy email-service-health    # NEW: Multi-service monitoring
 
 # Deployment (Critical: Must push to GitHub first!)
 git push origin [branch]           # Push changes to GitHub
@@ -281,8 +286,16 @@ VITE_SUPABASE_ANON_KEY=...
 # Supabase Edge Functions
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-RESEND_API_KEY=re_...
-RESEND_WEBHOOK_SECRET=whsec_... # For email reply detection
+
+# Email Service Migration (Phase 3)
+RESEND_API_KEY=re_... # Current service (outbound only)
+RESEND_WEBHOOK_SECRET=whsec_... # Limited functionality
+
+# Postmark Configuration (NEW - Phase 3)
+POSTMARK_SERVER_TOKEN=... # For outbound emails
+POSTMARK_ACCOUNT_TOKEN=... # For account management
+POSTMARK_INBOUND_WEBHOOK_SECRET=... # For response detection
+POSTMARK_INBOUND_EMAIL_ADDRESS=... # Configured inbound address
 ```
 
 ## Database Schema
@@ -701,12 +714,26 @@ The platform includes comprehensive OAuth authentication with proper session man
 - Remove message body content from dashboard display (privacy)
 - Update dashboard to show only: sender email, subject, timestamp, payment status
 
-#### **Phase 3: Hybrid Response Tracking System**
-**Priority**: HIGH - Revenue protection and quality control
-- **Automatic Detection**: Resend webhook catches receiver email replies in real-time
+#### **Phase 3: Email Service Migration & Response Tracking System**
+**Status**: IN PROGRESS (2025-09-29)
+**Priority**: CRITICAL - Revenue protection and quality control
+
+**📧 Email Service Migration (Resend → Postmark)**
+- **Migration Rationale**: Resend lacks inbound email parsing (early access only)
+- **Target Platform**: Postmark (93.8% deliverability, $15/month for 10k emails)
+- **Benefits**: Real-time response detection, precise timing, automated escrow release
+
+**🎯 Implementation Phases:**
+- **Phase 3A**: Dual-service setup (Resend + Postmark)
+- **Phase 3B**: Gradual migration with inbound parsing
+- **Phase 3C**: Complete Postmark implementation
+
+**🔧 Response Tracking Features:**
+- **Automatic Detection**: Postmark inbound webhooks catch receiver email replies in real-time
+- **Precise Timing**: Email headers provide exact timestamps for deadline enforcement
 - **Grace Period**: 15-minute buffer for email delivery delays
 - **Quality Control**: Manual admin review system for disputed cases
-- **Deadline Enforcement**: Original countdown with webhook override capability
+- **Revenue Protection**: Automated escrow release upon verified response
 
 #### **Phase 4: Quality Control & Rating System**
 **Priority**: MEDIUM - Platform quality assurance
@@ -724,12 +751,43 @@ The platform includes comprehensive OAuth authentication with proper session man
 
 ### **Technical Implementation Details**
 
-#### **Response Detection: Resend Webhooks + Manual Dispute Hybrid**
-- **Primary Method**: Resend inbound parsing webhook for automatic reply detection
+#### **Email Service Migration Strategy**
+
+**🔄 Migration Phases:**
+
+**Phase 3A: Dual-Service Setup (1-2 days)**
+- Keep Resend for current outbound emails (no disruption)
+- Add Postmark account for inbound parsing testing
+- Implement Postmark webhook endpoints
+- Test inbound parsing with development emails
+
+**Phase 3B: Gradual Migration (1 week)**
+- Migrate new message notifications to Postmark
+- Update email templates for Postmark API
+- Implement response detection webhooks
+- A/B test deliverability between services
+- Monitor response tracking accuracy
+
+**Phase 3C: Complete Migration (1-2 weeks)**
+- Migrate all outbound emails to Postmark
+- Remove Resend dependencies
+- Optimize webhook performance
+- Comprehensive end-to-end testing
+
+#### **Response Detection: Postmark Inbound Parsing + Manual Verification**
+- **Primary Method**: Postmark inbound email webhooks for automatic reply detection
+- **Email Headers**: Precise timestamp extraction for deadline enforcement
 - **Backup Method**: Manual admin review for edge cases and disputes
-- **Quality Assurance**: Sender rating system to ensure meaningful responses
+- **Quality Assurance**: Response content validation and sender rating system
 - **Grace Period**: 15-minute buffer to handle email delivery delays
 - **Dispute Process**: Admin dashboard for reviewing contested cases
+
+#### **Technical Requirements:**
+- **Postmark Account**: Professional plan with inbound processing
+- **Webhook Endpoints**: Secure endpoints for inbound email processing
+- **Domain Configuration**: MX records for inbound email routing
+- **API Integration**: Postmark SDK for outbound and inbound emails
+- **Database Updates**: Response tracking tables and timing precision
 
 #### **Email Template Design Requirements**
 - Branded FastPass visual identity consistent with platform
@@ -744,13 +802,37 @@ The platform includes comprehensive OAuth authentication with proper session man
 - **Session Separation**: Zero access bleeding between sender/receiver contexts
 - **Data Minimization**: Store only necessary transaction and contact metadata
 
-### **Success Metrics**
+### **Phase 3 Success Metrics & Migration Goals**
+
+#### **Phase 3A: Dual-Service Setup**
 - ✅ Payment links work in any browser without authentication
 - ✅ Receivers get actual emails with sender messages
-- ✅ Response detection works reliably via email webhooks
+- ✅ Postmark account configured with inbound processing
+- ✅ Webhook endpoints deployed and tested
+- ✅ No disruption to existing Resend email flow
+
+#### **Phase 3B: Response Detection Implementation**
+- ✅ Automatic response detection via Postmark webhooks
+- ✅ Precise timestamp extraction from email headers
+- ✅ 15-minute grace period handling for late responses
+- ✅ A/B testing shows ≥95% deliverability with Postmark
+- ✅ Response tracking accuracy ≥98% for escrow release
+
+#### **Phase 3C: Complete Migration**
+- ✅ All outbound emails migrated to Postmark
+- ✅ Resend dependencies removed from codebase
 - ✅ Dashboard shows earnings data only (no private message content)
+- ✅ Response detection works reliably within deadline windows
 - ✅ Quality control maintains meaningful response standards
 - ✅ Complete security separation between senders and receivers
+- ✅ Revenue protection through automated escrow release
+
+#### **Performance Targets:**
+- **Email Deliverability**: ≥95% (target: 93.8% proven by Postmark)
+- **Response Detection**: ≥98% accuracy within deadline windows
+- **Processing Time**: <30 seconds from email receipt to escrow release
+- **System Uptime**: 99.9% availability for email processing
+- **Cost Efficiency**: <$50/month for 10k messages (Postmark pricing)
 
 ## Git Workflow Guidelines
 
