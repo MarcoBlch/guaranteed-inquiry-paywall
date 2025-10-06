@@ -128,7 +128,8 @@ serve(async (req) => {
         processed: false,
         reason: 'No matching message found'
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       })
     }
 
@@ -165,7 +166,8 @@ serve(async (req) => {
         processed: false,
         reason: 'Message already responded'
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       })
     }
 
@@ -241,6 +243,32 @@ serve(async (req) => {
 
       console.log(`Successfully processed response for message ${messageId}`)
 
+      // Forward response to original sender
+      const postmarkServerToken = Deno.env.get('POSTMARK_SERVER_TOKEN')
+      if (postmarkServerToken && message.sender_email) {
+        try {
+          await fetch('https://api.postmarkapp.com/email', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'X-Postmark-Server-Token': postmarkServerToken,
+            },
+            body: JSON.stringify({
+              From: 'FASTPASS <noreply@fastpass.email>',
+              To: message.sender_email,
+              Subject: `Re: ${inboundEmail.Subject}`,
+              TextBody: inboundEmail.TextBody,
+              HtmlBody: inboundEmail.HtmlBody || `<p>${inboundEmail.TextBody}</p>`,
+              MessageStream: 'outbound',
+            })
+          })
+          console.log(`Forwarded response to sender: ${message.sender_email}`)
+        } catch (error) {
+          console.error('Failed to forward response to sender:', error)
+        }
+      }
+
       // Log inbound email
       await supabase.from('email_logs').insert({
         message_id: messageId,
@@ -284,7 +312,8 @@ serve(async (req) => {
         processed: false,
         reason: reason
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       })
     }
 

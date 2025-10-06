@@ -175,7 +175,7 @@ serve(async (req) => {
       body: JSON.stringify({
         From: 'FASTPASS <noreply@fastpass.email>',
         To: recipientEmail,
-        ReplyTo: senderEmail, // Enable direct reply to sender
+        ReplyTo: '3e25f9d6075c2e558e480850eee96513@inbound.postmarkapp.com', // Route replies through Postmark inbound
         Subject: `💰 Guaranteed Message (${paymentAmount.toFixed(2)}€) - Response within ${responseDeadline}`,
         HtmlBody: htmlContent,
         TextBody: textContent,
@@ -199,7 +199,8 @@ serve(async (req) => {
         Metadata: {
           messageId: messageId,
           paymentAmount: paymentAmount.toString(),
-          deadline: responseDeadline
+          deadline: responseDeadline,
+          senderEmail: senderEmail
         }
       }),
     });
