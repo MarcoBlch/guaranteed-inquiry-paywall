@@ -99,6 +99,12 @@ verify_jwt = true
 [functions.get-payment-profile]
 verify_jwt = false
 
+[functions.postmark-webhook-public]
+verify_jwt = false
+
+[functions.postmark-inbound-webhook]
+verify_jwt = false
+
 [functions.escrow-health-check]
 verify_jwt = false
 

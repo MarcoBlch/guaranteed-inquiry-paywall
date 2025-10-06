@@ -38,6 +38,10 @@ serve(async (req) => {
   }
 
   try {
+    // No authentication required - webhook is publicly accessible
+    // Postmark doesn't send auth headers, and we identify messages by email threading
+    console.log('Processing inbound webhook from Postmark')
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -141,7 +145,7 @@ serve(async (req) => {
           status,
           expires_at
         ),
-        message_responses!inner(
+        message_responses(
           id,
           has_response
         )
@@ -154,7 +158,7 @@ serve(async (req) => {
     }
 
     // Check if already responded
-    if (message.message_responses?.has_response) {
+    if (message.message_responses?.[0]?.has_response) {
       console.log('Message already has a response:', messageId)
       return new Response(JSON.stringify({
         received: true,
