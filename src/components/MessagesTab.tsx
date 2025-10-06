@@ -32,7 +32,6 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
         .from('messages')
         .select(`
           id,
-          content,
           sender_email,
           created_at,
           response_deadline_hours,
@@ -211,20 +210,24 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
               
               <CardContent>
                 <div className="space-y-4">
-                  {/* Message original */}
+                  {/* Message metadata (privacy-compliant) */}
                   <div className="bg-gray-50 p-3 rounded-md">
-                    <h4 className="font-medium text-sm mb-2">📝 Message:</h4>
-                    <p className="text-sm">{message.content}</p>
+                    <h4 className="font-medium text-sm mb-2">📝 Message Details:</h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="font-medium">Response Required:</span> {message.response_deadline_hours}h</p>
+                      <p><span className="font-medium">Payment:</span> €{message.amount_paid?.toFixed(2) || '0.00'}</p>
+                      <p className="text-gray-600">Message content available in original email</p>
+                    </div>
                   </div>
 
                   {/* Réponse si existe */}
                   {message.message_responses?.has_response && (
                     <div className="bg-green-50 p-3 rounded-md border-l-4 border-green-500">
                       <h4 className="font-medium text-sm mb-2 text-green-800">
-                        ✅ Your response (sent on {new Date(message.message_responses.response_sent_at).toLocaleDateString('en-US')})
+                        ✅ Response sent on {new Date(message.message_responses.response_sent_at).toLocaleDateString('en-US')}
                       </h4>
                       <p className="text-sm text-green-700">
-                        {message.message_responses.response_content}
+                        Payment has been processed and released.
                       </p>
                     </div>
                   )}
