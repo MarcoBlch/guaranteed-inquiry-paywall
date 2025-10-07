@@ -50,55 +50,63 @@ serve(async (req) => {
     const inboundEmail: PostmarkInboundEmail = await req.json()
     console.log('Received Postmark inbound email:', inboundEmail.MessageID, 'from:', inboundEmail.From)
 
-    // Extract custom headers to identify original message
-    const headers = inboundEmail.Headers || []
-    const messageIdHeader = headers.find(h => h.Name === 'X-Fastpass-Message-Id')
+    // STRATEGY 1: Extract message ID from To address (reply+{uuid}@reply.fastpass.email)
+    const toAddress = inboundEmail.To || inboundEmail.ToFull?.[0]?.Email
+    console.log('Inbound To address:', toAddress)
 
-    // Also check for In-Reply-To header which contains the original email's MessageID
-    const inReplyToHeader = headers.find(h => h.Name === 'In-Reply-To')
-    const referencesHeader = headers.find(h => h.Name === 'References')
-
-    console.log('Email headers:', {
-      messageIdHeader: messageIdHeader?.Value,
-      inReplyTo: inReplyToHeader?.Value,
-      references: referencesHeader?.Value
-    })
-
-    // Try to find the original message by Postmark MessageID in email_logs
     let messageId: string | null = null;
 
-    if (inReplyToHeader?.Value) {
-      // Extract MessageID from angle brackets: <message-id@postmarkapp.com>
-      const cleanMessageId = inReplyToHeader.Value.replace(/[<>]/g, '')
-
-      const { data: emailLog, error: logError } = await supabase
-        .from('email_logs')
-        .select(`
-          message_id,
-          messages!inner(
-            id,
-            sender_email,
-            user_id,
-            escrow_transactions!inner(
-              id,
-              status,
-              expires_at
-            )
-          )
-        `)
-        .eq('email_provider_id', cleanMessageId)
-        .eq('email_type', 'new_message_notification')
-        .eq('email_service_provider', 'postmark')
-        .single()
-
-      if (emailLog && !logError) {
-        messageId = emailLog.message_id
-        console.log('Found message via In-Reply-To header:', messageId)
+    // Try to parse message ID from To address
+    if (toAddress) {
+      const addressMatch = toAddress.match(/reply\+([a-f0-9-]{36})@reply\.fastpass\.email/i)
+      if (addressMatch) {
+        messageId = addressMatch[1]
+        console.log('✅ Extracted message ID from To address:', messageId)
       }
     }
 
-    // Fallback: Search by sender's email address in messages table
+    // STRATEGY 2: Fallback to In-Reply-To header matching
     if (!messageId) {
+      console.log('⚠️ Could not extract from To address, trying In-Reply-To header')
+
+      const headers = inboundEmail.Headers || []
+      const inReplyToHeader = headers.find(h => h.Name === 'In-Reply-To')
+
+      if (inReplyToHeader?.Value) {
+        const cleanMessageId = inReplyToHeader.Value.replace(/[<>]/g, '')
+        console.log('Checking In-Reply-To header:', cleanMessageId)
+
+        const { data: emailLog, error: logError } = await supabase
+          .from('email_logs')
+          .select(`
+            message_id,
+            messages!inner(
+              id,
+              sender_email,
+              user_id,
+              escrow_transactions!inner(
+                id,
+                status,
+                expires_at
+              )
+            )
+          `)
+          .eq('email_provider_id', cleanMessageId)
+          .eq('email_type', 'new_message_notification')
+          .eq('email_service_provider', 'postmark')
+          .single()
+
+        if (emailLog && !logError) {
+          messageId = emailLog.message_id
+          console.log('✅ Found message via In-Reply-To header:', messageId)
+        }
+      }
+    }
+
+    // STRATEGY 3: Last resort - search by sender email
+    if (!messageId) {
+      console.log('⚠️ Trying last resort: sender email lookup')
+
       const { data: message, error: messageError } = await supabase
         .from('messages')
         .select(`
@@ -117,21 +125,29 @@ serve(async (req) => {
 
       if (message && !messageError) {
         messageId = message.id
-        console.log('Found message via sender email:', messageId)
+        console.log('✅ Found message via sender email:', messageId)
       }
     }
 
+    // If still no message ID found, return early
     if (!messageId) {
-      console.log('No matching message found for inbound email')
+      console.log('❌ No matching message found for inbound email')
       return new Response(JSON.stringify({
         received: true,
         processed: false,
-        reason: 'No matching message found'
+        reason: 'No matching message found',
+        debugInfo: {
+          toAddress,
+          fromAddress: inboundEmail.From,
+          hasInReplyTo: !!inboundEmail.Headers?.find(h => h.Name === 'In-Reply-To')
+        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
     }
+
+    console.log('🎯 Processing response for message:', messageId)
 
     // Get message details and check if transaction is still active
     const { data: message, error: messageError } = await supabase
