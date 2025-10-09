@@ -38,9 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    // No authentication required - webhook is publicly accessible
-    // Postmark doesn't send auth headers, and we identify messages by email threading
-    console.log('Processing inbound webhook from Postmark')
+    console.log('=== POSTMARK WEBHOOK RECEIVED ===')
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -48,11 +46,16 @@ serve(async (req) => {
     )
 
     const inboundEmail: PostmarkInboundEmail = await req.json()
-    console.log('Received Postmark inbound email:', inboundEmail.MessageID, 'from:', inboundEmail.From)
+    console.log('📧 Inbound email:', {
+      messageID: inboundEmail.MessageID,
+      from: inboundEmail.From,
+      to: inboundEmail.To,
+      subject: inboundEmail.Subject
+    })
 
-    // STRATEGY 1: Extract message ID from To address (reply+{uuid}@reply.fastpass.email)
+    // Extract message ID from To address (reply+{uuid}@reply.fastpass.email)
     const toAddress = inboundEmail.To || inboundEmail.ToFull?.[0]?.Email
-    console.log('Inbound To address:', toAddress)
+    console.log('To address:', toAddress)
 
     let messageId: string | null = null;
 
@@ -65,277 +68,251 @@ serve(async (req) => {
       }
     }
 
-    // STRATEGY 2: Fallback to In-Reply-To header matching
-    if (!messageId) {
-      console.log('⚠️ Could not extract from To address, trying In-Reply-To header')
-
-      const headers = inboundEmail.Headers || []
-      const inReplyToHeader = headers.find(h => h.Name === 'In-Reply-To')
-
-      if (inReplyToHeader?.Value) {
-        const cleanMessageId = inReplyToHeader.Value.replace(/[<>]/g, '')
-        console.log('Checking In-Reply-To header:', cleanMessageId)
-
-        const { data: emailLog, error: logError } = await supabase
-          .from('email_logs')
-          .select(`
-            message_id,
-            messages!inner(
-              id,
-              sender_email,
-              user_id,
-              escrow_transactions!inner(
-                id,
-                status,
-                expires_at
-              )
-            )
-          `)
-          .eq('email_provider_id', cleanMessageId)
-          .eq('email_type', 'new_message_notification')
-          .eq('email_service_provider', 'postmark')
-          .single()
-
-        if (emailLog && !logError) {
-          messageId = emailLog.message_id
-          console.log('✅ Found message via In-Reply-To header:', messageId)
-        }
-      }
-    }
-
-    // STRATEGY 3: Last resort - search by sender email
-    if (!messageId) {
-      console.log('⚠️ Trying last resort: sender email lookup')
-
-      const { data: message, error: messageError } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          sender_email,
-          escrow_transactions!inner(
-            id,
-            status,
-            expires_at
-          )
-        `)
-        .eq('sender_email', inboundEmail.From)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (message && !messageError) {
-        messageId = message.id
-        console.log('✅ Found message via sender email:', messageId)
-      }
-    }
-
     // If still no message ID found, return early
     if (!messageId) {
       console.log('❌ No matching message found for inbound email')
       return new Response(JSON.stringify({
         received: true,
         processed: false,
-        reason: 'No matching message found',
-        debugInfo: {
-          toAddress,
-          fromAddress: inboundEmail.From,
-          hasInReplyTo: !!inboundEmail.Headers?.find(h => h.Name === 'In-Reply-To')
-        }
+        reason: 'No matching message ID found in To address'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
     }
 
-    console.log('🎯 Processing response for message:', messageId)
+    console.log('🔍 Querying for transaction with message ID:', messageId)
 
-    // Get message details and check if transaction is still active
-    const { data: message, error: messageError } = await supabase
-      .from('messages')
+    // Query escrow_transactions with the CORRECT schema
+    const { data: transaction, error: fetchError } = await supabase
+      .from('escrow_transactions')
       .select(`
         id,
+        status,
+        amount,
+        expires_at,
+        recipient_user_id,
         sender_email,
-        response_deadline_hours,
-        created_at,
-        escrow_transactions!inner(
-          id,
-          status,
-          expires_at
-        ),
-        message_responses(
-          id,
-          has_response
-        )
+        message_id
       `)
-      .eq('id', messageId)
+      .eq('message_id', messageId)
       .single()
 
-    if (messageError || !message) {
-      throw new Error('Message not found')
-    }
-
-    // Check if already responded
-    if (message.message_responses?.[0]?.has_response) {
-      console.log('Message already has a response:', messageId)
-      return new Response(JSON.stringify({
-        received: true,
-        processed: false,
-        reason: 'Message already responded'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      })
-    }
-
-    const transaction = message.escrow_transactions
-    const deadline = new Date(transaction.expires_at)
-    const responseTime = new Date(inboundEmail.Date)
-    const gracePeriod = 15 * 60 * 1000 // 15 minutes in milliseconds
-
-    const withinDeadline = responseTime <= deadline
-    const withinGracePeriod = responseTime <= new Date(deadline.getTime() + gracePeriod)
-
-    console.log('Response timing:', {
-      deadline: deadline.toISOString(),
-      responseTime: responseTime.toISOString(),
-      withinDeadline,
-      withinGracePeriod,
-      gracePeriodUsed: !withinDeadline && withinGracePeriod
+    console.log('Database query result:', {
+      hasError: !!fetchError,
+      errorMessage: fetchError?.message,
+      hasTransaction: !!transaction,
+      transactionData: transaction
     })
 
-    // Only process if within deadline or grace period AND transaction is still held
-    if (withinGracePeriod && transaction.status === 'held') {
-
-      // Store response tracking data
-      const { error: trackingError } = await supabase
-        .from('email_response_tracking')
-        .insert({
-          message_id: messageId,
-          original_email_id: inReplyToHeader?.Value?.replace(/[<>]/g, '') || 'unknown',
-          inbound_email_id: inboundEmail.MessageID,
-          response_email_subject: inboundEmail.Subject,
-          response_email_from: inboundEmail.From,
-          response_received_at: responseTime.toISOString(),
-          response_detected_method: 'webhook',
-          within_deadline: withinDeadline,
-          grace_period_used: !withinDeadline && withinGracePeriod,
-          email_headers: inboundEmail.Headers,
-          response_content_preview: inboundEmail.TextBody?.substring(0, 500) || '',
-          metadata: {
-            subject: inboundEmail.Subject,
-            html_body_length: inboundEmail.HtmlBody?.length || 0,
-            text_body_length: inboundEmail.TextBody?.length || 0,
-            has_attachments: (inboundEmail.Attachments?.length || 0) > 0
-          }
-        })
-
-      if (trackingError) {
-        console.error('Failed to insert response tracking:', trackingError)
-      }
-
-      // Mark response as received and trigger fund distribution
-      const { error: markError } = await supabase.functions.invoke('mark-response-received', {
-        body: {
-          messageId: messageId,
-          responseReceived: true,
-          detectionMethod: 'webhook',
-          webhookData: {
-            email_id: inboundEmail.MessageID,
-            from: inboundEmail.From,
-            subject: inboundEmail.Subject,
-            detected_at: new Date().toISOString(),
-            grace_period_used: !withinDeadline && withinGracePeriod
-          }
-        }
-      })
-
-      if (markError) {
-        console.error('Failed to mark response:', markError)
-        return new Response(JSON.stringify({ error: 'Failed to process response' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
-
-      console.log(`Successfully processed response for message ${messageId}`)
-
-      // Forward response to original sender
-      const postmarkServerToken = Deno.env.get('POSTMARK_SERVER_TOKEN')
-      if (postmarkServerToken && message.sender_email) {
-        try {
-          await fetch('https://api.postmarkapp.com/email', {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'X-Postmark-Server-Token': postmarkServerToken,
-            },
-            body: JSON.stringify({
-              From: 'FASTPASS <noreply@fastpass.email>',
-              To: message.sender_email,
-              Subject: `Re: ${inboundEmail.Subject}`,
-              TextBody: inboundEmail.TextBody,
-              HtmlBody: inboundEmail.HtmlBody || `<p>${inboundEmail.TextBody}</p>`,
-              MessageStream: 'outbound',
-            })
-          })
-          console.log(`Forwarded response to sender: ${message.sender_email}`)
-        } catch (error) {
-          console.error('Failed to forward response to sender:', error)
-        }
-      }
-
-      // Log inbound email
-      await supabase.from('email_logs').insert({
-        message_id: messageId,
-        recipient_email: inboundEmail.ToFull[0]?.Email || inboundEmail.To,
-        sender_email: inboundEmail.From,
-        email_provider_id: inboundEmail.MessageID,
-        email_type: 'inbound_response',
-        email_service_provider: 'postmark',
-        sent_at: responseTime.toISOString(),
-        response_detected_at: new Date().toISOString(),
-        metadata: {
-          subject: inboundEmail.Subject,
-          within_deadline: withinDeadline,
-          grace_period_used: !withinDeadline && withinGracePeriod,
-          in_reply_to: inReplyToHeader?.Value
-        }
-      })
-
-      return new Response(JSON.stringify({
-        received: true,
-        processed: true,
-        messageId: messageId,
-        withinDeadline: withinDeadline,
-        gracePeriodUsed: !withinDeadline && withinGracePeriod
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
-
-    } else {
-      const reason = transaction.status !== 'held'
-        ? 'Transaction no longer active'
-        : 'Response outside grace period'
-
-      console.log(`Not processing response: ${reason}`, {
-        status: transaction.status,
-        withinGracePeriod
-      })
-
+    if (fetchError || !transaction) {
+      console.error('❌ Transaction not found:', fetchError)
       return new Response(JSON.stringify({
         received: true,
         processed: false,
-        reason: reason
+        reason: 'Transaction not found in database',
+        error: fetchError?.message
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
     }
 
+    // Check transaction status
+    if (transaction.status !== 'held') {
+      console.log(`Transaction status is "${transaction.status}", not "held"`)
+      return new Response(JSON.stringify({
+        received: true,
+        processed: false,
+        reason: `Transaction status is "${transaction.status}", not "held"`
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
+    // Parse dates safely
+    const now = new Date()
+    const gracePeriod = 15 * 60 * 1000 // 15 minutes in milliseconds
+
+    let deadline: Date
+    let responseTime: Date = now
+
+    try {
+      deadline = new Date(transaction.expires_at)
+
+      if (isNaN(deadline.getTime())) {
+        console.error('❌ Invalid deadline date:', transaction.expires_at)
+        deadline = new Date(Date.now() + gracePeriod)
+      }
+    } catch (error) {
+      console.error('❌ Error parsing deadline:', error)
+      deadline = new Date(Date.now() + gracePeriod)
+    }
+
+    // Calculate grace period deadline
+    let gracePeriodDeadline: Date
+    try {
+      gracePeriodDeadline = new Date(deadline.getTime() + gracePeriod)
+      if (isNaN(gracePeriodDeadline.getTime())) {
+        gracePeriodDeadline = new Date(Date.now() + gracePeriod)
+      }
+    } catch (error) {
+      gracePeriodDeadline = new Date(Date.now() + gracePeriod)
+    }
+
+    const withinDeadline = responseTime <= deadline
+    const withinGracePeriod = responseTime <= gracePeriodDeadline
+
+    console.log('⏰ Timing check:', {
+      now: responseTime.toISOString(),
+      deadline: isNaN(deadline.getTime()) ? 'Invalid' : deadline.toISOString(),
+      gracePeriodDeadline: isNaN(gracePeriodDeadline.getTime()) ? 'Invalid' : gracePeriodDeadline.toISOString(),
+      withinDeadline,
+      withinGracePeriod
+    })
+
+    // Check if within grace period
+    if (!withinGracePeriod) {
+      console.log('❌ Response received after grace period')
+      return new Response(JSON.stringify({
+        received: true,
+        processed: false,
+        reason: 'Response received after deadline (including grace period)'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
+    console.log('✅ Response is within grace period, processing...')
+
+    // Store response tracking data
+    const { error: trackingError } = await supabase
+      .from('email_response_tracking')
+      .insert({
+        message_id: messageId,
+        original_email_id: messageId,
+        inbound_email_id: inboundEmail.MessageID,
+        response_email_subject: inboundEmail.Subject,
+        response_email_from: inboundEmail.From,
+        response_received_at: responseTime.toISOString(),
+        response_detected_method: 'webhook',
+        within_deadline: withinDeadline,
+        grace_period_used: !withinDeadline && withinGracePeriod,
+        email_headers: inboundEmail.Headers,
+        response_content_preview: inboundEmail.TextBody?.substring(0, 500) || '',
+        metadata: {
+          subject: inboundEmail.Subject,
+          html_body_length: inboundEmail.HtmlBody?.length || 0,
+          text_body_length: inboundEmail.TextBody?.length || 0,
+          has_attachments: (inboundEmail.Attachments?.length || 0) > 0
+        }
+      })
+
+    if (trackingError) {
+      console.error('⚠️ Failed to insert response tracking:', trackingError)
+    } else {
+      console.log('✅ Response tracking saved')
+    }
+
+    // Mark response as received and trigger fund distribution
+    console.log('💰 Triggering fund distribution...')
+    const { error: markError } = await supabase.functions.invoke('mark-response-received', {
+      body: {
+        messageId: messageId,
+        responseReceived: true,
+        detectionMethod: 'webhook',
+        webhookData: {
+          email_id: inboundEmail.MessageID,
+          from: inboundEmail.From,
+          subject: inboundEmail.Subject,
+          detected_at: responseTime.toISOString(),
+          grace_period_used: !withinDeadline && withinGracePeriod
+        }
+      }
+    })
+
+    if (markError) {
+      console.error('❌ Failed to mark response:', markError)
+      return new Response(JSON.stringify({
+        received: true,
+        processed: false,
+        error: 'Failed to process response',
+        details: markError.message
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    console.log('✅ Successfully processed response for message:', messageId)
+
+    // Forward response to original sender
+    const postmarkServerToken = Deno.env.get('POSTMARK_SERVER_TOKEN')
+    if (postmarkServerToken && transaction.sender_email) {
+      try {
+        await fetch('https://api.postmarkapp.com/email', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Postmark-Server-Token': postmarkServerToken,
+          },
+          body: JSON.stringify({
+            From: 'FASTPASS <noreply@fastpass.email>',
+            To: transaction.sender_email,
+            Subject: `Re: ${inboundEmail.Subject}`,
+            TextBody: inboundEmail.TextBody,
+            HtmlBody: inboundEmail.HtmlBody || `<p>${inboundEmail.TextBody}</p>`,
+            MessageStream: 'outbound',
+          })
+        })
+        console.log(`📤 Forwarded response to sender: ${transaction.sender_email}`)
+      } catch (error) {
+        console.error('⚠️ Failed to forward response to sender:', error)
+      }
+    }
+
+    // Log inbound email
+    await supabase.from('email_logs').insert({
+      message_id: messageId,
+      recipient_email: inboundEmail.ToFull[0]?.Email || inboundEmail.To,
+      sender_email: inboundEmail.From,
+      email_provider_id: inboundEmail.MessageID,
+      email_type: 'inbound_response',
+      email_service_provider: 'postmark',
+      sent_at: responseTime.toISOString(),
+      response_detected_at: responseTime.toISOString(),
+      metadata: {
+        subject: inboundEmail.Subject,
+        within_deadline: withinDeadline,
+        grace_period_used: !withinDeadline && withinGracePeriod
+      }
+    })
+
+    return new Response(JSON.stringify({
+      received: true,
+      processed: true,
+      messageId: messageId,
+      withinDeadline: withinDeadline,
+      gracePeriodUsed: !withinDeadline && withinGracePeriod
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+
   } catch (error: any) {
-    console.error('Webhook processing error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('💥 Webhook processing error:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack
+    })
+
+    return new Response(JSON.stringify({
+      error: error.message,
+      received: true,
+      processed: false
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })

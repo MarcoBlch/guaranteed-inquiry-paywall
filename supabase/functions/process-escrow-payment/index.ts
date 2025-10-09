@@ -136,8 +136,8 @@ serve(async (req) => {
                              messageData.responseDeadlineHours === 72 ? '72 hours' :
                              `${messageData.responseDeadlineHours} hours`
 
-    // Send email to recipient using our new email system
-    await supabase.functions.invoke('send-message-email', {
+    // Send email to recipient using Postmark email service
+    await supabase.functions.invoke('postmark-send-message', {
       body: {
         senderEmail: messageData.senderEmail,
         senderMessage: sanitizedContent,
