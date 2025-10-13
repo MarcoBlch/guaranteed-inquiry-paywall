@@ -19,9 +19,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Récupérer transaction avec profile
-    const { data: transaction, error: transactionError } = await supabase
+    // 1. ATOMIC LOCK: Claim transaction before any Stripe operations
+    // This prevents race conditions where multiple processes try to distribute the same transaction
+    const { data: lockedTransaction, error: lockError } = await supabase
       .from('escrow_transactions')
+      .update({
+        status: 'processing',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', escrowTransactionId)
+      .eq('status', 'held')  // Only succeeds if status is still 'held'
       .select(`
         *,
         profiles!escrow_transactions_recipient_user_id_fkey(
@@ -29,16 +36,14 @@ serve(async (req) => {
           stripe_onboarding_completed
         )
       `)
-      .eq('id', escrowTransactionId)
       .single()
 
-    if (transactionError || !transaction) {
-      throw new Error('Transaction not found')
+    if (lockError || !lockedTransaction) {
+      throw new Error(`Transaction already processing or not in held status: ${lockError?.message || 'Not found'}`)
     }
 
-    if (transaction.status !== 'held') {
-      throw new Error(`Transaction status is ${transaction.status}, expected 'held'`)
-    }
+    const transaction = lockedTransaction
+    console.log(`Transaction ${escrowTransactionId} locked for processing`)
 
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
     const totalAmountCents = Math.round(transaction.amount * 100)
@@ -58,11 +63,23 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Idempotency-Key': `capture-${escrowTransactionId}`,
       }
     })
 
     if (!captureResponse.ok) {
       const error = await captureResponse.text()
+      console.error(`Capture failed for transaction ${escrowTransactionId}:`, error)
+
+      // Rollback to 'held' status so it can be retried
+      await supabase
+        .from('escrow_transactions')
+        .update({
+          status: 'held',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', escrowTransactionId)
+
       throw new Error(`Failed to capture payment: ${error}`)
     }
 
@@ -77,6 +94,7 @@ serve(async (req) => {
         headers: {
           'Authorization': `Bearer ${stripeSecretKey}`,
           'Content-Type': 'application/x-www-form-urlencoded',
+          'Idempotency-Key': `transfer-${escrowTransactionId}`,
         },
         body: new URLSearchParams({
           amount: userAmountCents.toString(),
@@ -91,11 +109,11 @@ serve(async (req) => {
       if (userTransferResponse.ok) {
         userTransfer = await userTransferResponse.json()
         console.log('User transfer created:', userTransfer.id)
-        
+
         // 5a. Mettre à jour statut = released
         await supabase
           .from('escrow_transactions')
-          .update({ 
+          .update({
             status: 'released',
             updated_at: new Date().toISOString()
           })
@@ -103,7 +121,31 @@ serve(async (req) => {
       } else {
         const error = await userTransferResponse.text()
         console.error('User transfer failed:', error)
-        throw new Error(`Transfer failed: ${error}`)
+
+        // Mark as failed so we can retry later
+        // Money is captured (platform has it), but transfer to user failed
+        await supabase
+          .from('escrow_transactions')
+          .update({
+            status: 'transfer_failed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', escrowTransactionId)
+
+        // Don't throw - return error response so caller knows
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Transfer failed, marked for retry',
+            transaction_id: escrowTransactionId,
+            captured_amount: capturedPayment.amount,
+            platform_fee: platformFeeCents
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          }
+        )
       }
     } else {
       // 5b. Utilisateur n'a pas configuré Stripe - fonds en attente

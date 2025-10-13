@@ -187,6 +187,26 @@ serve(async (req) => {
 
     console.log('✅ Response is within grace period, processing...')
 
+    // Check for duplicate webhook (idempotency protection)
+    const { data: existingTracking } = await supabase
+      .from('email_response_tracking')
+      .select('id')
+      .eq('inbound_email_id', inboundEmail.MessageID)
+      .maybeSingle()
+
+    if (existingTracking) {
+      console.log('⚠️ Webhook already processed (duplicate detected)')
+      return new Response(JSON.stringify({
+        received: true,
+        processed: false,
+        reason: 'Duplicate webhook - already processed',
+        messageId: messageId
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
     // Store response tracking data
     const { error: trackingError } = await supabase
       .from('email_response_tracking')

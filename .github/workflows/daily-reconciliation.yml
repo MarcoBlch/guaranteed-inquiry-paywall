@@ -1,0 +1,55 @@
+name: Daily Reconciliation
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Every day at 9:00 AM UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Daily Reconciliation
+        run: |
+          response=$(curl -s -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/daily-reconciliation" \
+            -d '{}')
+
+          http_code="${response: -3}"
+          body="${response%???}"
+
+          if [ "$http_code" -ne 200 ]; then
+            echo "Error: HTTP $http_code"
+            echo "$body"
+            exit 1
+          fi
+
+          echo "Reconciliation Results:"
+          echo "$body" | jq '.'
+
+          # Check for issues
+          issues_count=$(echo "$body" | jq '.issues | length')
+          if [ "$issues_count" -gt 0 ]; then
+            echo "⚠️ Issues found: $issues_count"
+            echo "$body" | jq '.issues'
+          else
+            echo "✅ No issues found"
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Notify on Issues
+        if: success()
+        run: |
+          # Parse response and alert if issues found
+          # Add Slack/Discord/Email notification here
+          echo "Check logs above for any issues"
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "🚨 Daily reconciliation job failed!"
+          # Add Slack/Discord/Email notification here

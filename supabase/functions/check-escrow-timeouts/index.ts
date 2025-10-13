@@ -32,10 +32,35 @@ serve(async (req) => {
 
     console.log(`Found ${expiredTransactions.length} expired transactions`)
 
+    // CIRCUIT BREAKER: Safety limits to prevent catastrophic failures
+    const MAX_REFUNDS_PER_RUN = 50
+    const MAX_REFUND_AMOUNT_PER_RUN = 10000 // €100 total limit
+
+    if (expiredTransactions.length > MAX_REFUNDS_PER_RUN) {
+      console.error(`🚨 CIRCUIT BREAKER TRIGGERED`)
+      console.error(`${expiredTransactions.length} timeouts detected (max: ${MAX_REFUNDS_PER_RUN})`)
+      console.error(`Processing first ${MAX_REFUNDS_PER_RUN}, rest queued for next run`)
+
+      // Create admin alert
+      await supabase.from('admin_actions').insert({
+        action_type: 'circuit_breaker_triggered',
+        description: `${expiredTransactions.length} timeouts detected - circuit breaker activated`,
+        metadata: {
+          total_timeouts: expiredTransactions.length,
+          max_allowed: MAX_REFUNDS_PER_RUN,
+          processing_count: MAX_REFUNDS_PER_RUN
+        }
+      }).catch(err => console.error('Failed to log circuit breaker alert:', err))
+
+      // Process only the first MAX_REFUNDS_PER_RUN transactions
+      expiredTransactions = expiredTransactions.slice(0, MAX_REFUNDS_PER_RUN)
+    }
+
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
     let refundedCount = 0
     let errorCount = 0
     let skippedCount = 0
+    let totalRefundAmount = 0
 
     for (const transaction of expiredTransactions) {
       try {
@@ -68,7 +93,7 @@ serve(async (req) => {
           const responseTime = new Date(recentResponse.response_received_at)
           if (responseTime > expiresAt) {
             const graceMinutes = Math.floor((responseTime.getTime() - expiresAt.getTime()) / (1000 * 60))
-            if (graceMinutes <= 5) { // 5-minute grace period
+            if (graceMinutes <= 15) { // 15-minute grace period (matches webhook handler)
               console.log(`Response received ${graceMinutes}min after deadline for ${transaction.id}, processing payment`)
               
               // Process the late response
@@ -88,12 +113,33 @@ serve(async (req) => {
 
         console.log(`Processing expired transaction ${transaction.id} (${minutesOverdue}min overdue)`)
 
+        // Circuit breaker: Check total refund amount
+        totalRefundAmount += transaction.amount
+        if (totalRefundAmount > MAX_REFUND_AMOUNT_PER_RUN) {
+          console.error(`🚨 REFUND AMOUNT LIMIT REACHED: €${totalRefundAmount.toFixed(2)} exceeds €${MAX_REFUND_AMOUNT_PER_RUN}`)
+          console.error(`Stopping processing. Remaining transactions will be processed in next run.`)
+
+          // Alert admin
+          await supabase.from('admin_actions').insert({
+            action_type: 'refund_limit_reached',
+            description: `Refund amount limit reached: €${totalRefundAmount.toFixed(2)}`,
+            metadata: {
+              total_refund_amount: totalRefundAmount,
+              max_allowed: MAX_REFUND_AMOUNT_PER_RUN,
+              processed_count: refundedCount + skippedCount
+            }
+          }).catch(err => console.error('Failed to log refund limit alert:', err))
+
+          break
+        }
+
         // Cancel payment intent = automatic refund
         const cancelResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/cancel`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${stripeSecretKey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Idempotency-Key': `cancel-${transaction.id}`,
           }
         })
 
