@@ -12,23 +12,33 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json()
-    
+    // Make userId optional - if not provided, process ALL pending transfers
+    const body = await req.json().catch(() => ({}))
+    const { userId } = body
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Trouver toutes les transactions en attente pour cet utilisateur
-    const { data: pendingTransactions, error } = await supabase
+    // Build query - filter by userId only if provided
+    let query = supabase
       .from('escrow_transactions')
       .select('*')
-      .eq('recipient_user_id', userId)
       .eq('status', 'pending_user_setup')
+
+    if (userId) {
+      query = query.eq('recipient_user_id', userId)
+      console.log(`Processing pending transfers for user ${userId}`)
+    } else {
+      console.log('Processing ALL pending transfers (no userId specified)')
+    }
+
+    const { data: pendingTransactions, error } = await query
 
     if (error) throw error
 
-    console.log(`Processing ${pendingTransactions.length} pending transfers for user ${userId}`)
+    console.log(`Found ${pendingTransactions.length} pending transfers to process`)
 
     let processedCount = 0
     let errorCount = 0
@@ -44,6 +54,7 @@ serve(async (req) => {
           console.error(`Failed to process transaction ${transaction.id}:`, distributeError)
           errorCount++
         } else {
+          console.log(`Successfully processed transaction ${transaction.id}`)
           processedCount++
         }
       } catch (error) {
@@ -55,6 +66,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        user_id: userId || 'all',
         total_pending: pendingTransactions.length,
         processed: processedCount,
         errors: errorCount
@@ -65,10 +77,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing pending transfers:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500
       }
     )
   }
