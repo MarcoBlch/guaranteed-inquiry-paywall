@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminRoute from "./components/auth/AdminRoute";
 import { StaticBackground } from "./components/ui/StaticBackground";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -74,8 +75,6 @@ const App = () => {
             <Route path="/pay/:userId" element={<PaymentPage />} />
             <Route path="/payment/:userId" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/email-preview" element={<EmailPreview />} />
-            <Route path="/email-test" element={<EmailTest />} />
 
             {/* AUTHENTICATION ROUTES - For login/signup only */}
             <Route path="/auth" element={<Auth />} />
@@ -107,11 +106,28 @@ const App = () => {
               </AuthProvider>
             } />
 
+            {/* ADMIN-ONLY ROUTES - Authentication + Admin privileges required */}
             <Route path="/admin-setup" element={
               <AuthProvider>
-                <ProtectedRoute>
+                <AdminRoute>
                   <AdminSetup />
-                </ProtectedRoute>
+                </AdminRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/email-preview" element={
+              <AuthProvider>
+                <AdminRoute>
+                  <EmailPreview />
+                </AdminRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/email-test" element={
+              <AuthProvider>
+                <AdminRoute>
+                  <EmailTest />
+                </AdminRoute>
               </AuthProvider>
             } />
 
