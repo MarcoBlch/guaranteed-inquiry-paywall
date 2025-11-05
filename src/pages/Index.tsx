@@ -89,7 +89,7 @@ const PaywallPage = () => {
           <div className="w-full max-w-3xl mx-4 mb-12 sm:mb-16 space-y-8">
             {/* H2: Section Title */}
             <h2 className="text-[#5cffb0] text-2xl sm:text-3xl font-semibold text-center mb-6">
-              Keep your inbox clean and valuable
+              Keep Your Inbox Clean and Valuable
             </h2>
 
             {/* Body paragraphs */}
