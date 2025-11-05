@@ -89,7 +89,7 @@ const PaywallPage = () => {
           <div className="w-full max-w-3xl mx-4 mb-12 sm:mb-16 space-y-8">
             {/* H2: Section Title */}
             <h2 className="text-[#5cffb0] text-2xl sm:text-3xl font-semibold text-center mb-6">
-              Keep Your Inbox Clean and Valuable
+              Keep your inbox clean and valuable
             </h2>
 
             {/* Body paragraphs */}
@@ -103,7 +103,7 @@ const PaywallPage = () => {
             </h2>
 
             <p className="text-[#B0B0B0] text-base sm:text-lg font-normal leading-relaxed text-center px-4">
-              A FastPass is more than just a tool—its value lies in commitment. By setting your own price and response time, you stay in control while giving your audience the attention they deserve.
+              A FastPass is more than just a tool, it's a commitment. By setting your own price and response time, you stay in control while giving your audience the attention they deserve.
             </p>
           </div>
 
