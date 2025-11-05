@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AuthForm from '@/components/auth/AuthForm';
+import { FastPassLogo } from '@/components/ui/FastPassLogo';
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -14,11 +15,11 @@ const AuthPage = () => {
       const token = searchParams.get('token');
       const type = searchParams.get('type');
       const redirectTo = searchParams.get('redirect_to');
-      
+
       // Check for OAuth session (access_token and refresh_token in URL)
       const accessToken = searchParams.get('access_token');
       const refreshToken = searchParams.get('refresh_token');
-      
+
       if (accessToken && refreshToken) {
         console.log('OAuth tokens found in URL, redirecting to callback handler...');
         navigate('/auth/callback');
@@ -52,16 +53,29 @@ const AuthPage = () => {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 relative overflow-hidden flex items-center justify-center p-4">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-black/20" />
-      <div className="absolute top-0 left-0 w-full h-full">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />
-        <div className="absolute bottom-20 right-10 w-24 h-24 bg-white/10 rounded-full blur-xl" />
-      </div>
-      
-      <div className="relative z-10">
-        <AuthForm />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* StaticBackground component from App.tsx provides the background */}
+
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header with Logo */}
+        <header className="p-4 sm:p-6 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <FastPassLogo size="lg" />
+            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-4 sm:-mt-5">
+              GUARANTEED RESPONSES
+            </p>
+          </div>
+        </header>
+
+        {/* Main Content - Auth Form */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <AuthForm />
+        </div>
+
+        {/* Footer */}
+        <footer className="text-center py-6 text-[#B0B0B0]/60 text-sm">
+          <p>© 2025 FastPass • Guaranteed Response Platform</p>
+        </footer>
       </div>
     </div>
   );

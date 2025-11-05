@@ -56,17 +56,17 @@ const AuthForm = () => {
       if (newPassword !== confirmPassword) {
         throw new Error('Passwords do not match');
       }
-      
+
       if (newPassword.length < 6) {
         throw new Error('Password must be at least 6 characters');
       }
 
-      const { error } = await supabase.auth.updateUser({ 
-        password: newPassword 
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
       });
-      
+
       if (error) throw error;
-      
+
       toast.success('Password updated successfully!');
       navigate('/dashboard');
     } catch (error: any) {
@@ -89,9 +89,9 @@ const AuthForm = () => {
           }
         }
       });
-      
+
       if (error) throw error;
-      
+
       console.log('Google OAuth initiated:', data);
       // Supabase will handle the redirect to Google
     } catch (error: any) {
@@ -110,9 +110,9 @@ const AuthForm = () => {
           redirectTo: `${window.location.origin}/auth/callback`
         }
       });
-      
+
       if (error) throw error;
-      
+
       console.log('LinkedIn OAuth initiated:', data);
       // Supabase will handle the redirect to LinkedIn
     } catch (error: any) {
@@ -124,22 +124,22 @@ const AuthForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (isForgotPassword) {
       return handleForgotPasswordSubmit(e);
     }
-    
+
     if (isPasswordReset) {
       return handlePasswordResetSubmit(e);
     }
-    
+
     setLoading(true);
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ 
-          email, 
-          password 
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
         });
         if (error) {
           // SECURITY FIX: Better error handling for login
@@ -155,8 +155,8 @@ const AuthForm = () => {
       } else {
         // SECURITY FIX: Add proper emailRedirectTo for signup
         const redirectUrl = `${window.location.origin}/auth`;
-        const { error } = await supabase.auth.signUp({ 
-          email, 
+        const { error } = await supabase.auth.signUp({
+          email,
           password,
           options: {
             emailRedirectTo: redirectUrl
@@ -183,16 +183,16 @@ const AuthForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm border-white/20 shadow-2xl">
+    <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-[#5cffb0] text-2xl font-bold">
           {isPasswordReset ? 'Set New Password' :
-           isForgotPassword ? 'Reset Password' : 
+           isForgotPassword ? 'Reset Password' :
            isLogin ? 'Login' : 'Sign Up'}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-[#B0B0B0]">
           {isPasswordReset ? 'Enter your new password below' :
-           isForgotPassword ? 'Enter your email to receive a reset link' : 
+           isForgotPassword ? 'Enter your email to receive a reset link' :
            isLogin ? 'Welcome back!' : 'Create a new account'}
         </CardDescription>
       </CardHeader>
@@ -201,7 +201,7 @@ const AuthForm = () => {
           {isPasswordReset ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword" className="text-[#5cffb0]">New Password</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -210,10 +210,11 @@ const AuthForm = () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
+                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-[#5cffb0]">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -222,13 +223,14 @@ const AuthForm = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={6}
+                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
                 />
               </div>
             </>
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-[#5cffb0]">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -236,11 +238,12 @@ const AuthForm = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
                 />
               </div>
               {!isForgotPassword && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-[#5cffb0]">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -248,27 +251,32 @@ const AuthForm = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
                   />
                 </div>
               )}
             </>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Loading...' : 
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+            disabled={loading}
+          >
+            {loading ? 'Loading...' :
              isPasswordReset ? 'Update Password' :
              isForgotPassword ? 'Send Reset Email' :
              isLogin ? 'Login' : 'Sign Up'}
           </Button>
 
-          {/* OAuth Buttons - Only show for login/signup, not for password reset/forgot */}
-          {!isPasswordReset && !isForgotPassword && (
+          {/* OAuth Buttons - Currently disabled, uncomment to enable when OAuth is configured */}
+          {/* {!isPasswordReset && !isForgotPassword && (
             <>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300" />
+                  <span className="w-full border-t border-[#5cffb0]/30" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                  <span className="bg-[#1a1f2e] px-2 text-[#B0B0B0]">Or continue with</span>
                 </div>
               </div>
 
@@ -278,7 +286,7 @@ const AuthForm = () => {
                   variant="outline"
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full"
+                  className="w-full border-[#5cffb0]/50 text-[#B0B0B0] bg-transparent hover:bg-[#5cffb0]/10 hover:text-[#5cffb0]"
                 >
                   <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                     <path
@@ -306,7 +314,7 @@ const AuthForm = () => {
                   variant="outline"
                   onClick={handleLinkedInSignIn}
                   disabled={loading}
-                  className="w-full"
+                  className="w-full border-[#5cffb0]/50 text-[#B0B0B0] bg-transparent hover:bg-[#5cffb0]/10 hover:text-[#5cffb0]"
                 >
                   <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -315,13 +323,13 @@ const AuthForm = () => {
                 </Button>
               </div>
             </>
-          )}
-          
+          )} */}
+
           {isPasswordReset ? (
             <Button
               type="button"
               variant="link"
-              className="w-full"
+              className="w-full text-[#5cffb0] hover:text-[#4de89d]"
               onClick={() => {
                 setIsPasswordReset(false);
                 setIsLogin(true);
@@ -335,7 +343,7 @@ const AuthForm = () => {
             <Button
               type="button"
               variant="link"
-              className="w-full"
+              className="w-full text-[#5cffb0] hover:text-[#4de89d]"
               onClick={() => {
                 setIsForgotPassword(false);
                 setIsLogin(true);
@@ -349,7 +357,7 @@ const AuthForm = () => {
                 <Button
                   type="button"
                   variant="link"
-                  className="w-full text-sm"
+                  className="w-full text-sm text-[#B0B0B0] hover:text-[#5cffb0]"
                   onClick={() => setIsForgotPassword(true)}
                 >
                   Forgot Password?
@@ -358,7 +366,7 @@ const AuthForm = () => {
               <Button
                 type="button"
                 variant="link"
-                className="w-full"
+                className="w-full text-[#5cffb0] hover:text-[#4de89d]"
                 onClick={() => setIsLogin(!isLogin)}
               >
                 {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}
