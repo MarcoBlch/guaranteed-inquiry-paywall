@@ -164,9 +164,22 @@ const PaywallPage = () => {
                     </h3>
                     <div className="flex items-start gap-3">
                       <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
-                        FastPass is a smart paywall service that lets you monetize your inbox. Instead of being overwhelmed by messages, you decide who can reach you, when, and at what cost. By registering, you create your own FastPass link that filters out the noise, ensures you only get serious requests, and rewards you financially for your time and expertise.
-                      </p>
+                      <div className="text-[#B0B0B0] text-base font-normal leading-relaxed space-y-2">
+                        <p>
+                          FastPass is a smart paywall service that lets you monetize your inbox.
+                        </p>
+                        <p>
+                          Instead of being overwhelmed by messages, you decide who can reach you, when, and at what cost.
+                        </p>
+                        <p>
+                          By registering, you create your own FastPass link that:
+                        </p>
+                        <ul className="list-disc list-inside ml-4">
+                          <li>Filters out the noise</li>
+                          <li>Ensures you only get serious requests</li>
+                          <li>Rewards you financially for your time and expertise</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
