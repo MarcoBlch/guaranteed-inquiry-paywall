@@ -695,9 +695,7 @@ const Dashboard = () => {
                                 'pending_user_setup': 'Stripe setup required',
                                 'completed': 'Completed',
                                 'expired': 'Expired',
-                                'refunded': 'Refunded',
-                                'held': 'Held',
-                                'released': 'Released'
+                                'refunded': 'Refunded'
                               };
 
                               const statusColor = {
