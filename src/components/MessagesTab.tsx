@@ -125,11 +125,6 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
     }
   };
 
-  const handleRespond = (messageId: string) => {
-    // Ouvrir dans un nouvel onglet
-    window.open(`/respond/${messageId}`, '_blank');
-  };
-
   const handleRefresh = () => {
     loadMessages();
   };
@@ -234,23 +229,6 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    {message.escrow_transactions?.status === 'held' && !message.message_responses?.has_response && (
-                      <>
-                        {new Date(message.escrow_transactions.expires_at) > new Date() ? (
-                          <Button 
-                            onClick={() => handleRespond(message.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            🚀 Respond (€{(message.escrow_transactions.amount * 0.75).toFixed(2)})
-                          </Button>
-                        ) : (
-                          <Button variant="outline" disabled>
-                            ⏰ Deadline expired
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    
                     {message.escrow_transactions?.status === 'pending_user_setup' && (
                       <Button variant="outline" className="border-blue-500 text-blue-600">
                         ⚙️ Configure Stripe to receive €{(message.escrow_transactions.amount * 0.75).toFixed(2)}

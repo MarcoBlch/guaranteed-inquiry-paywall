@@ -133,24 +133,166 @@ serve(async (req) => {
           break
         }
 
-        // Cancel payment intent = automatic refund
-        const cancelResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/cancel`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${stripeSecretKey}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Idempotency-Key': `cancel-${transaction.id}`,
-          }
-        })
+        // Handle refund based on PaymentIntent state (defensive state handling)
+        let refundSuccessful = false
+        let stripeOperationType = 'unknown'
 
-        if (cancelResponse.ok) {
-          await supabase
+        try {
+          // First, retrieve the PaymentIntent to check its current state
+          const retrieveResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${stripeSecretKey}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            }
+          })
+
+          // Handle missing PaymentIntent (common during testing when PIs are deleted)
+          if (!retrieveResponse.ok) {
+            const errorText = await retrieveResponse.text()
+            let errorData
+            try {
+              errorData = JSON.parse(errorText)
+            } catch {
+              errorData = { error: { code: 'unknown' } }
+            }
+
+            if (errorData.error?.code === 'resource_missing') {
+              // PaymentIntent was deleted from Stripe
+              console.warn(`⚠️ PaymentIntent not found in Stripe: ${transaction.stripe_payment_intent_id}`)
+              console.log(`Marking transaction as refunded in database: ${transaction.id}`)
+
+              // Update our database to mark as refunded (can't process if PI is gone)
+              const { error: updateError } = await supabase
+                .from('escrow_transactions')
+                .update({
+                  status: 'refunded',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', transaction.id)
+
+              if (updateError) {
+                throw new Error(`Database update failed: ${updateError.message}`)
+              }
+
+              skippedCount++
+              continue // Skip to next transaction
+            }
+
+            // Other Stripe errors - throw
+            throw new Error(`Failed to retrieve PaymentIntent: ${errorText}`)
+          }
+
+          const paymentIntent = await retrieveResponse.json()
+          console.log(`Processing PI ${paymentIntent.id} with status: ${paymentIntent.status}`)
+
+          switch (paymentIntent.status) {
+            case 'requires_capture':
+              // Standard case: Payment authorized but not captured - cancel it
+              stripeOperationType = 'cancel'
+              const cancelResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/cancel`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${stripeSecretKey}`,
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Idempotency-Key': `cancel-${transaction.id}`,
+                }
+              })
+
+              if (!cancelResponse.ok) {
+                throw new Error(`Cancellation failed: ${await cancelResponse.text()}`)
+              }
+
+              console.log(`✅ Canceled PaymentIntent: ${paymentIntent.id}`)
+              refundSuccessful = true
+              break
+
+            case 'succeeded':
+              // Money already captured - need to issue a refund instead
+              stripeOperationType = 'refund'
+              console.log(`💰 Payment already succeeded, creating refund for: ${paymentIntent.id}`)
+
+              const refundResponse = await fetch('https://api.stripe.com/v1/refunds', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${stripeSecretKey}`,
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Idempotency-Key': `refund-${transaction.id}`,
+                },
+                body: new URLSearchParams({
+                  'payment_intent': paymentIntent.id,
+                  'reason': 'requested_by_customer',
+                })
+              })
+
+              if (!refundResponse.ok) {
+                throw new Error(`Refund creation failed: ${await refundResponse.text()}`)
+              }
+
+              const refundData = await refundResponse.json()
+              console.log(`✅ Created refund: ${refundData.id}`)
+              refundSuccessful = true
+              break
+
+            case 'canceled':
+              // Already canceled - nothing to do, just update our database
+              stripeOperationType = 'already_canceled'
+              console.log(`⏭️ PaymentIntent already canceled: ${paymentIntent.id}`)
+              refundSuccessful = true
+              break
+
+            case 'requires_payment_method':
+            case 'requires_confirmation':
+            case 'requires_action':
+              // Incomplete payment - customer never completed it
+              stripeOperationType = 'incomplete'
+              console.log(`⚠️ Incomplete payment, marking as canceled: ${paymentIntent.id}`)
+
+              // Try to cancel if possible, but don't fail if we can't
+              try {
+                const incompleteResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/cancel`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${stripeSecretKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Idempotency-Key': `cancel-incomplete-${transaction.id}`,
+                  }
+                })
+
+                if (incompleteResponse.ok) {
+                  console.log(`✅ Canceled incomplete payment: ${paymentIntent.id}`)
+                }
+              } catch (e) {
+                const errorMsg = e instanceof Error ? e.message : String(e)
+                console.log(`Could not cancel incomplete payment: ${errorMsg}`)
+              }
+
+              refundSuccessful = true
+              break
+
+            default:
+              console.warn(`⚠️ Unexpected PaymentIntent status: ${paymentIntent.status}`)
+              throw new Error(`Cannot process PaymentIntent in status: ${paymentIntent.status}`)
+          }
+
+        } catch (stripeError) {
+          console.error(`❌ Stripe operation failed for transaction ${transaction.id}:`, stripeError)
+          throw stripeError
+        }
+
+        if (refundSuccessful) {
+          // Update transaction status to refunded in our database
+          const { error: updateError } = await supabase
             .from('escrow_transactions')
-            .update({ 
+            .update({
               status: 'refunded',
               updated_at: new Date().toISOString()
             })
             .eq('id', transaction.id)
+
+          if (updateError) {
+            throw new Error(`Database update failed: ${updateError.message}`)
+          }
 
           // Send notifications to both parties
           try {
@@ -194,14 +336,10 @@ serve(async (req) => {
               minutes_overdue: minutesOverdue,
               refund_reason: 'timeout'
             }
-          }).catch(logErr => console.warn('Failed to log refund:', logErr))
+          }).catch((logErr: unknown) => console.warn('Failed to log refund:', logErr))
 
-          console.log(`Refunded expired transaction: ${transaction.id} (${minutesOverdue}min overdue)`)
+          console.log(`✅ Refunded expired transaction: ${transaction.id} (${minutesOverdue}min overdue, operation: ${stripeOperationType})`)
           refundedCount++
-        } else {
-          const error = await cancelResponse.text()
-          console.error(`Failed to refund transaction ${transaction.id}:`, error)
-          errorCount++
         }
       } catch (refundError) {
         console.error(`Error processing expired transaction ${transaction.id}:`, refundError)
@@ -231,10 +369,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error checking escrow timeouts:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500
       }
     )
   }

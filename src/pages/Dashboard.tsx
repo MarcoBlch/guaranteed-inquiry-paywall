@@ -520,7 +520,6 @@ const Dashboard = () => {
                           {messages.map((message) => {
                             const hasResponse = message.message_responses.some(r => r.has_response);
                             const escrow = message.escrow_transactions[0];
-                            const isExpired = escrow && new Date(escrow.expires_at) < new Date();
 
                             const getStatusBadge = () => {
                               if (!escrow) return (
@@ -562,10 +561,6 @@ const Dashboard = () => {
                                     {escrow.status}
                                   </Badge>;
                               }
-                            };
-
-                            const handleRespond = (messageId: string) => {
-                              navigate(`/respond/${messageId}`);
                             };
 
                             return (
@@ -617,26 +612,6 @@ const Dashboard = () => {
 
                                     {/* Actions */}
                                     <div className="flex gap-2">
-                                      {escrow?.status === 'held' && !hasResponse && (
-                                        <>
-                                          {!isExpired ? (
-                                            <Button
-                                              onClick={() => handleRespond(message.id)}
-                                              className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
-                                            >
-                                              🚀 Respond (€{(escrow.amount * 0.75).toFixed(2)})
-                                            </Button>
-                                          ) : (
-                                            <Button
-                                              disabled
-                                              className="bg-[#B0B0B0]/20 text-[#B0B0B0] cursor-not-allowed"
-                                            >
-                                              ⏰ Time expired
-                                            </Button>
-                                          )}
-                                        </>
-                                      )}
-
                                       {escrow?.status === 'pending_user_setup' && (
                                         <Button
                                           onClick={handleStripeOnboarding}
