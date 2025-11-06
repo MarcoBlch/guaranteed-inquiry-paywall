@@ -44,12 +44,66 @@ jobs:
       - name: Notify on Issues
         if: success()
         run: |
-          # Parse response and alert if issues found
-          # Add Slack/Discord/Email notification here
-          echo "Check logs above for any issues"
+          # Check if there were issues in the reconciliation
+          response=$(curl -s -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/daily-reconciliation")
+
+          issues_count=$(echo "$response" | jq '.issues | length')
+
+          if [ "$issues_count" -gt 0 ]; then
+            echo "⚠️ Issues found, sending alert..."
+
+            issues_text=$(echo "$response" | jq -r '.issues | join("\n")')
+            refund_rate=$(echo "$response" | jq -r '.refund_rate')
+            date=$(echo "$response" | jq -r '.date')
+
+            # Send Discord webhook notification if configured
+            if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+              curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"embeds\": [{
+                    \"title\": \"⚠️ Daily Reconciliation - Issues Found\",
+                    \"description\": \"Issues detected in reconciliation for ${date}\",
+                    \"color\": 16744448,
+                    \"fields\": [
+                      {\"name\": \"Refund Rate\", \"value\": \"${refund_rate}\", \"inline\": true},
+                      {\"name\": \"Issues Count\", \"value\": \"${issues_count}\", \"inline\": true},
+                      {\"name\": \"Issues\", \"value\": \"${issues_text}\"}
+                    ],
+                    \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                  }]
+                }"
+            fi
+          else
+            echo "✅ No issues found"
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Notify on Failure
         if: failure()
         run: |
           echo "🚨 Daily reconciliation job failed!"
-          # Add Slack/Discord/Email notification here
+
+          # Send Discord webhook notification if configured
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"embeds\": [{
+                  \"title\": \"🚨 Daily Reconciliation Failed\",
+                  \"description\": \"The daily reconciliation job encountered an error and failed to complete.\",
+                  \"color\": 15158332,
+                  \"fields\": [
+                    {\"name\": \"Workflow\", \"value\": \"${{ github.workflow }}\", \"inline\": true},
+                    {\"name\": \"Run ID\", \"value\": \"${{ github.run_id }}\", \"inline\": true},
+                    {\"name\": \"Action\", \"value\": \"[View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}
+                  ],
+                  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                }]
+              }"
+          fi

@@ -54,5 +54,24 @@ jobs:
       - name: Notify on Failure
         if: failure()
         run: |
-          echo "🚨 Escrow timeout check failed!" 
-          # Ici ajouter notification Slack/Discord/Email si besoin
+          echo "🚨 Escrow timeout check failed!"
+
+          # Send Discord webhook notification if configured
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"embeds\": [{
+                  \"title\": \"🚨 Escrow Timeout Check Failed\",
+                  \"description\": \"Critical: The escrow timeout check job failed. This could delay refunds to senders!\",
+                  \"color\": 15158332,
+                  \"fields\": [
+                    {\"name\": \"Workflow\", \"value\": \"${{ github.workflow }}\", \"inline\": true},
+                    {\"name\": \"Run ID\", \"value\": \"${{ github.run_id }}\", \"inline\": true},
+                    {\"name\": \"Frequency\", \"value\": \"Every 10 minutes\", \"inline\": true},
+                    {\"name\": \"Action\", \"value\": \"[View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}
+                  ],
+                  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                }]
+              }"
+          fi

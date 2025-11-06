@@ -40,6 +40,53 @@ serve(async (req) => {
   try {
     console.log('=== POSTMARK WEBHOOK RECEIVED ===')
 
+    // 🔒 SECURITY: Verify Postmark webhook authentication
+    // Postmark uses Basic Auth for inbound webhooks
+    const authHeader = req.headers.get('authorization')
+    const expectedSecret = Deno.env.get('POSTMARK_INBOUND_WEBHOOK_SECRET')
+
+    if (!expectedSecret) {
+      console.error('❌ POSTMARK_INBOUND_WEBHOOK_SECRET not configured!')
+      return new Response(JSON.stringify({
+        error: 'Webhook authentication not configured'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Verify Basic Auth header
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+      console.error('❌ Missing or invalid Authorization header')
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - Invalid authentication'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Extract and verify credentials
+    const base64Credentials = authHeader.slice(6) // Remove "Basic "
+    const credentials = atob(base64Credentials)
+    const [username, password] = credentials.split(':')
+
+    // Postmark uses 'username:password' format for Basic Auth
+    // The expectedSecret should be in format "username:password"
+    const expectedCredentials = expectedSecret
+
+    if (credentials !== expectedCredentials) {
+      console.error('❌ Invalid webhook credentials')
+      return new Response(JSON.stringify({
+        error: 'Unauthorized - Invalid credentials'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    console.log('✅ Webhook authentication verified')
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
