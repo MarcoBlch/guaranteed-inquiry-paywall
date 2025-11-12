@@ -86,8 +86,6 @@ serve(async (req) => {
           const recipientEmail = userProfile.user.email
           const hoursLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60))
           const earnings = transaction.amount * 0.75
-          const baseUrl = req.headers.get('origin') || 'https://votre-domaine.com'
-          const responseUrl = `${baseUrl}/respond/${transaction.message_id}`
 
           // Send reminder email
           const reminderHtml = `
@@ -134,11 +132,14 @@ serve(async (req) => {
                 </div>
             </div>
             
-            <div style="text-align: center;">
-                <a href="${responseUrl}" class="cta-button">
-                    ⚡ RESPOND NOW
-                </a>
-                <div style="margin-top: 15px; font-size: 14px; color: #64748b;">
+            <div style="text-align: center; background: #10B981; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">
+                    📧 REPLY TO THE ORIGINAL EMAIL TO RESPOND
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    Simply reply to the message you received from reply+...@reply.fastpass.email
+                </div>
+                <div style="margin-top: 15px; font-size: 14px; opacity: 0.9;">
                     Don't miss this opportunity to earn €${earnings.toFixed(2)}!
                 </div>
             </div>

@@ -13,7 +13,6 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import PaymentPage from "./pages/PaymentPage";
-import ResponsePage from "./pages/ResponsePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
 import EmailPreview from "./pages/EmailPreview";
@@ -90,23 +89,6 @@ const App = () => {
               </AuthProvider>
             } />
 
-            <Route path="/respond/:messageId" element={
-              <AuthProvider>
-                <ProtectedRoute>
-                  <ResponsePage />
-                </ProtectedRoute>
-              </AuthProvider>
-            } />
-
-            <Route path="/message/:messageId" element={
-              <AuthProvider>
-                <ProtectedRoute>
-                  <ResponsePage />
-                </ProtectedRoute>
-              </AuthProvider>
-            } />
-
-            {/* ADMIN-ONLY ROUTES - Authentication + Admin privileges required */}
             <Route path="/admin-setup" element={
               <AuthProvider>
                 <AdminRoute>
