@@ -227,7 +227,7 @@ serve(async (req) => {
                 },
                 body: new URLSearchParams({
                   'payment_intent': paymentIntent.id,
-                  'reason': 'requested_by_customer',
+                  'reason': 'expired',
                 })
               })
 
