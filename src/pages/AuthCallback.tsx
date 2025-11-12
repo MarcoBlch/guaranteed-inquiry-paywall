@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { FastPassLogo } from '@/components/ui/FastPassLogo';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -11,11 +12,11 @@ const AuthCallback = () => {
     const handleAuthCallback = async () => {
       try {
         console.log('Handling OAuth callback...');
-        
+
         // Check for error parameters first
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
-        
+
         if (error) {
           console.error('OAuth error:', error, errorDescription);
           toast.error(`Authentication failed: ${errorDescription || error}`);
@@ -25,7 +26,7 @@ const AuthCallback = () => {
 
         // Get the current session after OAuth redirect
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           console.error('Session error:', sessionError);
           toast.error('Failed to establish session');
@@ -36,7 +37,7 @@ const AuthCallback = () => {
         if (session && session.user) {
           console.log('OAuth callback successful - user:', session.user.email);
           toast.success(`Welcome back, ${session.user.email}!`);
-          
+
           // Check if user has completed profile setup
           const { data: profile } = await supabase
             .from('profiles')
@@ -66,13 +67,38 @@ const AuthCallback = () => {
   }, [navigate, searchParams]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 flex items-center justify-center">
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Completing sign in...</h2>
-          <p className="text-gray-600">Please wait while we set up your account</p>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* StaticBackground component from App.tsx provides the background */}
+
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="p-4 sm:p-6 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <FastPassLogo size="lg" />
+            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-4 sm:-mt-5">
+              GUARANTEED RESPONSES
+            </p>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-[#1a1f2e]/95 backdrop-blur-md rounded-2xl p-8 shadow-[0_0_20px_rgba(92,255,176,0.2)] border border-[#5cffb0]/20">
+            <div className="text-center">
+              <div className="relative inline-block mb-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#5cffb0]/20 border-t-[#5cffb0] mx-auto"></div>
+                <div className="absolute inset-0 rounded-full bg-[#5cffb0]/10 blur-xl animate-pulse"></div>
+              </div>
+              <h2 className="text-xl font-semibold text-[#5cffb0] mb-2">Completing sign in...</h2>
+              <p className="text-[#B0B0B0]">Please wait while we set up your account</p>
+            </div>
+          </div>
         </div>
+
+        {/* Footer */}
+        <footer className="text-center py-6 text-[#B0B0B0]/60 text-xs sm:text-sm px-4">
+          <p>© 2025 FastPass • Guaranteed Response Platform</p>
+        </footer>
       </div>
     </div>
   );

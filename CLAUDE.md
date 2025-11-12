@@ -1,419 +1,322 @@
-# FASTPASS ESCROW SYSTEM - Documentation
+# CLAUDE.md
 
-**Version**: 2.0 (Updated: 2025-10-08)
-**Status**: Production-Ready
-**Language**: 100% English
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
+## Project Overview
 
-## 🎯 Project Overview
+Escrow-based pay-to-contact platform (FastPass) with guaranteed email responses. Recipients monetize their inbox attention; senders guarantee responses by paying upfront.
 
-**Purpose**: Escrow-based pay-to-contact platform with guaranteed email responses
 **Revenue Model**: 75% recipient / 25% platform fee
-**Target Market**: Busy professionals (VCs, investors, HR) & serious inquirers
+**Core Flow**: Payment → Escrow Hold → Email Sent → Response Detection → Payout (or Refund)
 
-### Core Value Proposition
-- **For Recipients**: Monetize inbox attention, filter serious inquiries
-- **For Senders**: Guarantee responses, skip the noise
-- **For Platform**: Quality filtering marketplace
+## Tech Stack
 
----
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (Radix)
+- **Backend**: Supabase (PostgreSQL + Edge Functions + Auth)
+- **Payments**: Stripe + Stripe Connect (for 75/25 split)
+- **Email**: Postmark (outbound + inbound webhooks for response detection)
+- **State**: React Query + React Context
+- **Deployment**: Vercel (frontend) + Supabase (backend)
 
-## 📐 Architecture
+## Development Commands
 
-### Tech Stack
+```bash
+# Frontend Development
+npm run dev              # Start dev server (localhost:5173)
+npm run build            # Production build
+npm run build:dev        # Development build
+npm run lint             # Run ESLint
+npm run preview          # Preview production build
+
+# Supabase Edge Functions
+npx supabase functions list                    # List all deployed functions
+npx supabase functions deploy {function-name}  # Deploy specific function
+npx supabase functions deploy --no-verify-jwt {function-name}  # Deploy without JWT verification
+npx supabase start                             # Start local Supabase (Docker required)
+npx supabase db reset                          # Reset local database
+npx supabase db push                           # Push local migrations to remote
+
+# Testing & Debugging
+./test-postmark-flow.sh                        # End-to-end payment + email flow
+./test-postmark-webhook.sh                     # Test webhook processing
+./test-production-webhook.sh                   # Test production webhook
+./tests/scripts/verify-postmark-response.sh    # Verify response detection
+./tests/scripts/verify-webhook-deployment.sh   # Verify webhook deployment
 ```
-Frontend:  React 18 + TypeScript + Vite + Tailwind CSS
-Backend:   Supabase (PostgreSQL + Edge Functions)
-Payment:   Stripe + Stripe Connect (75/25 split)
-Email:     Postmark (outbound + inbound webhooks)
-Auth:      Supabase Auth (email/password + OAuth)
-State:     React Query + React Context
+
+## Architecture & Key Concepts
+
+### User Types & Authentication
+
+**Two distinct user contexts** (critical to understand):
+
+1. **Anonymous Senders** (No auth required)
+   - Access `/pay/:userId` to make payments
+   - No account, no session, pure anonymous flow
+   - Payment processed via `process-escrow-payment` (verify_jwt = false)
+
+2. **Authenticated Recipients** (Protected routes)
+   - Have accounts, login via Supabase Auth
+   - Access dashboard, settings, message history
+   - Protected by `ProtectedRoute.tsx` (checks session)
+   - Admin routes protected by `AdminRoute.tsx` (checks is_admin flag)
+
+**Critical**: Anonymous payment flow must NEVER require authentication. This is enforced via:
+- `verify_jwt = false` in `supabase/config.toml` for payment functions
+- No `AuthProvider` wrapper on `/pay/:userId` route in `App.tsx`
+- Separate context for anonymous vs authenticated states
+
+### Core Data Flow
+
 ```
+Payment Page (/pay/:userId)
+  ↓ (anonymous user pays)
+create-stripe-payment → Stripe PaymentIntent
+  ↓
+process-escrow-payment → Creates escrow_transactions (status: held) + messages record
+  ↓
+postmark-send-message → Sends email with Reply-To: reply+{messageId}@reply.fastpass.email
+  ↓
+[Receiver replies via email client]
+  ↓
+Postmark → postmark-inbound-webhook (detects reply via Reply-To address)
+  ↓
+mark-response-received → Updates message_responses, email_response_tracking
+  ↓
+distribute-escrow-funds → Transfers 75% to receiver's Stripe Connect, 25% to platform
+  ↓
+escrow_transactions.status = released
 
-### User Types
-**Receivers** (Revenue Generators):
-- Have accounts, profiles, dashboards
-- Share `/pay/[userId]` payment links
-- Receive 75% of payments
-
-**Senders** (Anonymous):
-- No accounts required
-- Pay via Stripe (sessionless)
-- Receive responses via email
-
----
-
-## 🔄 Core Flow
-
-### Payment → Email → Response → Payout
-
-```
-1. Sender visits /pay/{userId}
-   ↓
-2. Pays via Stripe (escrow: held)
-   ↓
-3. Postmark sends email to receiver
-   Reply-To: reply+{messageId}@reply.fastpass.email
-   ↓
-4. Receiver replies via email client
-   ↓
-5. Postmark webhook detects response
-   ↓
-6. Escrow released (75% receiver, 25% platform)
+[If no response within deadline]
+  ↓
+check-escrow-timeouts (cron: every 10 minutes)
+  ↓
+Refunds sender, status = refunded
 ```
 
 ### Transaction Statuses
-- `held` → Awaiting response
-- `released` → Response received, funds distributed
-- `pending_user_setup` → Response received, Stripe Connect not configured
-- `refunded` → Timeout (no response)
 
----
+- `held` - Awaiting response, funds in escrow
+- `released` - Response received, funds distributed (75/25)
+- `pending_user_setup` - Response received but recipient hasn't configured Stripe Connect
+- `refunded` - No response within deadline, funds refunded to sender
 
-## 🗄️ Database Schema
+### Database Schema Highlights
 
-### Core Tables
-```sql
-escrow_transactions    -- Payment tracking with status
-├── status: held|released|refunded|pending_user_setup
-├── amount: integer (cents)
-├── expires_at: timestamp
-└── stripe_payment_intent_id
+**Core Tables**:
+- `escrow_transactions` - Payment tracking, status, expiry
+- `messages` - Message metadata (NO message body stored for privacy)
+- `message_responses` - Response tracking, timestamps
+- `email_response_tracking` - Webhook audit trail (includes email headers)
+- `profiles` - User profiles, Stripe Connect account IDs
+- `email_logs` - Email delivery tracking
+- `admin_actions` - Audit trail for admin operations
+- `security_audit` - Security event logging
 
-messages               -- Message metadata
-├── sender_email
-├── response_deadline_hours: 24|48|72
-└── (no message body - privacy)
+**All tables have Row Level Security (RLS)** enabled. Check policies before modifying queries.
 
-message_responses      -- Response tracking
-├── has_response: boolean
-├── responded_at: timestamp
-└── detection_method: webhook|manual
+### Edge Functions Architecture
 
-email_response_tracking -- Webhook audit trail
-├── response_received_at
-├── within_deadline: boolean
-├── grace_period_used: boolean (15min buffer)
-└── email_headers: jsonb
+**23 total functions** in `supabase/functions/`. Key ones:
 
-profiles               -- User Stripe Connect info
-email_logs            -- Email delivery tracking
-admin_actions         -- Audit trail
-security_audit        -- Security events
-```
-
----
-
-## ⚙️ Supabase Edge Functions
-
-### Active Functions (15)
-
-**Payment Flow**:
-- `create-stripe-payment` → Create PaymentIntent
-- `process-escrow-payment` → Create message + transaction
-- `capture-stripe-payment` → Manual capture if needed
+**Payment Flow** (verify_jwt = false):
+- `create-stripe-payment` - Creates PaymentIntent
+- `process-escrow-payment` - Creates transaction + message
+- `capture-stripe-payment` - Manual capture if needed
 
 **Email System** (Postmark):
-- `postmark-send-message` → Send initial message
-- `postmark-inbound-webhook` → Detect email replies
-- `postmark-webhook-public` → Public webhook wrapper
-- `send-refund-notification` → Timeout refund emails
-- `send-timeout-notification` → Deadline notifications
+- `postmark-send-message` - Sends initial message
+- `postmark-inbound-webhook` - Detects email replies (verify_jwt = false)
+- `postmark-webhook-public` - Public webhook wrapper (verify_jwt = false)
 
-**Response & Distribution**:
-- `mark-response-received` → Mark response, trigger payout
-- `distribute-escrow-funds` → 75/25 split distribution
-- `check-escrow-timeouts` → Cron job (10min intervals)
+**Response & Payout**:
+- `mark-response-received` - Marks response, triggers payout
+- `distribute-escrow-funds` - 75/25 split via Stripe Connect
+- `check-escrow-timeouts` - Cron job (every 10 minutes)
 
 **Stripe Connect**:
-- `create-stripe-connect-account` → Onboard receivers
-- `stripe-connect-webhook` → Stripe events
-- `process-pending-transfers` → Process pending payouts
+- `create-stripe-connect-account` - Onboards recipients
+- `stripe-connect-webhook` - Processes Stripe events (verify_jwt = false)
+- `process-pending-transfers` - Processes pending payouts
 
-**Utilities**:
-- `escrow-health-check` → System monitoring
-- `email-service-health` → Email service monitoring
-- `get-payment-profile` → Anonymous profile access
+**Monitoring**:
+- `escrow-health-check` - System health (verify_jwt = false)
+- `email-service-health` - Email service monitoring
 
----
+**JWT Verification**: Check `supabase/config.toml` for which functions require authentication.
 
-## 🔧 Development
+### Frontend Architecture
 
-### Commands
+**Routing** (`src/App.tsx`):
+- Anonymous routes: `/`, `/pay/:userId`, `/payment-success`
+- Auth routes: `/auth`, `/auth/callback`
+- Protected routes: `/dashboard`, `/respond/:messageId` (wrapped in `AuthProvider` + `ProtectedRoute`)
+- Admin routes: `/admin-setup`, `/email-preview`, `/email-test` (wrapped in `AuthProvider` + `AdminRoute`)
+
+**State Management**:
+- React Query for server state (queries, mutations)
+- React Context for auth state (`AuthContext.tsx`)
+- Supabase client (`src/integrations/supabase/client.ts`) for all backend calls
+
+**Component Structure**:
+- `src/components/auth/` - Auth components, ProtectedRoute, AdminRoute
+- `src/components/payment/` - Payment form components (Stripe)
+- `src/components/ui/` - shadcn/ui components (reusable primitives)
+- `src/pages/` - Page-level components
+- `src/hooks/` - Custom React hooks
+- `src/contexts/` - React contexts
+
+### Email System (Postmark)
+
+**Why Postmark?**
+- Inbound email parsing (detects replies automatically)
+- Real-time webhooks
+- High deliverability (93.8%)
+
+**Response Detection Flow**:
+1. Email sent with `Reply-To: reply+{messageId}@reply.fastpass.email`
+2. Receiver replies to email
+3. Postmark catches reply, extracts message ID from `Reply-To`
+4. Webhook → `postmark-inbound-webhook`
+5. Validates deadline + 15-minute grace period
+6. Creates `email_response_tracking` record
+7. Calls `mark-response-received` → triggers payout
+
+**Grace Period**: 15 minutes after deadline to account for email delays.
+
+### Deployment Workflow
+
+**Frontend** (Vercel):
 ```bash
-# Frontend
-npm run dev              # Development server
-npm run build           # Production build
-npm run lint            # ESLint
-
-# Supabase
-npx supabase functions list              # List deployed functions
-npx supabase functions deploy {name}     # Deploy Edge Function
-npx supabase start                       # Local Supabase
-
-# Deployment
-git push origin {branch}   # Push to GitHub
-# Merge to main → triggers Vercel deployment
-
-# Testing
-./test-postmark-flow.sh              # End-to-end test
-./tests/scripts/verify-*.sh          # Verification scripts
+git checkout -b feature/my-feature
+# Make changes
+git add .
+git commit -m "feat: description"
+git push origin feature/my-feature
+# Create PR on GitHub → Merge to main → Vercel auto-deploys
 ```
 
-### Project Structure
-```
-src/
-├── components/
-│   ├── auth/          # Auth components + ProtectedRoute
-│   ├── payment/       # Stripe payment forms
-│   └── ui/            # shadcn/ui components
-├── pages/             # Main pages
-├── hooks/             # Custom hooks
-└── integrations/      # Supabase client
-
-supabase/
-├── functions/         # Edge Functions (20 total)
-├── migrations/        # Database migrations
-└── config.toml        # Configuration
-
-tests/
-├── scripts/           # Test scripts
-├── sql/               # SQL queries
-└── docs/              # Test documentation
-```
-
----
-
-## 🌐 Environment Variables
-
+**Edge Functions** (Supabase):
 ```bash
-# Frontend (.env)
+npx supabase functions deploy {function-name}
+# Test immediately after deployment
+```
+
+**Database Migrations**:
+```bash
+# Create migration
+npx supabase migration new migration_name
+# Edit SQL file in supabase/migrations/
+npx supabase db push  # Push to remote
+```
+
+**Critical**: Frontend requires GitHub merge to trigger Vercel. Edge Functions deploy immediately via CLI.
+
+## Important Patterns & Conventions
+
+### Authentication Isolation
+
+**Never mix anonymous and authenticated contexts**:
+- Payment flow is 100% anonymous (no session checks)
+- Dashboard/settings are 100% authenticated (ProtectedRoute wrapper)
+- Use `get-payment-profile` Edge Function for anonymous profile access (not direct Supabase queries)
+
+### Security Best Practices
+
+- **Row Level Security (RLS)**: All tables have policies. Check before querying.
+- **JWT verification**: Check `config.toml` - payment functions are public, payout functions require auth.
+- **Webhook signatures**: Always verify Stripe/Postmark signatures before processing.
+- **Input validation**: Sanitize all user inputs (especially message bodies).
+- **Audit trails**: Log admin actions in `admin_actions` table.
+
+### Testing After Changes
+
+Always test after deployment:
+1. Run `./test-postmark-flow.sh` for end-to-end test
+2. Check Supabase function logs
+3. Check Postmark Activity dashboard
+4. Query `email_response_tracking` table for webhook processing
+
+### Git Workflow
+
+- **Always use feature branches** - Never commit directly to main
+- **Conventional commits**: `feat:`, `fix:`, `docs:`, `refactor:`, etc.
+- **Professional language**: No AI/Claude references in commits
+- **One feature per branch**
+
+### Environment Variables
+
+**Frontend** (.env):
+```bash
 VITE_STRIPE_PUBLISHABLE_KEY=pk_...
 VITE_SUPABASE_URL=https://...supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
+```
 
-# Supabase Edge Functions
+**Edge Functions** (set in Supabase dashboard):
+```bash
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-
-# Email (Postmark)
-POSTMARK_SERVER_TOKEN=...           # Outbound emails
-POSTMARK_ACCOUNT_TOKEN=...          # Account management
-POSTMARK_INBOUND_WEBHOOK_SECRET=... # Webhook verification
+POSTMARK_SERVER_TOKEN=...
+POSTMARK_ACCOUNT_TOKEN=...
+POSTMARK_INBOUND_WEBHOOK_SECRET=...
 ```
 
----
+## Common Debugging Scenarios
 
-## 🔐 Security
-
-### Authentication Architecture
-- **Anonymous payment flow**: No auth required for `/pay/:userId`
-- **Protected routes**: Dashboard, settings (via `ProtectedRoute.tsx`)
-- **Session isolation**: Zero bleeding between anonymous/authenticated contexts
-- **RLS enabled**: All tables have Row Level Security
-- **Secure webhooks**: Signature verification (Stripe, Postmark)
-
-### Key Security Features
-- JWT verification for protected endpoints
-- Input validation and sanitization
-- Rate limiting on Edge Functions
-- Audit trails (`admin_actions`, `security_audit`)
-- Anonymous profile access via secure Edge Function
-
----
-
-## 📧 Email System (Postmark)
-
-### Why Postmark?
-- **Inbound email parsing**: Automatic response detection
-- **93.8% deliverability**: Better than Resend
-- **Real-time webhooks**: Instant response processing
-- **Cost**: $15/month for 10k emails
-
-### Email Flow
-```
-Outbound:
-postmark-send-message
-  → api.postmarkapp.com
-  → Email with Reply-To: reply+{uuid}@reply.fastpass.email
-
-Inbound:
-Receiver replies
-  → Postmark catches reply
-  → Webhook: postmark-inbound-webhook
-  → Escrow released (15min grace period)
-```
-
-### Webhook Processing
-1. Extract message ID from `Reply-To` address
-2. Query `escrow_transactions` for status
-3. Validate deadline + 15-minute grace period
-4. Insert `email_response_tracking` record
-5. Invoke `mark-response-received`
-6. Distribute funds (75/25 split)
-
----
-
-## 🎨 UI Design System
-
-### Design Language
-- **Gradient backgrounds**: Orange → Red → Pink
-- **Glassmorphism**: `bg-white/95 backdrop-blur-sm`
-- **Mobile-first**: Responsive breakpoints (sm, md, lg, xl)
-- **Tailwind CSS**: Utility-first styling
-- **shadcn/ui**: Headless components (Radix UI)
-
-### Key Pages
-- `/` → Landing (hero + features)
-- `/pay/:userId` → Payment form (anonymous)
-- `/dashboard` → Receiver dashboard (protected)
-- `/auth` → Login/signup/OAuth
-- `/payment-success` → Confirmation
-
----
-
-## 🚀 Deployment
-
-### Workflow
-```bash
-# 1. Edge Functions (immediate)
-npx supabase functions deploy {name}
-
-# 2. Frontend (via GitHub)
-git push origin {branch}
-# Merge to main → Vercel auto-deploys
-```
-
-### Critical Notes
-- **Frontend**: Requires GitHub merge to trigger Vercel
-- **Edge Functions**: Direct deployment via CLI
-- **Database**: Migrations via Supabase CLI
-- **Always test** after deployment
-
----
-
-## 📊 Monitoring & Analytics
-
-### Key Metrics
-- **Response Rate**: % within deadline
-- **Revenue**: MRR, average transaction value
-- **Deliverability**: Email success rate
-- **System Health**: Uptime, error rates
-
-### Monitoring Tools
-- `escrow-health-check` → System stats
-- `email-service-health` → Email monitoring
-- `email_logs` table → Delivery tracking
-- Supabase Dashboard → Function logs
-
----
-
-## 🧪 Testing
-
-### Test Scripts
-```bash
-# End-to-end flow
-./test-postmark-flow.sh
-
-# Webhook testing
-./test-postmark-webhook.sh
-
-# Production webhook
-./test-production-webhook.sh
-```
-
-### Verification Queries
-See `tests/sql/verify-webhook-fix.sql` for comprehensive database queries.
-
----
-
-## 🛠️ Common Tasks
-
-### Add New Edge Function
-```bash
-# 1. Create function directory
-mkdir supabase/functions/my-function
-
-# 2. Create index.ts
-# (use existing functions as template)
-
-# 3. Deploy
-npx supabase functions deploy my-function
-```
-
-### Update Payment Flow
-1. Edit `process-escrow-payment/index.ts`
-2. Deploy: `npx supabase functions deploy process-escrow-payment`
-3. Test with `./test-postmark-flow.sh`
-
-### Debug Webhook Issues
+### Webhook Not Firing
 1. Check Supabase function logs
-2. Query `email_response_tracking` table
-3. Check Postmark Activity dashboard
-4. Run verification queries
+2. Verify webhook URL in Postmark/Stripe dashboard
+3. Check signature verification logic
+4. Run `./tests/scripts/verify-webhook-deployment.sh`
+
+### Payment Failing
+1. Check Stripe dashboard for payment intent status
+2. Check `escrow_transactions` table for status
+3. Verify Stripe keys are correct (test vs live)
+4. Check browser console for frontend errors
+
+### Email Not Sending
+1. Check Postmark Activity dashboard
+2. Query `email_logs` table
+3. Verify `POSTMARK_SERVER_TOKEN` is set
+4. Check sender email is verified in Postmark
+
+### Response Not Detected
+1. Query `email_response_tracking` table
+2. Check Postmark webhook logs
+3. Verify `Reply-To` header is correct format
+4. Check grace period logic (15 minutes)
+
+## Key Files to Know
+
+- `src/App.tsx` - Main app, routing, auth boundaries
+- `src/components/auth/ProtectedRoute.tsx` - Auth guard for protected routes
+- `src/contexts/AuthContext.tsx` - Auth state management
+- `supabase/config.toml` - Edge Function JWT settings
+- `supabase/functions/process-escrow-payment/index.ts` - Core payment flow
+- `supabase/functions/postmark-inbound-webhook/index.ts` - Response detection
+- `supabase/functions/distribute-escrow-funds/index.ts` - Payout logic
+
+## Additional Documentation
+
+- `CODEBASE-CLEANUP-REPORT.md` - Architecture cleanup notes
+- `CLEANUP-RESULTS.md` - Recent cleanup results
+- `tests/docs/` - Test documentation
+- `tests/sql/` - Verification SQL queries
+
+## Critical Reminders
+
+1. **Test after every deployment** (frontend + functions)
+2. **Never commit directly to main** - Always use feature branches
+3. **Verify webhook signatures** - Security critical
+4. **Check RLS policies** - Before modifying database queries
+5. **Anonymous payment flow** - Must never require authentication
+6. **Grace period** - 15 minutes after deadline for email delays
+7. **Update this doc** - When architecture changes
 
 ---
 
-## 🔄 Recent Changes (October 2025)
-
-### ✅ Completed
-- **Email Migration**: Resend → Postmark (complete)
-- **Codebase Cleanup**: Removed 6 unused functions (-26%)
-- **Webhook Fixes**: Safe date parsing, schema matching
-- **Security**: Anonymous payment flow isolation
-- **Tests**: Organized into `/tests` directory
-
-### 🎯 Current Architecture
-- **Email**: Postmark only (Resend removed)
-- **Functions**: 15 active (PayPal removed)
-- **Payment**: Stripe only
-- **Auth**: Supabase + OAuth (Google, LinkedIn)
-
----
-
-## 📚 Additional Documentation
-
-- **Cleanup Report**: `CODEBASE-CLEANUP-REPORT.md`
-- **Cleanup Results**: `CLEANUP-RESULTS.md`
-- **Test Docs**: `tests/docs/`
-- **SQL Queries**: `tests/sql/`
-
----
-
-## 🚨 Critical Reminders
-
-1. **Always work on feature branches** - Never commit to main directly
-2. **Test after deployment** - Edge Functions + Frontend
-3. **Monitor webhooks** - Check Postmark + Supabase logs
-4. **Backup before changes** - Database migrations especially
-5. **Update this doc** - When architecture changes
-
----
-
-## Git Workflow
-
-### Branching
-```bash
-# Always create feature branch
-git checkout -b feature/my-feature
-
-# Make changes, commit
-git add .
-git commit -m "Add feature description"
-
-# Push and create PR
-git push origin feature/my-feature
-```
-
-### Commit Guidelines
-- **Clear, descriptive messages**: "Fix webhook date parsing"
-- **Professional language**: No AI/Claude references
-- **Conventional commits**: `feat:`, `fix:`, `docs:`, etc.
-- **One feature per branch**
-
----
-
-**Last Updated**: 2025-10-08
-**Codebase Version**: 2.0 (Cleaned & Optimized)
-**Production Status**: ✅ Active & Stable
+**Last Updated**: 2025-11-06
+**Status**: Production-Ready
+**Version**: 3.0

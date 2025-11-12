@@ -7,12 +7,99 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 }
 
+// 🔒 RATE LIMITING: Prevent profile scraping and abuse
+// Track requests per IP address with timestamps
+interface RateLimitEntry {
+  count: number
+  resetAt: number
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>()
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour in milliseconds
+const MAX_REQUESTS_PER_WINDOW = 60 // 60 requests per hour per IP
+
+// Clean up expired entries every 10 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, entry] of rateLimitStore.entries()) {
+    if (now > entry.resetAt) {
+      rateLimitStore.delete(ip)
+    }
+  }
+}, 10 * 60 * 1000)
+
+function checkRateLimit(clientIP: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now()
+  const entry = rateLimitStore.get(clientIP)
+
+  if (!entry) {
+    // First request from this IP
+    rateLimitStore.set(clientIP, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW
+    })
+    return { allowed: true }
+  }
+
+  // Check if window has expired
+  if (now > entry.resetAt) {
+    // Reset the counter
+    rateLimitStore.set(clientIP, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW
+    })
+    return { allowed: true }
+  }
+
+  // Check if limit exceeded
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+    const retryAfter = Math.ceil((entry.resetAt - now) / 1000) // seconds
+    return { allowed: false, retryAfter }
+  }
+
+  // Increment counter
+  entry.count++
+  rateLimitStore.set(clientIP, entry)
+  return { allowed: true }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // Extract client IP for rate limiting
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     req.headers.get('x-real-ip') ||
+                     'unknown'
+
+    console.log('Request from IP:', clientIP)
+
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit(clientIP)
+    if (!rateLimitCheck.allowed) {
+      console.warn(`⚠️ Rate limit exceeded for IP: ${clientIP}`)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Too many requests. Please try again later.',
+          retryAfter: rateLimitCheck.retryAfter
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': rateLimitCheck.retryAfter!.toString(),
+            'X-RateLimit-Limit': MAX_REQUESTS_PER_WINDOW.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': new Date(Date.now() + (rateLimitCheck.retryAfter! * 1000)).toISOString()
+          }
+        }
+      )
+    }
+
     console.log('Getting payment profile information');
 
     const url = new URL(req.url);
