@@ -157,7 +157,13 @@ serve(async (req) => {
               errorData = { error: { code: 'unknown' } }
             }
 
-            if (errorData.error?.code === 'resource_missing') {
+            if (
+              typeof errorData === 'object' &&
+              errorData !== null &&
+              typeof errorData.error === 'object' &&
+              errorData.error !== null &&
+              errorData.error.code === 'resource_missing'
+            ) {
               // PaymentIntent was deleted from Stripe
               console.warn(`⚠️ PaymentIntent not found in Stripe: ${transaction.stripe_payment_intent_id}`)
               console.log(`Marking transaction as refunded in database: ${transaction.id}`)
