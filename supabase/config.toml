@@ -90,9 +90,6 @@ verify_jwt = false
 [functions.send-email-notification]
 verify_jwt = true
 
-[functions.send-response-email]
-verify_jwt = true
-
 [functions.send-deadline-reminder]
 verify_jwt = true
 

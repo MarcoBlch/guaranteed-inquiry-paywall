@@ -77,8 +77,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [transactions, setTransactions] = useState<EscrowTransaction[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [responseText, setResponseText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
@@ -276,34 +274,6 @@ const Dashboard = () => {
       ));
     } catch (error: any) {
       console.error('Error marking message as read:', error);
-    }
-  };
-
-  const sendResponse = async () => {
-    if (!selectedMessage || !responseText.trim()) {
-      toast.error('Please enter a response');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke('send-response-email', {
-        body: {
-          messageId: selectedMessage.id,
-          responseContent: responseText.trim()
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success('Response sent successfully!');
-      setResponseText('');
-      setSelectedMessage(null);
-      await refreshData();
-    } catch (error: any) {
-      toast.error('Error sending: ' + error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
