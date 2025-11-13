@@ -93,6 +93,13 @@ serve(async (req) => {
     // Create Stripe payment intent with immediate capture to platform account
     // Funds are captured immediately to FastPass account (true escrow)
     // Later distributed via Stripe Connect Transfer when response received
+    console.log('Creating payment intent with params:', {
+      amount: Math.round(price * 100),
+      currency: 'eur',
+      userId,
+      responseDeadlineHours
+    });
+
     const paymentIntentResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
       method: 'POST',
       headers: {
@@ -111,12 +118,16 @@ serve(async (req) => {
       }),
     })
 
+    console.log('Stripe API response status:', paymentIntentResponse.status);
+
     if (!paymentIntentResponse.ok) {
       const error = await paymentIntentResponse.text()
+      console.error('Stripe API error response:', error);
       throw new Error(`Stripe API error: ${error}`)
     }
 
     const paymentIntent = await paymentIntentResponse.json()
+    console.log('Payment intent created successfully:', paymentIntent.id);
 
     return new Response(
       JSON.stringify({

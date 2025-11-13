@@ -71,6 +71,14 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       if (paymentError) throw paymentError;
 
+      console.log('Payment data received:', paymentData);
+      console.log('Client secret:', paymentData.clientSecret);
+      console.log('Payment intent ID:', paymentData.paymentIntentId);
+
+      if (!paymentData?.clientSecret) {
+        throw new Error('No client secret received from server');
+      }
+
       // 2. Confirm payment (authorization only, no capture)
       const { error: confirmError } = await stripe.confirmCardPayment(
         paymentData.clientSecret,
