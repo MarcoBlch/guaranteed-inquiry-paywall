@@ -11,20 +11,24 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log('Handling OAuth callback...');
+        // Determine the type of callback (email verification or OAuth)
+        const type = searchParams.get('type');
+        const isEmailVerification = type === 'email';
+
+        console.log('Handling auth callback...', { type, isEmailVerification });
 
         // Check for error parameters first
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
 
         if (error) {
-          console.error('OAuth error:', error, errorDescription);
+          console.error('Auth error:', error, errorDescription);
           toast.error(`Authentication failed: ${errorDescription || error}`);
           navigate('/auth');
           return;
         }
 
-        // Get the current session after OAuth redirect
+        // Get the current session (this automatically processes email verification tokens)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
@@ -35,8 +39,14 @@ const AuthCallback = () => {
         }
 
         if (session && session.user) {
-          console.log('OAuth callback successful - user:', session.user.email);
-          toast.success(`Welcome back, ${session.user.email}!`);
+          console.log('Auth callback successful - user:', session.user.email);
+
+          // Different messages for email verification vs OAuth
+          if (isEmailVerification) {
+            toast.success('Email verified! Welcome to FastPass.');
+          } else {
+            toast.success(`Welcome back, ${session.user.email}!`);
+          }
 
           // Check if user has completed profile setup
           const { data: profile } = await supabase
@@ -48,16 +58,22 @@ const AuthCallback = () => {
           if (profile) {
             navigate('/dashboard');
           } else {
-            // First time OAuth user - create profile
+            // First time user - create profile
             navigate('/dashboard?setup=true');
           }
         } else {
-          console.log('No session found after OAuth callback');
-          toast.error('Authentication session not found');
+          console.log('No session found after auth callback');
+
+          // For email verification, provide more helpful message
+          if (isEmailVerification) {
+            toast.error('Email verification link may have expired. Please try logging in or request a new verification email.');
+          } else {
+            toast.error('Authentication session not found');
+          }
           navigate('/auth');
         }
       } catch (error) {
-        console.error('OAuth callback error:', error);
+        console.error('Auth callback error:', error);
         toast.error('Authentication failed');
         navigate('/auth');
       }
@@ -89,8 +105,8 @@ const AuthCallback = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#5cffb0]/20 border-t-[#5cffb0] mx-auto"></div>
                 <div className="absolute inset-0 rounded-full bg-[#5cffb0]/10 blur-xl animate-pulse"></div>
               </div>
-              <h2 className="text-xl font-semibold text-[#5cffb0] mb-2">Completing sign in...</h2>
-              <p className="text-[#B0B0B0]">Please wait while we set up your account</p>
+              <h2 className="text-xl font-semibold text-[#5cffb0] mb-2">Verifying your account...</h2>
+              <p className="text-[#B0B0B0]">Please wait while we complete the process</p>
             </div>
           </div>
         </div>

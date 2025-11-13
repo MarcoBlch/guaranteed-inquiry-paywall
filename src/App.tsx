@@ -77,7 +77,7 @@ const App = () => {
 
             {/* AUTHENTICATION ROUTES - For login/signup only */}
             <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/confirm" element={<Auth />} />
+            <Route path="/auth/confirm" element={<AuthCallback />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* PROTECTED ROUTES - Authentication required */}

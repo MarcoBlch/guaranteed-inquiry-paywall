@@ -132,7 +132,7 @@ serve(async (req) => {
 
       console.log('✅ User email found:', authUser.user.email)
 
-      // Créer nouveau compte Connect avec personnalisation FASTPASS
+      // Create Stripe Connect account (minimal configuration - Express accounts inherit platform branding)
       const accountResponse = await fetch('https://api.stripe.com/v1/accounts', {
         method: 'POST',
         headers: {
@@ -144,24 +144,10 @@ serve(async (req) => {
           country: 'FR',
           email: authUser.user.email,
           'business_type': 'individual',
-          'business_profile[category]': 'professional_services',
-          'business_profile[subcategory]': 'consulting',
-          'business_profile[product_description]': 'Premium professional communication and response services through FASTPASS - guaranteed response platform for busy professionals',
-          'business_profile[name]': 'FASTPASS Professional Services',
-          'business_profile[url]': 'https://fastpass.email',
-          'business_profile[support_phone]': '+33123456789',
-          'business_profile[support_email]': 'support@fastpass.email',
-          'business_profile[support_url]': 'https://fastpass.email/support',
-          'settings[branding][primary_color]': '#ea580c', // Orange theme matching FASTPASS
-          'settings[branding][secondary_color]': '#dc2626', // Red accent
-          'settings[branding][icon]': 'https://fastpass.email/favicon.ico',
-          'settings[branding][logo]': 'https://fastpass.email/logo.png',
-          'settings[payouts][schedule][interval]': 'daily',
-          'settings[payouts][statement_descriptor]': 'FASTPASS',
-          'settings[dashboard][display_name]': 'FASTPASS Earnings Dashboard',
-          'settings[dashboard][timezone]': 'Europe/Paris',
           'capabilities[card_payments][requested]': 'true',
           'capabilities[transfers][requested]': 'true',
+          'settings[payouts][schedule][interval]': 'daily',
+          'settings[payouts][statement_descriptor]': 'FASTPASS',
         })
       })
 
