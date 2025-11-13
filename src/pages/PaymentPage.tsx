@@ -10,8 +10,14 @@ import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
 
-// Stripe publishable key - safe to store in code
-const stripePromise = loadStripe('pk_test_51RiErSRrgEEFpaiMLBBwEwv3hzswFpxx99iToSwtF1R0ouwbFHQygddjv7ABOuKELDjgO0e7tL9DkZiYVINdStjS00OQpDFGqR', {
+// Load Stripe with publishable key from environment variable
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+if (!stripeKey) {
+  console.error('Missing VITE_STRIPE_PUBLISHABLE_KEY environment variable');
+}
+
+const stripePromise = loadStripe(stripeKey, {
   locale: 'en'
 });
 
