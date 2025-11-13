@@ -1,0 +1,118 @@
+
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
+project_id = "znncfayiwfamujvrprvf"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "https://fastpass.email"
+additional_redirect_urls = [
+  "http://localhost:5173",
+  "http://localhost:5173/auth/callback",
+  "https://localhost:5173", 
+  "https://localhost:5173/auth/callback", 
+  "https://fastpass.email",
+  "https://fastpass.email/auth/callback",
+  "https://www.fastpass.email",
+  "https://www.fastpass.email/auth/callback",
+  "https://fastpass.email/dashboard",
+  "https://www.fastpass.email/dashboard",
+  "https://fastpass.email/dashboard?setup=complete",
+  "https://fastpass.email/dashboard?setup=refresh"
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_manual_linking = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+[functions]
+
+[functions.create-stripe-payment]
+verify_jwt = false
+
+[functions.capture-stripe-payment]
+verify_jwt = false
+
+[functions.process-escrow-payment]
+verify_jwt = false
+
+[functions.distribute-escrow-funds]
+verify_jwt = true
+
+[functions.check-escrow-timeouts]
+verify_jwt = true
+
+[functions.mark-response-received]
+verify_jwt = true
+
+[functions.create-stripe-connect-account]
+verify_jwt = false
+
+[functions.process-pending-transfers]
+verify_jwt = true
+
+[functions.stripe-connect-webhook]
+verify_jwt = false
+
+[functions.send-email-notification]
+verify_jwt = true
+
+[functions.send-deadline-reminder]
+verify_jwt = true
+
+[functions.get-payment-profile]
+verify_jwt = false
+
+[functions.postmark-webhook-public]
+verify_jwt = false
+
+[functions.postmark-inbound-webhook]
+verify_jwt = false
+
+[functions.escrow-health-check]
+verify_jwt = false
+
+[functions.resend-email-webhook]
+verify_jwt = false
+
+[functions.send-deadline-reminders]
+verify_jwt = true
+
+[functions.send-refund-notification]
+verify_jwt = true
+
+[functions.send-timeout-notification]
+verify_jwt = true
