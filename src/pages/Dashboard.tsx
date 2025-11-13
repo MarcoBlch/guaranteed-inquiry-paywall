@@ -112,12 +112,28 @@ const Dashboard = () => {
         newSearchParams.delete('auth');
         navigate({ search: newSearchParams.toString() }, { replace: true });
 
-        // Refresh profile data to update onboarding status
-        setTimeout(() => {
-          if (user) {
-            checkAuth();
-          }
-        }, 1000);
+        // Verify Stripe account status immediately
+        if (user && session) {
+          console.log('Verifying Stripe account status...');
+          supabase.functions
+            .invoke('verify-stripe-status', {
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            })
+            .then(({ data, error }) => {
+              if (error) {
+                console.error('Failed to verify Stripe status:', error);
+              } else {
+                console.log('Stripe status verified:', data);
+                if (data?.onboarding_completed) {
+                  toast.success('Stripe account verified and ready to receive payments!');
+                }
+                // Refresh profile data
+                checkAuth();
+              }
+            });
+        }
       } else if (setupStatus === 'refresh') {
         toast.info('Stripe configuration in progress...');
       }
