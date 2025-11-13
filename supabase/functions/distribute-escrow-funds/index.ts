@@ -57,19 +57,18 @@ serve(async (req) => {
       platform: platformFeeCents    // 25% (reste automatiquement)
     })
 
-    // 3. Capturer le paiement (argent arrive sur notre compte principal)
-    const captureResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/capture`, {
-      method: 'POST',
+    // 3. Verify payment was captured (should already be 'succeeded' from immediate capture)
+    const paymentIntentResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Idempotency-Key': `capture-${escrowTransactionId}`,
       }
     })
 
-    if (!captureResponse.ok) {
-      const error = await captureResponse.text()
-      console.error(`Capture failed for transaction ${escrowTransactionId}:`, error)
+    if (!paymentIntentResponse.ok) {
+      const error = await paymentIntentResponse.text()
+      console.error(`Failed to retrieve payment intent for transaction ${escrowTransactionId}:`, error)
 
       // Rollback to 'held' status so it can be retried
       await supabase
@@ -80,11 +79,28 @@ serve(async (req) => {
         })
         .eq('id', escrowTransactionId)
 
-      throw new Error(`Failed to capture payment: ${error}`)
+      throw new Error(`Failed to retrieve payment intent: ${error}`)
     }
 
-    const capturedPayment = await captureResponse.json()
-    console.log('Payment captured:', capturedPayment.id)
+    const capturedPayment = await paymentIntentResponse.json()
+
+    // Verify payment was successful (immediate capture should have already succeeded)
+    if (capturedPayment.status !== 'succeeded') {
+      console.error(`Payment not yet completed for transaction ${escrowTransactionId}: ${capturedPayment.status}`)
+
+      // Rollback to 'held' status
+      await supabase
+        .from('escrow_transactions')
+        .update({
+          status: 'held',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', escrowTransactionId)
+
+      throw new Error(`Payment not completed: ${capturedPayment.status}`)
+    }
+
+    console.log('Payment verified as succeeded:', capturedPayment.id)
 
     // 4. Transfer vers utilisateur SI Stripe Connect configuré
     let userTransfer = null

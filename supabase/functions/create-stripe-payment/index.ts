@@ -90,7 +90,9 @@ serve(async (req) => {
       throw new Error('Invalid Stripe secret key format - must start with sk_')
     }
 
-    // Create Stripe payment intent with escrow hold
+    // Create Stripe payment intent with immediate capture to platform account
+    // Funds are captured immediately to FastPass account (true escrow)
+    // Later distributed via Stripe Connect Transfer when response received
     const paymentIntentResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
       method: 'POST',
       headers: {
@@ -100,7 +102,9 @@ serve(async (req) => {
       body: new URLSearchParams({
         amount: Math.round(price * 100).toString(), // Convert to cents
         currency: 'eur',
-        capture_method: 'manual', // Hold funds without capturing
+        // No capture_method = immediate capture to platform account (true escrow)
+        // This allows holding funds indefinitely (no 7-day authorization limit)
+        transfer_group: `ORDER_${Date.now()}_${userId}`, // For tracking related transfers
         'metadata[responseDeadlineHours]': responseDeadlineHours.toString(),
         'metadata[recipientUserId]': userId,
         'metadata[escrowType]': 'guaranteed_response'

@@ -133,12 +133,12 @@ serve(async (req) => {
           break
         }
 
-        // Handle refund based on PaymentIntent state (defensive state handling)
+        // Handle refund (with immediate capture, all payments will be 'succeeded')
         let refundSuccessful = false
-        let stripeOperationType = 'unknown'
+        let stripeOperationType = 'refund'
 
         try {
-          // First, retrieve the PaymentIntent to check its current state
+          // Retrieve the PaymentIntent to verify its state
           const retrieveResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}`, {
             method: 'GET',
             headers: {
@@ -192,93 +192,38 @@ serve(async (req) => {
           const paymentIntent = await retrieveResponse.json()
           console.log(`Processing PI ${paymentIntent.id} with status: ${paymentIntent.status}`)
 
-          switch (paymentIntent.status) {
-            case 'requires_capture':
-              // Standard case: Payment authorized but not captured - cancel it
-              stripeOperationType = 'cancel'
-              const cancelResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/cancel`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${stripeSecretKey}`,
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                  'Idempotency-Key': `cancel-${transaction.id}`,
-                }
+          // With immediate capture, all PaymentIntents should be 'succeeded'
+          if (paymentIntent.status === 'succeeded') {
+            // Create refund for expired transaction
+            console.log(`💰 Creating refund for succeeded payment: ${paymentIntent.id}`)
+
+            const refundResponse = await fetch('https://api.stripe.com/v1/refunds', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${stripeSecretKey}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Idempotency-Key': `refund-${transaction.id}`,
+              },
+              body: new URLSearchParams({
+                'payment_intent': paymentIntent.id,
+                'reason': 'expired',
               })
+            })
 
-              if (!cancelResponse.ok) {
-                throw new Error(`Cancellation failed: ${await cancelResponse.text()}`)
-              }
+            if (!refundResponse.ok) {
+              throw new Error(`Refund creation failed: ${await refundResponse.text()}`)
+            }
 
-              console.log(`✅ Canceled PaymentIntent: ${paymentIntent.id}`)
-              refundSuccessful = true
-              break
-
-            case 'succeeded':
-              // Money already captured - need to issue a refund instead
-              stripeOperationType = 'refund'
-              console.log(`💰 Payment already succeeded, creating refund for: ${paymentIntent.id}`)
-
-              const refundResponse = await fetch('https://api.stripe.com/v1/refunds', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${stripeSecretKey}`,
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                  'Idempotency-Key': `refund-${transaction.id}`,
-                },
-                body: new URLSearchParams({
-                  'payment_intent': paymentIntent.id,
-                  'reason': 'expired',
-                })
-              })
-
-              if (!refundResponse.ok) {
-                throw new Error(`Refund creation failed: ${await refundResponse.text()}`)
-              }
-
-              const refundData = await refundResponse.json()
-              console.log(`✅ Created refund: ${refundData.id}`)
-              refundSuccessful = true
-              break
-
-            case 'canceled':
-              // Already canceled - nothing to do, just update our database
-              stripeOperationType = 'already_canceled'
-              console.log(`⏭️ PaymentIntent already canceled: ${paymentIntent.id}`)
-              refundSuccessful = true
-              break
-
-            case 'requires_payment_method':
-            case 'requires_confirmation':
-            case 'requires_action':
-              // Incomplete payment - customer never completed it
-              stripeOperationType = 'incomplete'
-              console.log(`⚠️ Incomplete payment, marking as canceled: ${paymentIntent.id}`)
-
-              // Try to cancel if possible, but don't fail if we can't
-              try {
-                const incompleteResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${transaction.stripe_payment_intent_id}/cancel`, {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${stripeSecretKey}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Idempotency-Key': `cancel-incomplete-${transaction.id}`,
-                  }
-                })
-
-                if (incompleteResponse.ok) {
-                  console.log(`✅ Canceled incomplete payment: ${paymentIntent.id}`)
-                }
-              } catch (e) {
-                const errorMsg = e instanceof Error ? e.message : String(e)
-                console.log(`Could not cancel incomplete payment: ${errorMsg}`)
-              }
-
-              refundSuccessful = true
-              break
-
-            default:
-              console.warn(`⚠️ Unexpected PaymentIntent status: ${paymentIntent.status}`)
-              throw new Error(`Cannot process PaymentIntent in status: ${paymentIntent.status}`)
+            const refundData = await refundResponse.json()
+            console.log(`✅ Created refund: ${refundData.id}`)
+            refundSuccessful = true
+          } else {
+            // Unexpected status - this shouldn't happen with immediate capture
+            console.warn(`⚠️ Unexpected PaymentIntent status: ${paymentIntent.status}`)
+            console.log(`Expected 'succeeded' with immediate capture. Skipping transaction ${transaction.id}`)
+            stripeOperationType = 'unexpected_status'
+            skippedCount++
+            continue
           }
 
         } catch (stripeError) {
