@@ -212,22 +212,43 @@ serve(async (req) => {
         const expiresAt = new Date(transaction.expires_at)
         const totalDuration = expiresAt.getTime() - createdAt.getTime()
         const halfwayPoint = new Date(createdAt.getTime() + (totalDuration / 2))
+        const seventyFivePercentPoint = new Date(createdAt.getTime() + (totalDuration * 0.75))
 
-        // Check if we're past the halfway point (50% of deadline)
-        if (now >= halfwayPoint) {
+        // Count how many reminders have been sent (max 2 allowed)
+        const { count: reminderCount, error: countError } = await supabase
+          .from('email_logs')
+          .select('id', { count: 'exact', head: true })
+          .eq('message_id', transaction.message_id)
+          .eq('email_type', 'deadline_reminder')
 
-          // Check if reminder was already sent
-          const { data: existingReminder } = await supabase
-            .from('email_logs')
-            .select('id')
-            .eq('message_id', transaction.message_id)
-            .eq('email_type', 'deadline_reminder')
-            .single()
+        if (countError) {
+          console.error(`Failed to count reminders for ${transaction.message_id}:`, countError)
+          errorCount++
+          continue
+        }
 
-          if (existingReminder) {
-            remindersSkipped++
-            continue // Reminder already sent
-          }
+        // Skip if already sent 2 reminders
+        if (reminderCount !== null && reminderCount >= 2) {
+          remindersSkipped++
+          continue // Max reminders already sent
+        }
+
+        // Determine if we should send a reminder
+        let shouldSendReminder = false
+        let reminderType = ''
+
+        if (reminderCount === 0 && now >= halfwayPoint) {
+          // First reminder: at 50% of deadline
+          shouldSendReminder = true
+          reminderType = 'first_reminder_50_percent'
+        } else if (reminderCount === 1 && now >= seventyFivePercentPoint) {
+          // Second reminder: at 75% of deadline
+          shouldSendReminder = true
+          reminderType = 'second_reminder_75_percent'
+        }
+
+        // Check if we should send a reminder
+        if (shouldSendReminder) {
 
           // Get recipient email
           const { data: userProfile, error: profileError } = await supabase.auth.admin.getUserById(transaction.recipient_user_id)
@@ -262,6 +283,10 @@ serve(async (req) => {
           const htmlContent = generateReminderEmailTemplate(emailData)
           const textContent = generateReminderEmailPlainText(emailData)
 
+          // Customize subject based on reminder number
+          const reminderNumber = (reminderCount || 0) + 1
+          const subjectPrefix = reminderNumber === 1 ? '⏰ REMINDER' : '🚨 FINAL REMINDER'
+
           // Send reminder via Postmark
           const emailResponse = await fetch('https://api.postmarkapp.com/email', {
             method: 'POST',
@@ -273,7 +298,7 @@ serve(async (req) => {
             body: JSON.stringify({
               From: 'FASTPASS <noreply@fastpass.email>',
               To: recipientEmail,
-              Subject: `🚨 URGENT - Only ${hoursLeft}h left to earn €${earnings.toFixed(2)}`,
+              Subject: `${subjectPrefix} - Only ${hoursLeft}h left to earn €${earnings.toFixed(2)}`,
               HtmlBody: htmlContent,
               TextBody: textContent,
               MessageStream: 'outbound',
@@ -286,7 +311,11 @@ serve(async (req) => {
                 },
                 {
                   Name: 'X-Fastpass-Reminder-Type',
-                  Value: 'deadline'
+                  Value: reminderType
+                },
+                {
+                  Name: 'X-Fastpass-Reminder-Number',
+                  Value: reminderNumber.toString()
                 },
                 {
                   Name: 'X-Fastpass-Hours-Left',
@@ -295,7 +324,8 @@ serve(async (req) => {
               ],
               Metadata: {
                 messageId: transaction.message_id,
-                reminderType: 'deadline',
+                reminderType: reminderType,
+                reminderNumber: reminderNumber.toString(),
                 hoursLeft: hoursLeft.toString(),
                 earnings: earnings.toString()
               }
@@ -317,14 +347,16 @@ serve(async (req) => {
               metadata: {
                 hours_left: hoursLeft,
                 earnings: earnings,
-                reminder_trigger: 'halfway_deadline',
+                reminder_type: reminderType,
+                reminder_number: reminderNumber,
+                reminder_trigger: reminderNumber === 1 ? 'halfway_deadline' : 'seventy_five_percent_deadline',
                 postmark_message_id: emailResult.MessageID,
                 to: emailResult.To,
                 submitted_at: emailResult.SubmittedAt
               }
             })
 
-            console.log(`Reminder sent for message ${transaction.message_id} to ${recipientEmail}`)
+            console.log(`Reminder #${reminderNumber} sent for message ${transaction.message_id} to ${recipientEmail} (${reminderType})`)
             remindersSent++
           } else {
             const errorText = await emailResponse.text()
