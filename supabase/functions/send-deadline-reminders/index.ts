@@ -182,15 +182,20 @@ serve(async (req) => {
 
     for (const transaction of messagesNeedingReminder) {
       try {
-        // Validate required data (handle LEFT JOIN nulls)
-        if (!transaction.messages || !Array.isArray(transaction.messages) || transaction.messages.length === 0) {
-          console.error(`Transaction ${transaction.id} missing messages data`)
+        // Fetch message separately to avoid nested select issues
+        const { data: message, error: messageError } = await supabase
+          .from('messages')
+          .select('id, content, sender_email, response_deadline_hours, created_at')
+          .eq('id', transaction.message_id)
+          .single()
+
+        if (messageError || !message) {
+          console.error(`Transaction ${transaction.id} - failed to fetch message:`, messageError)
           errorCount++
           continue
         }
 
-        const message = transaction.messages[0]
-        if (!message || !message.created_at || !message.content) {
+        if (!message.created_at || !message.content) {
           console.error(`Transaction ${transaction.id} has invalid message data`)
           errorCount++
           continue

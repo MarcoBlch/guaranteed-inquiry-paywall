@@ -63,3 +63,7 @@ backup-*.sql
 # Windows metadata files (NTFS alternate data streams)
 *:Zone.Identifier
 *:mshield
+
+# Debug and temporary scripts
+*.mjs
+debug-*.md

@@ -137,7 +137,8 @@ serve(async (req) => {
                              `${messageData.responseDeadlineHours} hours`
 
     // Send email to recipient using Postmark email service
-    await supabase.functions.invoke('postmark-send-message', {
+    console.log('Attempting to send email via postmark-send-message function')
+    const emailResult = await supabase.functions.invoke('postmark-send-message', {
       body: {
         senderEmail: messageData.senderEmail,
         senderMessage: sanitizedContent,
@@ -147,6 +148,21 @@ serve(async (req) => {
         recipientEmail: recipientEmail
       }
     })
+
+    // Check if email sending failed
+    if (emailResult.error) {
+      console.error('Email sending failed:', emailResult.error)
+      throw new Error(`Failed to send email notification: ${emailResult.error.message || 'Unknown error'}`)
+    }
+
+    // Verify email was actually sent
+    const emailData = emailResult.data as any
+    if (!emailData?.success) {
+      console.error('Email function returned failure:', emailData)
+      throw new Error(`Email sending returned failure: ${emailData?.error || 'Unknown error'}`)
+    }
+
+    console.log('Email sent successfully:', emailData?.emailId)
 
     return new Response(
       JSON.stringify({ 
