@@ -12,30 +12,77 @@ serve(async (req) => {
 
     if (!signature || !webhookSecret) {
       console.error('Missing signature or webhook secret')
-      return new Response('Bad Request', { status: 400 })
+      return new Response(JSON.stringify({
+        received: false,
+        error: 'missing_signature_or_secret'
+      }), {
+        status: 200,  // Return 200 to prevent Stripe retries
+        headers: { 'Content-Type': 'application/json' }
+      })
     }
 
     // Initialize Stripe
     const stripe = new Stripe(stripeSecretKey!, { apiVersion: '2023-10-16' })
 
-    // Verify webhook signature (SECURE)
+    // Verify webhook signature (SECURE) - FIXED: Use async version
     let event: Stripe.Event
     try {
-      event = stripe.webhooks.constructEvent(
+      event = await stripe.webhooks.constructEventAsync(
         body,
         signature,
         webhookSecret
       )
-      console.log(`✅ Webhook signature verified: ${event.type}`)
+      console.log(`✅ Webhook signature verified: ${event.type} (${event.id})`)
     } catch (err) {
       console.error('⚠️ Webhook signature verification failed:', err instanceof Error ? err.message : 'Unknown error')
-      return new Response('Invalid signature', { status: 400 })
+      // Return 200 to prevent retry storm - log for investigation
+      return new Response(JSON.stringify({
+        received: false,
+        error: 'signature_verification_failed'
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
     }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // IDEMPOTENCY CHECK: Prevent duplicate event processing
+    const { data: existingEvent } = await supabase
+      .from('webhook_events')
+      .select('id')
+      .eq('event_id', event.id)
+      .single()
+
+    if (existingEvent) {
+      console.log(`✅ Event ${event.id} (${event.type}) already processed, skipping`)
+      return new Response(JSON.stringify({
+        received: true,
+        skipped: true,
+        reason: 'already_processed'
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Record that we're processing this event (idempotency)
+    const { error: insertError } = await supabase
+      .from('webhook_events')
+      .insert({
+        event_id: event.id,
+        event_type: event.type
+      })
+
+    if (insertError) {
+      console.error(`Failed to record webhook event ${event.id}:`, insertError.message)
+      // Continue processing anyway - we'll catch duplicates on next retry
+    } else {
+      console.log(`🔄 Processing new webhook event: ${event.type} (${event.id})`)
+    }
 
     switch (event.type) {
       case 'account.updated':
