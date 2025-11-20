@@ -298,12 +298,57 @@ POSTMARK_INBOUND_WEBHOOK_SECRET=...
 - `supabase/functions/postmark-inbound-webhook/index.ts` - Response detection
 - `supabase/functions/distribute-escrow-funds/index.ts` - Payout logic
 
+## Recent Fixes & Known Issues (Nov 2025)
+
+### Critical Bugs Fixed:
+
+**1. INNER JOIN Bug in check-escrow-timeouts** (Fixed: Nov 20, 2025)
+- **Issue**: Transactions without `message_responses` records were invisible to cron job
+- **Impact**: Expired transactions not being automatically refunded
+- **Fix**: Changed from INNER JOIN to LEFT JOIN with null-safe filtering
+- **Commit**: Latest deployment
+- **File**: `supabase/functions/check-escrow-timeouts/index.ts` lines 21-39
+
+**2. Webhook Signature Verification** (Fixed: Nov 19, 2025 - Commit 8f6dc76)
+- **Issue**: 96% webhook failure rate due to synchronous crypto operations
+- **Impact**: Stripe webhooks not processing, payments stuck
+- **Fix**: Switched to `constructEventAsync` for async signature verification
+- **File**: `supabase/functions/stripe-connect-webhook/index.ts`
+- **Added**: Idempotency protection with `webhook_events` table
+
+**3. Invalid Stripe Refund Reason** (Fixed: Nov 19, 2025 - Commit 8f6dc76)
+- **Issue**: Used `reason: 'expired'` which Stripe rejects
+- **Impact**: Refunds failing with 400 errors
+- **Fix**: Changed to `reason: 'requested_by_customer'`
+- **File**: `supabase/functions/check-escrow-timeouts/index.ts` line 209
+
+**4. Deadline Reminder Spam** (Fixed: Nov 14, 2025 - Commit e81332a)
+- **Issue**: Unlimited reminders sent to recipients
+- **Impact**: User complaints about spam
+- **Fix**: Limited to maximum 2 reminders (50% and 75% of deadline)
+- **File**: `supabase/functions/send-deadline-reminders/index.ts`
+
+### Known Configuration Issues:
+
+**Platform Balance for Transfers**
+- **Issue**: Auto-payouts prevent funds from staying in platform for transfers
+- **Impact**: Recipient payouts fail with "insufficient funds" error
+- **Solution**: Switch to manual payouts in Stripe Dashboard settings
+- **Workaround**: Manually fund platform account before processing transfers
+
+### Testing & Verification:
+
+- Webhook health: Check Stripe Dashboard → Webhooks (should be >90% success rate)
+- Cron jobs: GitHub Actions → Verify automated runs every 10 minutes
+- Screenshots: See `UI_inspiration/README.md` for debugging documentation
+
 ## Additional Documentation
 
 - `CODEBASE-CLEANUP-REPORT.md` - Architecture cleanup notes
 - `CLEANUP-RESULTS.md` - Recent cleanup results
 - `tests/docs/` - Test documentation
 - `tests/sql/` - Verification SQL queries
+- `UI_inspiration/README.md` - Debug screenshots and issue documentation
 
 ## Critical Reminders
 
@@ -317,6 +362,6 @@ POSTMARK_INBOUND_WEBHOOK_SECRET=...
 
 ---
 
-**Last Updated**: 2025-11-06
+**Last Updated**: 2025-11-20
 **Status**: Production-Ready
-**Version**: 3.0
+**Version**: 3.1

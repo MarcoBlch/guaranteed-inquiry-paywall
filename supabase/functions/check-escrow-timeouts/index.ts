@@ -18,17 +18,25 @@ serve(async (req) => {
     )
 
     // Trouver toutes les transactions expirées (statut 'held' uniquement)
-    const { data: expiredTransactions, error } = await supabase
+    // Using LEFT JOIN to include transactions without message_responses records
+    const { data: allExpiredTransactions, error } = await supabase
       .from('escrow_transactions')
       .select(`
         *,
-        message_responses!inner(has_response)
+        message_responses(has_response)
       `)
       .eq('status', 'held')
-      .eq('message_responses.has_response', false)
       .lt('expires_at', new Date().toISOString())
 
     if (error) throw error
+
+    // Filter to include only transactions without responses
+    // This includes both: (1) no message_responses record, OR (2) has_response = false
+    const expiredTransactions = allExpiredTransactions.filter(txn => {
+      const responses = txn.message_responses as any
+      // Include if no response record exists (null/undefined) or has_response is explicitly false
+      return !responses || responses.has_response === false
+    })
 
     console.log(`Found ${expiredTransactions.length} expired transactions`)
 
