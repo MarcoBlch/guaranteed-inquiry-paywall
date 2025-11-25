@@ -17,6 +17,9 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
 import EmailPreview from "./pages/EmailPreview";
 import EmailTest from "./pages/EmailTest";
+import Privacy from "./pages/Privacy";
+import CookieSettings from "./pages/CookieSettings";
+import { CookieBanner } from "./components/CookieBanner";
 import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -80,6 +83,10 @@ const App = () => {
             <Route path="/auth/confirm" element={<AuthCallback />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
+            {/* LEGAL & PRIVACY ROUTES - Public access */}
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/cookie-settings" element={<CookieSettings />} />
+
             {/* PROTECTED ROUTES - Authentication required */}
             <Route path="/dashboard" element={
               <AuthProvider>
@@ -129,6 +136,9 @@ const App = () => {
               </div>
             } />
           </Routes>
+
+          {/* Cookie Banner - Appears outside routes */}
+          <CookieBanner />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
