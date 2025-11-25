@@ -257,7 +257,29 @@ const PaywallPage = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-white/60 text-sm">
+        <footer className="text-center py-8 text-white/60 text-sm border-t border-[#5cffb0]/20">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+            <a
+              href="/privacy"
+              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <span className="hidden sm:inline text-white/40">•</span>
+            <a
+              href="/cookie-settings"
+              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+            >
+              Cookie Settings
+            </a>
+            <span className="hidden sm:inline text-white/40">•</span>
+            <a
+              href="mailto:support@fastpass.email"
+              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+            >
+              Contact Us
+            </a>
+          </div>
           <p>© 2025 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>
