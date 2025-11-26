@@ -89,15 +89,8 @@ GRANT SELECT ON public.response_tracking_stats TO authenticated;
 -- FIX 2: Comprehensive RLS Policies
 -- ============================================================
 
--- Helper function for admin check (reusable)
-CREATE OR REPLACE FUNCTION auth.is_admin()
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-    AND is_admin = true
-  );
-$$ LANGUAGE SQL SECURITY DEFINER;
+-- Helper function for admin check already exists in public schema
+-- (Skip creating in auth schema as we don't have permissions)
 
 -- ============================================================
 -- PROFILES TABLE
@@ -114,7 +107,7 @@ CREATE POLICY "profiles_select_policy" ON profiles
   FOR SELECT
   USING (
     auth.uid() = id  -- Own profile
-    OR auth.is_admin()  -- Or admin
+    OR public.is_admin()  -- Or admin
   );
 
 -- Users can update own profile, admins can update any
@@ -122,13 +115,13 @@ CREATE POLICY "profiles_update_policy" ON profiles
   FOR UPDATE
   USING (
     auth.uid() = id
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- Only admins can insert profiles (via signup trigger)
 CREATE POLICY "profiles_insert_policy" ON profiles
   FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 -- ============================================================
 -- MESSAGES TABLE
@@ -144,20 +137,20 @@ CREATE POLICY "messages_select_policy" ON messages
   FOR SELECT
   USING (
     auth.uid() = user_id  -- Received by user
-    OR auth.is_admin()  -- Or admin
+    OR public.is_admin()  -- Or admin
   );
 
 -- Service role can insert messages (anonymous senders)
 CREATE POLICY "messages_insert_policy" ON messages
   FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 -- Users can update own messages, admins can update any
 CREATE POLICY "messages_update_policy" ON messages
   FOR UPDATE
   USING (
     auth.uid() = user_id
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- ============================================================
@@ -173,18 +166,18 @@ CREATE POLICY "transactions_select_policy" ON escrow_transactions
   FOR SELECT
   USING (
     auth.uid() = recipient_user_id  -- User's transaction
-    OR auth.is_admin()  -- Or admin
+    OR public.is_admin()  -- Or admin
   );
 
 -- Only system can insert transactions (via Edge Functions with service role)
 CREATE POLICY "transactions_insert_policy" ON escrow_transactions
   FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 -- Only system/admin can update transactions
 CREATE POLICY "transactions_update_policy" ON escrow_transactions
   FOR UPDATE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- ============================================================
 -- EMAIL_LOGS TABLE
@@ -202,17 +195,17 @@ CREATE POLICY "email_logs_select_policy" ON email_logs
       SELECT id FROM messages
       WHERE user_id = auth.uid()
     )
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- Only system can insert/update email logs
 CREATE POLICY "email_logs_insert_policy" ON email_logs
   FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 CREATE POLICY "email_logs_update_policy" ON email_logs
   FOR UPDATE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- ============================================================
 -- MESSAGE_RESPONSES TABLE
@@ -230,7 +223,7 @@ CREATE POLICY "responses_select_policy" ON message_responses
       SELECT id FROM messages
       WHERE user_id = auth.uid()
     )
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- Users can insert responses for their messages
@@ -241,7 +234,7 @@ CREATE POLICY "responses_insert_policy" ON message_responses
       SELECT id FROM messages
       WHERE user_id = auth.uid()
     )
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- Users can update responses for their messages
@@ -252,7 +245,7 @@ CREATE POLICY "responses_update_policy" ON message_responses
       SELECT id FROM messages
       WHERE user_id = auth.uid()
     )
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- ============================================================
@@ -271,17 +264,17 @@ CREATE POLICY "response_tracking_select_policy" ON email_response_tracking
       SELECT id FROM messages
       WHERE user_id = auth.uid()
     )
-    OR auth.is_admin()
+    OR public.is_admin()
   );
 
 -- Only system can insert/update tracking
 CREATE POLICY "response_tracking_insert_policy" ON email_response_tracking
   FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 CREATE POLICY "response_tracking_update_policy" ON email_response_tracking
   FOR UPDATE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- ============================================================
 -- ADMIN_ACTIONS TABLE (if exists)
@@ -297,11 +290,11 @@ BEGIN
     -- Only admins can view/insert admin actions
     EXECUTE 'CREATE POLICY "admin_actions_select_policy" ON admin_actions
       FOR SELECT
-      USING (auth.is_admin())';
+      USING (public.is_admin())';
 
     EXECUTE 'CREATE POLICY "admin_actions_insert_policy" ON admin_actions
       FOR INSERT
-      WITH CHECK (auth.is_admin())';
+      WITH CHECK (public.is_admin())';
   END IF;
 END $$;
 
@@ -317,7 +310,7 @@ BEGIN
 
     EXECUTE 'CREATE POLICY "security_audit_select_policy" ON security_audit
       FOR SELECT
-      USING (auth.is_admin())';
+      USING (public.is_admin())';
 
     EXECUTE 'CREATE POLICY "security_audit_insert_policy" ON security_audit
       FOR INSERT

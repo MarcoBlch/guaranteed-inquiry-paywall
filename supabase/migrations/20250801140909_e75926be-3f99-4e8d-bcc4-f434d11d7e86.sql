@@ -69,6 +69,7 @@ CREATE POLICY "Users can delete their messages" ON public.messages
 FOR DELETE USING ((select auth.uid()) = user_id);
 
 -- Pricing tiers - garder séparées car logiques différentes
+DROP POLICY IF EXISTS "Public can view active pricing tiers" ON public.pricing_tiers;
 CREATE POLICY "Public can view active pricing tiers" ON public.pricing_tiers
 FOR SELECT USING (is_active = true);
 

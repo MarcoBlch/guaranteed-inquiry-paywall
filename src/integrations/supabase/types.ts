@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -19,27 +19,33 @@ export type Database = {
           action_type: string
           admin_user_id: string | null
           created_at: string | null
+          description: string | null
           escrow_transaction_id: string | null
           id: string
           message_response_id: string | null
+          metadata: Json | null
           notes: string | null
         }
         Insert: {
           action_type: string
           admin_user_id?: string | null
           created_at?: string | null
+          description?: string | null
           escrow_transaction_id?: string | null
           id?: string
           message_response_id?: string | null
+          metadata?: Json | null
           notes?: string | null
         }
         Update: {
           action_type?: string
           admin_user_id?: string | null
           created_at?: string | null
+          description?: string | null
           escrow_transaction_id?: string | null
           id?: string
           message_response_id?: string | null
+          metadata?: Json | null
           notes?: string | null
         }
         Relationships: [
@@ -83,10 +89,12 @@ export type Database = {
       }
       email_logs: {
         Row: {
+          bounced_at: string | null
           clicked_at: string | null
           created_at: string
           delivered_at: string | null
           email_provider_id: string | null
+          email_service_provider: string | null
           email_type: string
           failed_at: string | null
           failure_reason: string | null
@@ -95,15 +103,19 @@ export type Database = {
           metadata: Json | null
           opened_at: string | null
           recipient_email: string
+          response_detected_at: string | null
           sender_email: string
           sent_at: string
+          spam_at: string | null
           updated_at: string | null
         }
         Insert: {
+          bounced_at?: string | null
           clicked_at?: string | null
           created_at?: string
           delivered_at?: string | null
           email_provider_id?: string | null
+          email_service_provider?: string | null
           email_type: string
           failed_at?: string | null
           failure_reason?: string | null
@@ -112,15 +124,19 @@ export type Database = {
           metadata?: Json | null
           opened_at?: string | null
           recipient_email: string
+          response_detected_at?: string | null
           sender_email: string
           sent_at?: string
+          spam_at?: string | null
           updated_at?: string | null
         }
         Update: {
+          bounced_at?: string | null
           clicked_at?: string | null
           created_at?: string
           delivered_at?: string | null
           email_provider_id?: string | null
+          email_service_provider?: string | null
           email_type?: string
           failed_at?: string | null
           failure_reason?: string | null
@@ -129,8 +145,10 @@ export type Database = {
           metadata?: Json | null
           opened_at?: string | null
           recipient_email?: string
+          response_detected_at?: string | null
           sender_email?: string
           sent_at?: string
+          spam_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -143,6 +161,78 @@ export type Database = {
           },
           {
             foreignKeyName: "email_logs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_response_tracking: {
+        Row: {
+          created_at: string
+          email_headers: Json | null
+          grace_period_used: boolean
+          id: string
+          inbound_email_id: string | null
+          message_id: string
+          metadata: Json | null
+          original_email_id: string
+          quality_notes: string | null
+          quality_score: number | null
+          response_content_preview: string | null
+          response_detected_method: string
+          response_email_from: string | null
+          response_email_subject: string | null
+          response_received_at: string
+          within_deadline: boolean
+        }
+        Insert: {
+          created_at?: string
+          email_headers?: Json | null
+          grace_period_used?: boolean
+          id?: string
+          inbound_email_id?: string | null
+          message_id: string
+          metadata?: Json | null
+          original_email_id: string
+          quality_notes?: string | null
+          quality_score?: number | null
+          response_content_preview?: string | null
+          response_detected_method: string
+          response_email_from?: string | null
+          response_email_subject?: string | null
+          response_received_at: string
+          within_deadline?: boolean
+        }
+        Update: {
+          created_at?: string
+          email_headers?: Json | null
+          grace_period_used?: boolean
+          id?: string
+          inbound_email_id?: string | null
+          message_id?: string
+          metadata?: Json | null
+          original_email_id?: string
+          quality_notes?: string | null
+          quality_score?: number | null
+          response_content_preview?: string | null
+          response_detected_method?: string
+          response_email_from?: string | null
+          response_email_subject?: string | null
+          response_received_at?: string
+          within_deadline?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_response_tracking_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_email_status"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "email_response_tracking_message_id_fkey"
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "messages"
@@ -394,7 +484,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -403,7 +493,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -412,14 +502,54 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
         Relationships: []
       }
+      webhook_events: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          event_type: string
+          id: string
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
+      email_service_stats: {
+        Row: {
+          bounced: number | null
+          clicked: number | null
+          delivered: number | null
+          delivery_rate: number | null
+          email_service_provider: string | null
+          failed: number | null
+          failure_rate: number | null
+          open_rate: number | null
+          opened: number | null
+          spam: number | null
+          total_sent: number | null
+        }
+        Relationships: []
+      }
       email_stats: {
         Row: {
           clicked: number | null
@@ -446,40 +576,42 @@ export type Database = {
         }
         Relationships: []
       }
+      response_tracking_stats: {
+        Row: {
+          avg_quality_score: number | null
+          grace_period_responses: number | null
+          manually_marked: number | null
+          on_time_percentage: number | null
+          on_time_responses: number | null
+          total_responses: number | null
+          webhook_detected: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_expiration_time: {
         Args: { message_id: string }
         Returns: string
       }
-      clean_old_email_logs: {
-        Args: { days_to_keep?: number }
-        Returns: number
+      check_my_admin_status: {
+        Args: never
+        Returns: {
+          is_admin_function: boolean
+          is_admin_in_db: boolean
+          session_authenticated: boolean
+          user_email: string
+          user_id: string
+        }[]
       }
-      get_current_user_email: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_valid_email: {
-        Args: { email_text: string }
-        Returns: boolean
-      }
-      is_verified_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      sanitize_text: {
-        Args: { input_text: string }
-        Returns: string
-      }
+      clean_old_email_logs: { Args: { days_to_keep?: number }; Returns: number }
+      cleanup_old_webhook_events: { Args: never; Returns: undefined }
+      get_current_user_email: { Args: never; Returns: string }
+      get_current_user_id: { Args: never; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+      is_valid_email: { Args: { email_text: string }; Returns: boolean }
+      is_verified_admin: { Args: never; Returns: boolean }
+      sanitize_text: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
@@ -612,3 +744,5 @@ export const Constants = {
     Enums: {},
   },
 } as const
+A new version of Supabase CLI is available: v2.62.10 (currently installed v2.62.5)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
