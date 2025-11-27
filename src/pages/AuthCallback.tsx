@@ -23,7 +23,22 @@ const AuthCallback = () => {
         const isEmailVerification = type === 'email';
         const isPasswordRecovery = type === 'recovery';
 
-        console.log('Handling auth callback...', { type, tokenHash: tokenHash?.substring(0, 10) + '...', isEmailVerification, isPasswordRecovery });
+        // Log ALL URL parameters to debug
+        const allParams: Record<string, string> = {};
+        searchParams.forEach((value, key) => {
+          allParams[key] = key.includes('token') || key.includes('hash')
+            ? value.substring(0, 10) + '...'
+            : value;
+        });
+
+        console.log('Handling auth callback...', {
+          type,
+          tokenHash: tokenHash?.substring(0, 10) + '...',
+          isEmailVerification,
+          isPasswordRecovery,
+          allURLParams: allParams,
+          fullURL: window.location.href
+        });
 
         // Check for error parameters first
         const error = searchParams.get('error');
