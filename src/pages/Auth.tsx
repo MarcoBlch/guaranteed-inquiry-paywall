@@ -15,6 +15,13 @@ const AuthPage = () => {
       const token = searchParams.get('token');
       const type = searchParams.get('type');
       const redirectTo = searchParams.get('redirect_to');
+      const isPasswordReset = searchParams.get('reset') === 'true';
+
+      // If we're in password reset mode, don't do anything - just show the form
+      if (isPasswordReset) {
+        console.log('Password reset mode detected - staying on auth page');
+        return;
+      }
 
       // Check for OAuth session (access_token and refresh_token in URL)
       const accessToken = searchParams.get('access_token');

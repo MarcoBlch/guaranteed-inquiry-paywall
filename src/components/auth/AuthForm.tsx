@@ -24,6 +24,7 @@ const AuthForm = () => {
     // Check if this is a password reset flow
     const isReset = searchParams.get('reset') === 'true';
     if (isReset) {
+      console.log('Password reset mode activated - showing reset form');
       setIsPasswordReset(true);
       setIsLogin(false);
       setIsForgotPassword(false);

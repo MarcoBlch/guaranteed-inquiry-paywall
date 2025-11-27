@@ -9,7 +9,13 @@ const AuthCallback = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    // Prevent multiple executions
+    let executed = false;
+
     const handleAuthCallback = async () => {
+      if (executed) return;
+      executed = true;
+
       try {
         // Determine the type of callback (email verification, password recovery, or OAuth)
         const type = searchParams.get('type');
@@ -30,32 +36,19 @@ const AuthCallback = () => {
           return;
         }
 
-        // For password recovery, verify OTP and redirect to reset form
-        if (isPasswordRecovery && tokenHash) {
-          console.log('Password recovery detected - verifying token...');
+        // CRITICAL: For password recovery, redirect to reset form and STOP processing
+        // Supabase automatically handles the token verification via the URL
+        // and creates a recovery session. We must NOT continue to check session
+        // or we'll redirect to dashboard instead of showing the reset form.
+        if (isPasswordRecovery) {
+          console.log('Password recovery detected - redirecting to reset form and stopping execution');
 
-          try {
-            const { error: verifyError } = await supabase.auth.verifyOtp({
-              type: 'recovery',
-              token_hash: tokenHash,
-            });
+          // Use replace to avoid back button issues
+          navigate('/auth?reset=true', { replace: true });
 
-            if (verifyError) {
-              console.error('Token verification error:', verifyError);
-              toast.error('Password reset link is invalid or expired');
-              navigate('/auth');
-              return;
-            }
-
-            console.log('Token verified - redirecting to password reset form');
-            navigate('/auth?reset=true');
-            return;
-          } catch (err) {
-            console.error('Verification exception:', err);
-            toast.error('Failed to verify password reset link');
-            navigate('/auth');
-            return;
-          }
+          // CRITICAL: Return immediately to prevent any further processing
+          // that might redirect to dashboard
+          return;
         }
 
         // Get the current session (this automatically processes email verification tokens)
