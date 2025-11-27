@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
+import AccountSettings from "./pages/AccountSettings";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
@@ -92,6 +93,14 @@ const App = () => {
               <AuthProvider>
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/settings" element={
+              <AuthProvider>
+                <ProtectedRoute>
+                  <AccountSettings />
                 </ProtectedRoute>
               </AuthProvider>
             } />

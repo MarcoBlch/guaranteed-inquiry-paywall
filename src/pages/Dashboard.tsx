@@ -409,6 +409,14 @@ const Dashboard = () => {
                   Refresh
                 </Button>
                 <Button
+                  onClick={() => navigate('/settings')}
+                  className="bg-transparent border border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 flex-1 sm:flex-none"
+                  size="sm"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Account
+                </Button>
+                <Button
                   onClick={handleLogout}
                   className="bg-transparent border border-[#5cffb0]/50 text-[#B0B0B0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0] flex-1 sm:flex-none"
                   size="sm"
