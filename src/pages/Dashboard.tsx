@@ -151,18 +151,44 @@ const Dashboard = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch messages first
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select(`
-          *,
-          escrow_transactions(*),
-          message_responses(*)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (messagesError) throw messagesError;
+
+      // Fetch related data separately to avoid PostgREST ambiguous FK issue
+      const messageIds = messagesData?.map(m => m.id) || [];
+
+      let escrowData: any[] = [];
+      let responseData: any[] = [];
+
+      if (messageIds.length > 0) {
+        const { data: escrowTransactions } = await supabase
+          .from('escrow_transactions')
+          .select('*')
+          .in('message_id', messageIds);
+
+        const { data: messageResponses } = await supabase
+          .from('message_responses')
+          .select('*')
+          .in('message_id', messageIds);
+
+        escrowData = escrowTransactions || [];
+        responseData = messageResponses || [];
+      }
+
+      // Join data on client side
+      const enrichedMessages = messagesData?.map(message => ({
+        ...message,
+        escrow_transactions: escrowData.filter(e => e.message_id === message.id),
+        message_responses: responseData.filter(r => r.message_id === message.id)
+      })) || [];
+
+      setMessages(enrichedMessages);
     } catch (error: any) {
       toast.error('Error loading messages: ' + error.message);
     }
