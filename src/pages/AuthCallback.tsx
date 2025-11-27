@@ -17,16 +17,28 @@ const AuthCallback = () => {
       executed = true;
 
       try {
-        // Determine the type of callback (email verification, password recovery, or OAuth)
-        const type = searchParams.get('type');
-        const tokenHash = searchParams.get('token_hash');
+        // CRITICAL: Supabase sends auth parameters in URL FRAGMENT (#), not query string (?)
+        // React Router's useSearchParams only reads query params, so we must parse the fragment manually
+        const fragment = window.location.hash.substring(1); // Remove leading #
+        const fragmentParams = new URLSearchParams(fragment);
+
+        // Try query params first (for email verification), then fragment params (for password recovery)
+        const type = searchParams.get('type') || fragmentParams.get('type');
+        const tokenHash = searchParams.get('token_hash') || fragmentParams.get('token_hash');
         const isEmailVerification = type === 'email';
         const isPasswordRecovery = type === 'recovery';
 
         // Log ALL URL parameters to debug
-        const allParams: Record<string, string> = {};
+        const allQueryParams: Record<string, string> = {};
         searchParams.forEach((value, key) => {
-          allParams[key] = key.includes('token') || key.includes('hash')
+          allQueryParams[key] = key.includes('token') || key.includes('hash')
+            ? value.substring(0, 10) + '...'
+            : value;
+        });
+
+        const allFragmentParams: Record<string, string> = {};
+        fragmentParams.forEach((value, key) => {
+          allFragmentParams[key] = key.includes('token') || key.includes('hash')
             ? value.substring(0, 10) + '...'
             : value;
         });
@@ -36,7 +48,8 @@ const AuthCallback = () => {
           tokenHash: tokenHash?.substring(0, 10) + '...',
           isEmailVerification,
           isPasswordRecovery,
-          allURLParams: allParams,
+          queryParams: allQueryParams,
+          fragmentParams: allFragmentParams,
           fullURL: window.location.href
         });
 
