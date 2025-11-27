@@ -13,10 +13,11 @@ const AuthCallback = () => {
       try {
         // Determine the type of callback (email verification, password recovery, or OAuth)
         const type = searchParams.get('type');
+        const tokenHash = searchParams.get('token_hash');
         const isEmailVerification = type === 'email';
         const isPasswordRecovery = type === 'recovery';
 
-        console.log('Handling auth callback...', { type, isEmailVerification, isPasswordRecovery });
+        console.log('Handling auth callback...', { type, tokenHash: tokenHash?.substring(0, 10) + '...', isEmailVerification, isPasswordRecovery });
 
         // Check for error parameters first
         const error = searchParams.get('error');
@@ -29,11 +30,32 @@ const AuthCallback = () => {
           return;
         }
 
-        // For password recovery, redirect to reset form immediately
-        if (isPasswordRecovery) {
-          console.log('Password recovery detected - redirecting to reset form');
-          navigate('/auth?reset=true');
-          return;
+        // For password recovery, verify OTP and redirect to reset form
+        if (isPasswordRecovery && tokenHash) {
+          console.log('Password recovery detected - verifying token...');
+
+          try {
+            const { error: verifyError } = await supabase.auth.verifyOtp({
+              type: 'recovery',
+              token_hash: tokenHash,
+            });
+
+            if (verifyError) {
+              console.error('Token verification error:', verifyError);
+              toast.error('Password reset link is invalid or expired');
+              navigate('/auth');
+              return;
+            }
+
+            console.log('Token verified - redirecting to password reset form');
+            navigate('/auth?reset=true');
+            return;
+          } catch (err) {
+            console.error('Verification exception:', err);
+            toast.error('Failed to verify password reset link');
+            navigate('/auth');
+            return;
+          }
         }
 
         // Get the current session (this automatically processes email verification tokens)
