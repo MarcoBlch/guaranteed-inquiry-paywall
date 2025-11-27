@@ -70,6 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('User signed out');
         } else if (event === 'TOKEN_REFRESHED' && session) {
           console.log('Token refreshed for:', session.user.email);
+        } else if (event === 'PASSWORD_RECOVERY' && session) {
+          console.log('Password recovery flow started for:', session.user.email);
         }
       }
     );

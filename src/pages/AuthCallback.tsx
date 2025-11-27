@@ -11,11 +11,12 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Determine the type of callback (email verification or OAuth)
+        // Determine the type of callback (email verification, password recovery, or OAuth)
         const type = searchParams.get('type');
         const isEmailVerification = type === 'email';
+        const isPasswordRecovery = type === 'recovery';
 
-        console.log('Handling auth callback...', { type, isEmailVerification });
+        console.log('Handling auth callback...', { type, isEmailVerification, isPasswordRecovery });
 
         // Check for error parameters first
         const error = searchParams.get('error');
@@ -25,6 +26,13 @@ const AuthCallback = () => {
           console.error('Auth error:', error, errorDescription);
           toast.error(`Authentication failed: ${errorDescription || error}`);
           navigate('/auth');
+          return;
+        }
+
+        // For password recovery, redirect to reset form immediately
+        if (isPasswordRecovery) {
+          console.log('Password recovery detected - redirecting to reset form');
+          navigate('/auth?reset=true');
           return;
         }
 
