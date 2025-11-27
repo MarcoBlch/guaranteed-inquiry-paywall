@@ -64,18 +64,34 @@ const AuthCallback = () => {
           return;
         }
 
-        // CRITICAL: For password recovery, redirect to reset form and STOP processing
-        // Supabase automatically handles the token verification via the URL
-        // and creates a recovery session. We must NOT continue to check session
-        // or we'll redirect to dashboard instead of showing the reset form.
+        // CRITICAL: For password recovery, we need to let Supabase establish the session
+        // from the URL fragment BEFORE redirecting, otherwise the session will be lost
         if (isPasswordRecovery) {
-          console.log('Password recovery detected - redirecting to reset form and stopping execution');
+          console.log('Password recovery detected - establishing session from fragment');
 
-          // Use replace to avoid back button issues
+          // Extract access_token and refresh_token from fragment
+          const accessToken = fragmentParams.get('access_token');
+          const refreshToken = fragmentParams.get('refresh_token');
+
+          if (accessToken && refreshToken) {
+            // Set the session using the tokens from the URL
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+
+            if (sessionError) {
+              console.error('Failed to set recovery session:', sessionError);
+              toast.error('Failed to start password reset session');
+              navigate('/auth');
+              return;
+            }
+
+            console.log('Recovery session established - redirecting to reset form');
+          }
+
+          // Now redirect to reset form with session established
           navigate('/auth?reset=true', { replace: true });
-
-          // CRITICAL: Return immediately to prevent any further processing
-          // that might redirect to dashboard
           return;
         }
 
