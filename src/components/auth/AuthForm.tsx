@@ -144,9 +144,9 @@ const AuthForm = () => {
         if (error) {
           // SECURITY FIX: Better error handling for login
           if (error.message.includes('Invalid login credentials')) {
-            throw new Error('Email ou mot de passe incorrect');
+            throw new Error('Invalid email or password');
           } else if (error.message.includes('Email not confirmed')) {
-            throw new Error('Veuillez confirmer votre email avant de vous connecter');
+            throw new Error('Please confirm your email before logging in');
           } else {
             throw error;
           }
@@ -165,18 +165,18 @@ const AuthForm = () => {
         if (error) {
           // SECURITY FIX: Better error handling for signup
           if (error.message.includes('already registered')) {
-            throw new Error('Cet email est déjà utilisé. Essayez de vous connecter.');
+            throw new Error('This email is already in use. Please try logging in.');
           } else if (error.message.includes('password')) {
-            throw new Error('Le mot de passe doit contenir au moins 6 caractères.');
+            throw new Error('Password must be at least 6 characters long.');
           } else {
             throw error;
           }
         }
-        toast.success('Vérifiez votre email pour confirmer votre compte!');
+        toast.success('Check your email to confirm your account!');
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      toast.error(error.message || 'Une erreur est survenue. Veuillez réessayer.');
+      toast.error(error.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
