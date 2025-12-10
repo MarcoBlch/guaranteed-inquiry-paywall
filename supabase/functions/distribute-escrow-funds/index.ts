@@ -126,14 +126,75 @@ serve(async (req) => {
         userTransfer = await userTransferResponse.json()
         console.log('User transfer created:', userTransfer.id)
 
-        // 5a. Mettre à jour statut = released
-        await supabase
+        // 5a. CRITICAL: Update status to 'released' with proper error handling
+        // This is the most critical database operation - if this fails after transfer succeeds,
+        // we have money transferred but DB not updated (inconsistent state)
+        const { data: updatedTransaction, error: updateError } = await supabase
           .from('escrow_transactions')
           .update({
             status: 'released',
+            stripe_transfer_id: userTransfer.id,  // Store transfer ID for reconciliation
             updated_at: new Date().toISOString()
           })
           .eq('id', escrowTransactionId)
+          .select()
+          .single()
+
+        if (updateError) {
+          // CRITICAL ERROR: Transfer succeeded but DB update failed
+          // Log extensively for manual reconciliation
+          console.error('CRITICAL: Stripe transfer succeeded but DB update failed', {
+            transaction_id: escrowTransactionId,
+            stripe_transfer_id: userTransfer.id,
+            transfer_amount: userAmountCents,
+            error: updateError.message,
+            error_details: updateError,
+            timestamp: new Date().toISOString()
+          })
+
+          // Try to mark as 'transfer_failed' so retry mechanism can pick it up
+          // (even though transfer succeeded - this is for manual intervention)
+          const { error: fallbackError } = await supabase
+            .from('escrow_transactions')
+            .update({
+              status: 'transfer_failed',
+              stripe_transfer_id: userTransfer.id,  // Store the successful transfer ID
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', escrowTransactionId)
+
+          if (fallbackError) {
+            console.error('CRITICAL: Even fallback status update failed', {
+              transaction_id: escrowTransactionId,
+              stripe_transfer_id: userTransfer.id,
+              fallback_error: fallbackError.message
+            })
+          }
+
+          // Return error response with transfer ID for manual reconciliation
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Transfer succeeded but database update failed - requires manual reconciliation',
+              critical: true,
+              transaction_id: escrowTransactionId,
+              stripe_transfer_id: userTransfer.id,
+              transfer_amount: userAmountCents,
+              platform_fee: platformFeeCents,
+              db_error: updateError.message
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500
+            }
+          )
+        }
+
+        console.log('Transaction status updated to released:', {
+          transaction_id: escrowTransactionId,
+          stripe_transfer_id: userTransfer.id,
+          status: updatedTransaction.status
+        })
       } else {
         const error = await userTransferResponse.text()
         console.error('User transfer failed:', error)
@@ -166,15 +227,35 @@ serve(async (req) => {
     } else {
       // 5b. Utilisateur n'a pas configuré Stripe - fonds en attente
       console.log('User has not completed Stripe setup - funds held until setup complete')
-      
-      await supabase
+
+      const { error: setupError } = await supabase
         .from('escrow_transactions')
-        .update({ 
+        .update({
           status: 'pending_user_setup',
           updated_at: new Date().toISOString()
         })
         .eq('id', escrowTransactionId)
-        
+
+      if (setupError) {
+        console.error('Failed to update transaction to pending_user_setup:', {
+          transaction_id: escrowTransactionId,
+          error: setupError.message
+        })
+
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Database update failed',
+            transaction_id: escrowTransactionId,
+            db_error: setupError.message
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          }
+        )
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -201,12 +282,24 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error distributing funds:', error)
+    // This catch block should only catch errors that happen BEFORE the Stripe transfer
+    // or unexpected errors. Post-transfer errors are handled inline above.
+    console.error('Error distributing funds (caught in outer try-catch):', {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      note: 'This error occurred before Stripe transfer or is an unexpected error'
+    })
+
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({
+        error: error.message,
+        phase: 'pre_transfer_or_unexpected',
+        timestamp: new Date().toISOString()
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500
       }
     )
   }
