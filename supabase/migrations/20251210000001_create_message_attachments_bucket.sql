@@ -61,10 +61,3 @@ ON storage.objects
 FOR DELETE
 TO authenticated
 USING (bucket_id = 'message-attachments');
-
--- Create index for performance
-CREATE INDEX IF NOT EXISTS idx_storage_objects_bucket_id
-ON storage.objects(bucket_id)
-WHERE bucket_id = 'message-attachments';
-
-COMMENT ON TABLE storage.objects IS 'Storage objects including message attachments';

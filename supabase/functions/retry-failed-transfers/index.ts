@@ -81,11 +81,15 @@ serve(async (req) => {
     console.log('Retry summary:', summary)
 
     // Create audit log
-    await supabase.from('admin_actions').insert({
-      action_type: 'retry_failed_transfers',
-      description: `Retried ${retriedCount} failed transfers: ${successCount} succeeded, ${failedCount} still failing`,
-      metadata: summary
-    }).catch(err => console.warn('Failed to log retry summary:', err))
+    try {
+      await supabase.from('admin_actions').insert({
+        action_type: 'retry_failed_transfers',
+        description: `Retried ${retriedCount} failed transfers: ${successCount} succeeded, ${failedCount} still failing`,
+        metadata: summary
+      })
+    } catch (err) {
+      console.warn('Failed to log retry summary:', err)
+    }
 
     return new Response(
       JSON.stringify({
