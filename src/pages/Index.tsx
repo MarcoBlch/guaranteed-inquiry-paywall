@@ -28,7 +28,7 @@ const PaywallPage = () => {
         <header className="p-4 sm:p-6 text-center">
           <div className="flex flex-col items-center">
             <FastPassLogo size="xl" />
-            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-3 sm:-mt-4">GUARANTEED RESPONSES</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-3 sm:-mt-4">TIME IS MONEY</p>
           </div>
         </header>
 
@@ -38,11 +38,11 @@ const PaywallPage = () => {
           <div className="mb-8 sm:mb-12 max-w-2xl w-full">
             {/* H1: Main Headline - Neon Vert, Bold, text-5xl */}
             <h1 className="text-[#5cffb0] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              GET PAID<br />TO ANSWER FAST
+              CREATE PRIORITY ACCESS<br />TO YOUR INBOX
             </h1>
             {/* Body Text (Primary) - Light Gray, Regular, text-base/text-lg */}
             <p className="text-[#B0B0B0] text-base sm:text-lg md:text-xl font-normal mb-6 sm:mb-8 leading-relaxed px-2">
-              Monetize your priority inbox NOW
+              The best pay-to-reach service
             </p>
           </div>
 
@@ -89,21 +89,21 @@ const PaywallPage = () => {
           <div className="w-full max-w-3xl mx-4 mb-12 sm:mb-16 space-y-8">
             {/* H2: Section Title */}
             <h2 className="text-[#5cffb0] text-2xl sm:text-3xl font-semibold text-center mb-6">
-              Keep your inbox clean and valuable
+              Keep your inbox exclusive and rewarding
             </h2>
 
             {/* Body paragraphs */}
             <p className="text-[#B0B0B0] text-base sm:text-lg font-normal leading-relaxed text-center px-4">
-              No more spam, no more wasted time, with FastPass you decide who gets priority access to your inbox. Value your time while respecting your audience: when they pay, you pledge to deliver a clear and timely answer. It's a simple way to monetize your expertise and guarantee real engagement.
+              No spam, no wasted time. With FastPass, you decide who gets priority access to your inbox and you get paid for your attention. Value your time while respecting your audience, when they pay you commit to delivering a clear and timely answer. It is a smarter way to monetize your expertise and guarantee real engagement.
             </p>
 
             {/* H2: Second Section Title */}
             <h2 className="text-[#5cffb0] text-2xl sm:text-3xl font-semibold text-center mt-8 mb-4">
-              A Commitment to Peace of Mind
+              Keep the link with your audience
             </h2>
 
             <p className="text-[#B0B0B0] text-base sm:text-lg font-normal leading-relaxed text-center px-4">
-              A FastPass is more than just a tool, it's a commitment. By setting your own price and response time, you stay in control while giving your audience the attention they deserve.
+              FastPass lets you stay close to your community while protecting your time. Engage with intention and reward meaningful interactions. Join a growing movement of creators, founders and professionals who value their attention and make every connection count.
             </p>
           </div>
 
@@ -160,26 +160,13 @@ const PaywallPage = () => {
                 <CardContent className="p-6 sm:p-8">
                   <div className="mb-4">
                     <h3 className="text-[#5cffb0] text-lg sm:text-xl font-semibold mb-3">
-                      ❓ Q1: What exactly is FastPass and why should I register?
+                      ❓ Q1: What exactly is a FastPass and why should I register?
                     </h3>
                     <div className="flex items-start gap-3">
                       <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <div className="text-[#B0B0B0] text-base font-normal leading-relaxed space-y-2">
-                        <p>
-                          FastPass is a smart paywall service that lets you monetize your inbox.
-                        </p>
-                        <p>
-                          Instead of being overwhelmed by messages, you decide who can reach you, when, and at what cost.
-                        </p>
-                        <p>
-                          By registering, you create your own FastPass link that:
-                        </p>
-                        <ul className="list-disc list-inside ml-4">
-                          <li>Filters out the noise</li>
-                          <li>Ensures you only get serious requests</li>
-                          <li>Rewards you financially for your time and expertise</li>
-                        </ul>
-                      </div>
+                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
+                        A FastPass lets your audience skip the line to reach you directly. They buy a pass, send you a message, and get a guaranteed reply within 24 hours. It is how creators, founders and experts stay available, without giving away their time.
+                      </p>
                     </div>
                   </div>
                 </CardContent>
