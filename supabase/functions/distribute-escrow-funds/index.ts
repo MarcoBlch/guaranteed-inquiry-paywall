@@ -28,7 +28,7 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       })
       .eq('id', escrowTransactionId)
-      .eq('status', 'held')  // Only succeeds if status is still 'held'
+      .in('status', ['held', 'transfer_failed'])  // Allow retrying failed transfers
       .select(`
         *,
         profiles!escrow_transactions_recipient_user_id_fkey(
@@ -39,7 +39,7 @@ serve(async (req) => {
       .single()
 
     if (lockError || !lockedTransaction) {
-      throw new Error(`Transaction already processing or not in held status: ${lockError?.message || 'Not found'}`)
+      throw new Error(`Transaction already processing or not in held/transfer_failed status: ${lockError?.message || 'Not found'}`)
     }
 
     const transaction = lockedTransaction
