@@ -512,9 +512,9 @@ const Dashboard = () => {
               <TabsContent value="messages">
                 <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Message Management</CardTitle>
+                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Inbox</CardTitle>
                     <CardDescription className="text-[#B0B0B0]">
-                      View and respond to paid messages received
+                      View every messages received
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -658,7 +658,7 @@ const Dashboard = () => {
                   <CardHeader>
                     <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl flex items-center gap-2">
                       <Euro className="h-5 w-5" />
-                      Escrow Transaction History
+                      Transaction History
                     </CardTitle>
                     <CardDescription className="text-[#B0B0B0]">
                       Track the status of all your received payments
