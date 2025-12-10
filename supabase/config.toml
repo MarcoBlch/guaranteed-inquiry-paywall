@@ -126,3 +126,9 @@ verify_jwt = true
 
 [functions.delete-user-account]
 verify_jwt = true
+
+[functions.upload-message-attachment]
+verify_jwt = false
+
+[functions.postmark-send-message]
+verify_jwt = false

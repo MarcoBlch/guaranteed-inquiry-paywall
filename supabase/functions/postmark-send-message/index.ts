@@ -14,6 +14,7 @@ interface MessageEmailData {
   paymentAmount: number;
   messageId: string;
   recipientEmail: string;
+  attachmentUrls?: string[];
 }
 
 function generateMessageEmailTemplate(data: MessageEmailData): string {
@@ -58,6 +59,22 @@ function generateMessageEmailTemplate(data: MessageEmailData): string {
                                 <div style="margin: 15px 0; padding: 15px; background-color: #ffffff; border-radius: 4px; border: 1px solid #e9ecef;">
                                     <p style="margin: 0; white-space: pre-wrap; line-height: 1.6;">${data.senderMessage}</p>
                                 </div>
+                                ${data.attachmentUrls && data.attachmentUrls.length > 0 ? `
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+                                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #666; font-size: 14px;">📎 Attachments (${data.attachmentUrls.length}):</p>
+                                    <div style="margin: 0;">
+                                        ${data.attachmentUrls.map((url, index) => {
+                                          const fileName = url.split('/').pop() || `attachment-${index + 1}`;
+                                          const decodedFileName = decodeURIComponent(fileName).split('-').slice(2).join('-') || fileName;
+                                          return `<div style="margin: 5px 0;">
+                                            <a href="${url}" target="_blank" style="color: #667eea; text-decoration: none; font-size: 14px;">
+                                              📄 ${decodedFileName}
+                                            </a>
+                                          </div>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
                             </div>
 
                             <!-- Response Instructions -->
@@ -110,7 +127,14 @@ You have received a guaranteed message from: ${data.senderEmail}
 
 MESSAGE:
 ${data.senderMessage}
-
+${data.attachmentUrls && data.attachmentUrls.length > 0 ? `
+ATTACHMENTS (${data.attachmentUrls.length}):
+${data.attachmentUrls.map((url, index) => {
+  const fileName = url.split('/').pop() || `attachment-${index + 1}`;
+  const decodedFileName = decodeURIComponent(fileName).split('-').slice(2).join('-') || fileName;
+  return `${index + 1}. ${decodedFileName}\n   ${url}`;
+}).join('\n')}
+` : ''}
 HOW TO RESPOND AND CLAIM YOUR PAYMENT:
 1. Reply directly to this email with your response
 2. Response deadline: Within ${data.responseDeadline}
@@ -139,7 +163,8 @@ serve(async (req) => {
       responseDeadline,
       paymentAmount,
       messageId,
-      recipientEmail
+      recipientEmail,
+      attachmentUrls
     }: MessageEmailData = await req.json();
 
     // Validate required fields
@@ -158,7 +183,8 @@ serve(async (req) => {
       responseDeadline,
       paymentAmount,
       messageId,
-      recipientEmail
+      recipientEmail,
+      attachmentUrls: attachmentUrls || []
     };
 
     const htmlContent = generateMessageEmailTemplate(emailData);
