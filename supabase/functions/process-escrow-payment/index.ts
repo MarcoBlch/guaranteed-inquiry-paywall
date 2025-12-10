@@ -145,7 +145,8 @@ serve(async (req) => {
         responseDeadline: responseDeadline,
         paymentAmount: messageData.price,
         messageId: message.id,
-        recipientEmail: recipientEmail
+        recipientEmail: recipientEmail,
+        attachmentUrls: messageData.attachments || []
       }
     })
 

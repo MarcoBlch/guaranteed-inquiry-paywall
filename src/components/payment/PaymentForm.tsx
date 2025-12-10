@@ -38,7 +38,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
 
   const { options, loading, error } = useResponseTimeOptions(userId);
 
-  const handleContinueToPayment = () => {
+  const handleContinueToPayment = async () => {
     // Rate limiting check
     if (!checkRateLimit('payment-form', 3, 60000)) {
       toast.error('Too many attempts. Please wait before trying again.');
@@ -69,6 +69,22 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
       return;
     }
 
+    // Upload files if any
+    if (attachments.length > 0) {
+      setUploadingFiles(true);
+      try {
+        toast.info(`Uploading ${attachments.length} file(s)...`);
+        const urls = await uploadFiles(attachments);
+        setAttachmentUrls(urls);
+        toast.success(`${urls.length} file(s) uploaded successfully`);
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to upload files');
+        setUploadingFiles(false);
+        return;
+      }
+      setUploadingFiles(false);
+    }
+
     setShowPayment(true);
   };
 
@@ -87,6 +103,41 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     onError(error);
   };
 
+  // Upload files to Supabase Storage and return public URLs
+  const uploadFiles = async (files: File[]): Promise<string[]> => {
+    if (files.length === 0) {
+      return [];
+    }
+
+    try {
+      // Create FormData with all files
+      const formData = new FormData();
+      files.forEach((file, index) => {
+        formData.append(`file${index}`, file);
+      });
+
+      // Call upload Edge Function
+      const { data, error } = await supabase.functions.invoke('upload-message-attachment', {
+        body: formData
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to upload files');
+      }
+
+      if (!data?.success || !data?.urls) {
+        throw new Error(data?.error || 'File upload failed');
+      }
+
+      console.log(`Successfully uploaded ${data.urls.length} files`);
+      return data.urls;
+
+    } catch (error: any) {
+      console.error('Error uploading files:', error);
+      throw new Error(`Failed to upload attachments: ${error.message}`);
+    }
+  };
+
   if (loading) {
     return <ProcessingIndicator />;
   }
@@ -95,13 +146,17 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
     return <PaymentErrorMessage error={error} />;
   }
 
+  // State for uploaded attachment URLs
+  const [attachmentUrls, setAttachmentUrls] = React.useState<string[]>([]);
+  const [uploadingFiles, setUploadingFiles] = React.useState(false);
+
   const paymentData = {
     userId,
     price: selectedResponseTime?.price || price,
     responseDeadlineHours: selectedResponseTime?.hours || 24,
     senderEmail: customerEmail,
     content: message,
-    attachments: [] // TODO: Upload files to storage first
+    attachments: attachmentUrls
   };
 
   return (
@@ -134,10 +189,14 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
           <button
             type="button"
             onClick={handleContinueToPayment}
-            disabled={!customerEmail || message.length < 5 || !selectedResponseTime}
+            disabled={!customerEmail || message.length < 5 || !selectedResponseTime || uploadingFiles}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Continue to payment ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)
+            {uploadingFiles ? (
+              <>Uploading files...</>
+            ) : (
+              <>Continue to payment ({selectedResponseTime?.price.toFixed(2) || price.toFixed(2)}€)</>
+            )}
           </button>
           
           {/* Debug info - Remove after test */}
@@ -153,6 +212,9 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
               <div><strong>Response time:</strong> {selectedResponseTime?.label}</div>
               <div><strong>Price:</strong> {selectedResponseTime?.price.toFixed(2)}€</div>
               <div><strong>Email:</strong> {customerEmail}</div>
+              {attachmentUrls.length > 0 && (
+                <div><strong>Attachments:</strong> {attachmentUrls.length} file(s)</div>
+              )}
             </div>
           </div>
 

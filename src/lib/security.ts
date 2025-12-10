@@ -37,25 +37,22 @@ export const messageSchema = z
 
 export const fileValidationSchema = z.object({
   name: z.string().min(1).max(255),
-  size: z.number().max(25 * 1024 * 1024, 'Fichier trop volumineux (max 25MB)'),
+  size: z.number().max(10 * 1024 * 1024, 'File too large (max 10MB)'),
   type: z.string().refine(
     (type) => {
       const allowedTypes = [
         'image/jpeg',
-        'image/jpg', 
+        'image/jpg',
         'image/png',
         'image/gif',
-        'image/webp',
         'application/pdf',
         'text/plain',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ];
       return allowedTypes.includes(type);
     },
-    'Type de fichier non autorisé'
+    'File type not allowed'
   )
 });
 
@@ -116,31 +113,53 @@ export const validateMessage = (message: string): { isValid: boolean; sanitized?
   }
 };
 
-// File validation
+// File validation with enhanced limits
 export const validateFiles = (files: File[]): { isValid: boolean; errors?: string[] } => {
-  if (files.length > 2) {
-    return { isValid: false, errors: ['Maximum 2 fichiers autorisés'] };
+  // Check number of files (max 5)
+  if (files.length > 5) {
+    return { isValid: false, errors: ['Maximum 5 files allowed'] };
+  }
+
+  if (files.length === 0) {
+    return { isValid: true }; // No files is valid
   }
 
   const errors: string[] = [];
-  
+  let totalSize = 0;
+
+  // Validate each file
   for (const file of files) {
     try {
+      // Validate file schema (size, type, name)
       fileValidationSchema.parse({
         name: file.name,
         size: file.size,
         type: file.type
       });
+
+      // Check for suspicious file names
+      if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+        errors.push(`${file.name}: Invalid file name`);
+        continue;
+      }
+
+      totalSize += file.size;
     } catch (error) {
       if (error instanceof z.ZodError) {
         errors.push(`${file.name}: ${error.errors[0]?.message}`);
       } else {
-        errors.push(`${file.name}: Fichier invalide`);
+        errors.push(`${file.name}: Invalid file`);
       }
     }
   }
 
-  return errors.length > 0 
+  // Check total size (max 50MB)
+  const MAX_TOTAL_SIZE = 50 * 1024 * 1024;
+  if (totalSize > MAX_TOTAL_SIZE) {
+    errors.push(`Total file size exceeds 50MB limit (${(totalSize / 1024 / 1024).toFixed(2)}MB)`);
+  }
+
+  return errors.length > 0
     ? { isValid: false, errors }
     : { isValid: true };
 };
