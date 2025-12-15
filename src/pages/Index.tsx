@@ -44,6 +44,17 @@ const PaywallPage = () => {
             <p className="text-[#B0B0B0] text-base sm:text-lg md:text-xl font-normal mb-6 sm:mb-8 leading-relaxed px-2">
               The best pay-to-reach service
             </p>
+            {/* CTA Button below hero text - Only show for non-authenticated users */}
+            {!isAuthenticated && (
+              <div className="flex justify-center">
+                <Button
+                  className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_25px_rgba(92,255,176,0.5)] hover:scale-[1.02]"
+                  onClick={() => navigate('/auth')}
+                >
+                  Get your invitation
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Feature Cards */}
@@ -119,13 +130,6 @@ const PaywallPage = () => {
                     onClick={() => navigate('/dashboard')}
                   >
                     Go to Dashboard
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0]"
-                    onClick={() => navigate('/pay/b706cf3e-8d0b-47ed-af50-502b288510a8')}
-                  >
-                    🧪 Test Payment (Demo)
                   </Button>
                 </div>
               ) : (

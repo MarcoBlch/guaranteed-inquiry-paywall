@@ -90,13 +90,15 @@ const PaymentPage = () => {
                 <CardContent className="p-4 sm:p-6 lg:p-8">
                   {details && userId && (
                     <div className="space-y-4 sm:space-y-6">
-                      {/* Recipient Info */}
+                      {/* Personal Message from Recipient */}
                       <div className="bg-[#5cffb0]/10 border border-[#5cffb0]/30 rounded-lg p-4 sm:p-6">
-                        <h3 className="font-bold text-[#5cffb0] mb-2 text-lg sm:text-xl">
-                          Sending message to professional
-                        </h3>
-                        <p className="text-[#B0B0B0] text-sm sm:text-base">
-                          Your message will be delivered with payment guarantee for timely response
+                        <div className="mb-3">
+                          <p className="text-[#B0B0B0] text-sm sm:text-base leading-relaxed italic">
+                            "I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter. If you want a real answer, or to collaborate, this is the best way to reach me directly."
+                          </p>
+                        </div>
+                        <p className="text-[#5cffb0] text-sm sm:text-base font-semibold">
+                          — {details.userName}
                         </p>
                       </div>
 

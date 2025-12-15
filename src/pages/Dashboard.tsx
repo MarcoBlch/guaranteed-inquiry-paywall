@@ -787,7 +787,7 @@ const Dashboard = () => {
                   <CardHeader>
                     <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Your Payment Link</CardTitle>
                     <CardDescription className="text-[#B0B0B0]">
-                      Share this link to receive guaranteed response requests
+                      Share this Link to your Audience for them to reach you exclusively
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
