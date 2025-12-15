@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useResponseTimeOptions } from "@/hooks/useResponseTimeOptions";
-import { validateEmail, validateMessage, checkRateLimit, sanitizeText } from "@/lib/security";
+import { validateEmail, validateMessage, validateFiles, checkRateLimit, sanitizeText } from "@/lib/security";
+import FileUploadSection from "./FileUploadSection";
 
 interface StripeEscrowFormProps {
   userId: string;
@@ -23,15 +24,53 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
   
   const [customerEmail, setCustomerEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [selectedResponseTime, setSelectedResponseTime] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
 
   const { options, loading, error } = useResponseTimeOptions(userId);
 
+  // Upload files to Supabase Storage and return public URLs
+  const uploadFiles = async (files: File[]): Promise<string[]> => {
+    if (files.length === 0) {
+      return [];
+    }
+
+    try {
+      // Create FormData with all files
+      const formData = new FormData();
+      files.forEach((file, index) => {
+        formData.append(`file${index}`, file);
+      });
+
+      // Call upload Edge Function
+      const { data, error } = await supabase.functions.invoke('upload-message-attachment', {
+        body: formData
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to upload files');
+      }
+
+      if (!data?.success || !data?.urls) {
+        throw new Error(data?.error || 'File upload failed');
+      }
+
+      console.log(`Successfully uploaded ${data.urls.length} files`);
+      return data.urls;
+
+    } catch (error: any) {
+      console.error('Error uploading files:', error);
+      throw new Error(`Failed to upload attachments: ${error.message}`);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements || processing) return;
+    if (!stripe || !elements || processing || uploadingFiles) return;
     
     // Rate limiting check
     if (!checkRateLimit('stripe-payment', 3, 60000)) {
@@ -52,6 +91,12 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
       return;
     }
 
+    const fileValidation = validateFiles(attachments);
+    if (!fileValidation.isValid) {
+      toast.error(`Invalid files: ${fileValidation.errors?.join(', ')}`);
+      return;
+    }
+
     if (!selectedResponseTime) {
       toast.error('Please select a response timeframe');
       return;
@@ -60,7 +105,25 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
     setProcessing(true);
 
     try {
-      // 1. Create PaymentIntent with escrow
+      // 1. Upload files if any
+      let uploadedUrls: string[] = [];
+      if (attachments.length > 0) {
+        setUploadingFiles(true);
+        toast.info(`Uploading ${attachments.length} file(s)...`);
+        try {
+          uploadedUrls = await uploadFiles(attachments);
+          setAttachmentUrls(uploadedUrls);
+          toast.success(`${uploadedUrls.length} file(s) uploaded successfully`);
+        } catch (uploadError: any) {
+          toast.error(uploadError.message || 'Failed to upload files');
+          setProcessing(false);
+          setUploadingFiles(false);
+          return;
+        }
+        setUploadingFiles(false);
+      }
+
+      // 2. Create PaymentIntent with escrow
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-stripe-payment', {
         body: {
           price: selectedResponseTime.price,
@@ -79,7 +142,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
         throw new Error('No client secret received from server');
       }
 
-      // 2. Confirm payment (authorization only, no capture)
+      // 3. Confirm payment (authorization only, no capture)
       const { error: confirmError } = await stripe.confirmCardPayment(
         paymentData.clientSecret,
         {
@@ -94,7 +157,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
 
       if (confirmError) throw new Error(confirmError.message);
 
-      // 3. Create message and escrow transaction
+      // 4. Create message and escrow transaction
       const { error: escrowError } = await supabase.functions.invoke('process-escrow-payment', {
         body: {
           paymentIntentId: paymentData.paymentIntentId,
@@ -104,7 +167,7 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
             content: messageValidation.sanitized || sanitizeText(message),
             price: selectedResponseTime.price,
             responseDeadlineHours: selectedResponseTime.hours,
-            attachments: []
+            attachments: uploadedUrls
           }
         }
       });
@@ -176,6 +239,12 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
           {message.length}/2000 characters (minimum 10)
         </p>
       </div>
+
+      {/* File Attachments */}
+      <FileUploadSection
+        attachments={attachments}
+        setAttachments={setAttachments}
+      />
 
       {/* Response Time Options */}
       <div className="space-y-3">
@@ -267,13 +336,18 @@ export const StripeEscrowForm = ({ userId, basePrice, onSuccess, onError }: Stri
       <Button
         type="submit"
         className="w-full py-6 text-lg bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-all duration-300 hover:shadow-[0_0_25px_rgba(92,255,176,0.5)] hover:scale-[1.02]"
-        disabled={!stripe || processing || !selectedResponseTime || !customerEmail || !message}
+        disabled={!stripe || processing || uploadingFiles || !selectedResponseTime || !customerEmail || !message}
         size="lg"
       >
-        {processing ? (
+        {uploadingFiles ? (
           <div className="flex items-center">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            Processing...
+            Uploading files...
+          </div>
+        ) : processing ? (
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+            Processing payment...
           </div>
         ) : (
           `Pay ${selectedResponseTime?.price?.toFixed(2) || basePrice.toFixed(2)}€`
