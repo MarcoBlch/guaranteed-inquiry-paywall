@@ -72,6 +72,7 @@ interface EscrowTransaction {
 
 const Dashboard = () => {
   const [price, setPrice] = useState(10);
+  const [displayName, setDisplayName] = useState('');
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [pendingFunds, setPendingFunds] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -328,7 +329,7 @@ const Dashboard = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin')
+      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name')
       .eq('id', user.id)
       .single();
 
@@ -336,6 +337,7 @@ const Dashboard = () => {
       setStripeOnboarded(profile.stripe_onboarding_completed || false);
       setPrice(profile.price || 10);
       setIsAdmin(profile.is_admin || false);
+      setDisplayName(profile.display_name || '');
     }
 
     const { data: pendingTransactions } = await supabase
@@ -357,7 +359,10 @@ const Dashboard = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ price: price })
+        .update({
+          price: price,
+          display_name: displayName.trim() || null
+        })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -743,12 +748,28 @@ const Dashboard = () => {
               <TabsContent value="settings">
                 <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Response Pricing</CardTitle>
+                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Profile & Pricing Settings</CardTitle>
                     <CardDescription className="text-[#B0B0B0]">
-                      Configure your guaranteed response pricing
+                      Configure your public profile and guaranteed response pricing
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName" className="text-[#5cffb0]">Display Name</Label>
+                      <Input
+                        id="displayName"
+                        type="text"
+                        placeholder="e.g., John Smith, Dr. Johnson, TechGuru"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                        maxLength={50}
+                      />
+                      <p className="text-xs text-[#B0B0B0]/70">
+                        This name will appear on your payment page. Leave empty to show "this professional".
+                      </p>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="price" className="text-[#5cffb0]">Base Price (€)</Label>
                       <Input

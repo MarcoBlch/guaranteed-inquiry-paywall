@@ -130,7 +130,7 @@ serve(async (req) => {
     // Query profile with service role permissions
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('price, stripe_onboarding_completed, stripe_account_id, user_name')
+      .select('price, stripe_onboarding_completed, stripe_account_id, display_name')
       .eq('id', userId)
       .maybeSingle();
 
@@ -165,7 +165,7 @@ serve(async (req) => {
         profile: {
           price: profile.price,
           stripeOnboardingCompleted: profile.stripe_onboarding_completed,
-          userName: profile.user_name || 'this user' // User's actual name or fallback
+          userName: profile.display_name || 'this professional' // User's display name or fallback
         }
       }),
       {
