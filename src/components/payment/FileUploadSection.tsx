@@ -60,10 +60,10 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
   return (
     <div className="space-y-3">
       <div>
-        <Label htmlFor="attachments" className="text-base font-medium">
+        <Label htmlFor="attachments" className="text-[#5cffb0]">
           Attachments (Optional)
         </Label>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-[#B0B0B0]/70 mt-1">
           Up to 5 files, {maxFileSizeMB}MB each, {maxTotalSizeMB}MB total
         </p>
       </div>
@@ -74,19 +74,19 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
         multiple
         onChange={handleFileChange}
         accept={allowedTypes}
-        className={errors.length > 0 ? "border-red-500" : ""}
+        className={`bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[#5cffb0]/20 file:text-[#5cffb0] hover:file:bg-[#5cffb0]/30 focus:border-[#5cffb0] ${errors.length > 0 ? "border-red-500/50" : ""}`}
         disabled={attachments.length >= 5}
       />
 
-      <div className="text-xs text-muted-foreground">
+      <div className="text-xs text-[#B0B0B0]/70">
         Allowed formats: Images (JPG, PNG, GIF), Documents (PDF, TXT, DOC, DOCX)
       </div>
 
       {errors.length > 0 && (
-        <div className="space-y-1 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div className="space-y-1 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
           {errors.map((error, index) => (
-            <p key={index} className="text-sm text-red-600 flex items-start gap-2">
-              <span className="text-red-500 font-bold">•</span>
+            <p key={index} className="text-sm text-red-400 flex items-start gap-2">
+              <span className="text-red-400 font-bold">•</span>
               {error}
             </p>
           ))}
@@ -94,12 +94,12 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
       )}
 
       {attachments.length > 0 && (
-        <div className="space-y-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="space-y-2 p-3 bg-[#5cffb0]/5 border border-[#5cffb0]/30 rounded-lg">
           <div className="flex justify-between items-center">
-            <div className="text-sm font-medium">
+            <div className="text-sm font-medium text-[#5cffb0]">
               Selected files ({attachments.length}/5)
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-[#B0B0B0]/70">
               Total: {totalSizeMB.toFixed(2)} MB / {maxTotalSizeMB} MB
             </div>
           </div>
@@ -108,15 +108,15 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
             {attachments.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded hover:border-gray-300 transition-colors"
+                className="flex items-center justify-between p-2 bg-[#1a1f2e]/50 border border-[#5cffb0]/20 rounded hover:border-[#5cffb0]/40 transition-colors"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="text-gray-500">
+                  <div className="text-[#5cffb0]">
                     {getFileIcon(file.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-medium truncate text-[#B0B0B0]">{file.name}</p>
+                    <p className="text-xs text-[#B0B0B0]/70">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
@@ -126,7 +126,7 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveFile(index)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-2"
                 >
                   <X className="w-4 h-4" />
                 </Button>
