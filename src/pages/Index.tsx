@@ -34,7 +34,7 @@ const PaywallPage = () => {
         <header className="p-4 sm:p-6 text-center">
           <div className="flex flex-col items-center">
             <FastPassLogo size="xl" />
-            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-6 sm:-mt-8">TIME IS MONEY</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-16 sm:-mt-20">TIME IS MONEY</p>
           </div>
         </header>
 
@@ -43,8 +43,8 @@ const PaywallPage = () => {
           {/* Hero Text */}
           <div className="mb-8 sm:mb-12 max-w-2xl w-full">
             {/* H1: Main Headline - Neon Vert, Bold, text-5xl */}
-            <h1 className="text-[#5cffb0] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight break-words">
-              CREATE PRIORITY ACCESS TO YOUR INBOX
+            <h1 className="text-[#5cffb0] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+              CREATE PRIORITY ACCESS<br />TO YOUR INBOX
             </h1>
             {/* Body Text (Primary) - Light Gray, Regular, text-base/text-lg */}
             <p className="text-[#B0B0B0] text-base sm:text-lg md:text-xl font-normal mb-6 sm:mb-8 leading-relaxed px-2">
