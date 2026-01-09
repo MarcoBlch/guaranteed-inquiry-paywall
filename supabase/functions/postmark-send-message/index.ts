@@ -84,6 +84,7 @@ function generateMessageEmailTemplate(data: MessageEmailData): string {
                                     <li style="margin-bottom: 8px;"><strong>Reply directly to this email</strong> with your response</li>
                                     <li style="margin-bottom: 8px;"><strong>Response deadline:</strong> Within ${data.responseDeadline}</li>
                                     <li style="margin-bottom: 8px;"><strong>Payment:</strong> Automatically released upon response</li>
+                                    <li style="margin-bottom: 8px;"><strong>Important:</strong> If you wish to continue the conversation, don't forget to communicate your contact details to the person who reached you</li>
                                 </ol>
                             </div>
 
@@ -139,6 +140,7 @@ HOW TO RESPOND AND CLAIM YOUR PAYMENT:
 1. Reply directly to this email with your response
 2. Response deadline: Within ${data.responseDeadline}
 3. Payment: Automatically released upon response
+4. Important: If you wish to continue the conversation, don't forget to communicate your contact details to the person who reached you
 
 PAYMENT GUARANTEE:
 ✅ If you respond within ${data.responseDeadline}: Payment is automatically released to you
