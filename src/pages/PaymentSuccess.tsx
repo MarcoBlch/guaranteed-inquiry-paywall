@@ -12,9 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
+
+  // Track successful payment conversion
+  usePageViewTracking('/payment-success');
 
   return (
     <div className="min-h-screen relative overflow-hidden">

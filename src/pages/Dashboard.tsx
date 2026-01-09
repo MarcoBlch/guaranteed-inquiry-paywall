@@ -34,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 
 interface Message {
   id: string;
@@ -88,6 +89,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Track page view for analytics
+  usePageViewTracking('/dashboard');
 
   useEffect(() => {
     console.log('Dashboard mounted, searchParams:', Object.fromEntries(searchParams));

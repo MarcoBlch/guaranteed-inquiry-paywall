@@ -5,17 +5,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
+import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 
 const PaywallPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
+
+  // Track page view for analytics
+  usePageViewTracking('/');
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
+      setAuthChecked(true);
     };
-    
+
     checkAuth();
   }, []);
 
@@ -28,7 +34,7 @@ const PaywallPage = () => {
         <header className="p-4 sm:p-6 text-center">
           <div className="flex flex-col items-center">
             <FastPassLogo size="xl" />
-            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-3 sm:-mt-4">TIME IS MONEY</p>
+            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-6 sm:-mt-8">TIME IS MONEY</p>
           </div>
         </header>
 
@@ -37,15 +43,15 @@ const PaywallPage = () => {
           {/* Hero Text */}
           <div className="mb-8 sm:mb-12 max-w-2xl w-full">
             {/* H1: Main Headline - Neon Vert, Bold, text-5xl */}
-            <h1 className="text-[#5cffb0] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              CREATE PRIORITY ACCESS<br />TO YOUR INBOX
+            <h1 className="text-[#5cffb0] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight break-words">
+              CREATE PRIORITY ACCESS TO YOUR INBOX
             </h1>
             {/* Body Text (Primary) - Light Gray, Regular, text-base/text-lg */}
             <p className="text-[#B0B0B0] text-base sm:text-lg md:text-xl font-normal mb-6 sm:mb-8 leading-relaxed px-2">
               The best pay-to-reach service
             </p>
             {/* CTA Button below hero text - Only show for non-authenticated users */}
-            {!isAuthenticated && (
+            {authChecked && !isAuthenticated && (
               <div className="flex justify-center">
                 <Button
                   className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_25px_rgba(92,255,176,0.5)] hover:scale-[1.02]"
