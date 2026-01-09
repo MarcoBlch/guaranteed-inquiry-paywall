@@ -82,6 +82,8 @@ const Dashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userFilter, setUserFilter] = useState('');
   const [dateRange, setDateRange] = useState('30');
@@ -105,6 +107,9 @@ const Dashboard = () => {
 
       // Run checkAuth when auth context has finished loading
       checkAuth();
+
+      // Preload messages data on mount for better UX
+      loadMessages();
 
       // Handle Stripe return flow
       const setupStatus = searchParams.get('setup');
@@ -155,6 +160,7 @@ const Dashboard = () => {
   const loadMessages = async () => {
     if (!user) return;
 
+    setLoadingMessages(true);
     try {
       // Fetch messages first
       const { data: messagesData, error: messagesError } = await supabase
@@ -172,18 +178,20 @@ const Dashboard = () => {
       let responseData: any[] = [];
 
       if (messageIds.length > 0) {
-        const { data: escrowTransactions } = await supabase
-          .from('escrow_transactions')
-          .select('*')
-          .in('message_id', messageIds);
+        // Run these queries in parallel for better performance
+        const [escrowResult, responsesResult] = await Promise.all([
+          supabase
+            .from('escrow_transactions')
+            .select('*')
+            .in('message_id', messageIds),
+          supabase
+            .from('message_responses')
+            .select('*')
+            .in('message_id', messageIds)
+        ]);
 
-        const { data: messageResponses } = await supabase
-          .from('message_responses')
-          .select('*')
-          .in('message_id', messageIds);
-
-        escrowData = escrowTransactions || [];
-        responseData = messageResponses || [];
+        escrowData = escrowResult.data || [];
+        responseData = responsesResult.data || [];
       }
 
       // Join data on client side
@@ -196,12 +204,15 @@ const Dashboard = () => {
       setMessages(enrichedMessages);
     } catch (error: any) {
       toast.error('Error loading messages: ' + error.message);
+    } finally {
+      setLoadingMessages(false);
     }
   };
 
   const loadTransactions = async () => {
     if (!user) return;
 
+    setLoadingTransactions(true);
     try {
       const { data, error } = await supabase
         .from('escrow_transactions')
@@ -216,6 +227,8 @@ const Dashboard = () => {
       setTransactions(data || []);
     } catch (error: any) {
       toast.error('Error loading transactions: ' + error.message);
+    } finally {
+      setLoadingTransactions(false);
     }
   };
 
@@ -527,15 +540,21 @@ const Dashboard = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-[#5cffb0] text-lg font-semibold">Messages Received</h3>
-                        <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border border-[#5cffb0]/50">
-                          {messages.length} total
-                        </Badge>
+                    {loadingMessages ? (
+                      <div className="flex items-center justify-center py-12">
+                        <RefreshCw className="h-8 w-8 text-[#5cffb0] animate-spin" />
+                        <span className="ml-3 text-[#B0B0B0]">Loading messages...</span>
                       </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-[#5cffb0] text-lg font-semibold">Messages Received</h3>
+                          <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border border-[#5cffb0]/50">
+                            {messages.length} total
+                          </Badge>
+                        </div>
 
-                      {messages.length === 0 ? (
+                        {messages.length === 0 ? (
                         <Card className="bg-transparent backdrop-blur-sm border border-[#5cffb0]/30">
                           <CardContent className="p-8 text-center">
                             <p className="text-[#B0B0B0] text-lg">No messages received yet</p>
@@ -657,7 +676,8 @@ const Dashboard = () => {
                           })}
                         </div>
                       )}
-                    </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -674,7 +694,12 @@ const Dashboard = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {transactions.length === 0 ? (
+                    {loadingTransactions ? (
+                      <div className="flex items-center justify-center py-12">
+                        <RefreshCw className="h-8 w-8 text-[#5cffb0] animate-spin" />
+                        <span className="ml-3 text-[#B0B0B0]">Loading transactions...</span>
+                      </div>
+                    ) : transactions.length === 0 ? (
                       <p className="text-[#B0B0B0] text-center py-8">
                         No transactions yet
                       </p>

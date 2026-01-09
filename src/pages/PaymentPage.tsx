@@ -71,9 +71,9 @@ const PaymentPage = () => {
         <div className="relative z-10 min-h-screen flex flex-col">
           {/* Header */}
           <header className="p-4 sm:p-6 text-center">
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center">
               <FastPassLogo size="lg" />
-              <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-4 sm:-mt-5">
+              <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-12 sm:-mt-14">
                 SKIP THE LINE
               </p>
             </div>
