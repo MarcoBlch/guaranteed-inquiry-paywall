@@ -9,6 +9,7 @@ import PaymentError from "@/components/payment/PaymentError";
 import LoadingState from "@/components/payment/LoadingState";
 import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 
 // Load Stripe with publishable key from environment variable
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -26,6 +27,9 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const { details, loading, error } = usePaymentDetails(userId);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // Track page view for analytics (includes userId in path for conversion tracking)
+  usePageViewTracking(userId ? `/pay/${userId}` : '/pay');
 
   if (loading) {
     return (
@@ -70,7 +74,7 @@ const PaymentPage = () => {
             <div className="flex flex-col items-center gap-2">
               <FastPassLogo size="lg" />
               <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-4 sm:-mt-5">
-                GUARANTEED RESPONSES
+                SKIP THE LINE
               </p>
             </div>
           </header>
