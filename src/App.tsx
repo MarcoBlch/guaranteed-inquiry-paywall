@@ -21,6 +21,8 @@ import EmailPreview from "./pages/EmailPreview";
 import EmailTest from "./pages/EmailTest";
 import Privacy from "./pages/Privacy";
 import CookieSettings from "./pages/CookieSettings";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import { CookieBanner } from "./components/CookieBanner";
 import { supabase } from "./integrations/supabase/client";
 
@@ -88,6 +90,10 @@ const App = () => {
             {/* LEGAL & PRIVACY ROUTES - Public access */}
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/cookie-settings" element={<CookieSettings />} />
+
+            {/* BLOG ROUTES - Public access for SEO */}
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
 
             {/* PROTECTED ROUTES - Authentication required */}
             <Route path="/dashboard" element={
