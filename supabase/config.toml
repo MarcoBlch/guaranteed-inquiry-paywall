@@ -135,3 +135,25 @@ verify_jwt = false
 
 [functions.track-page-view]
 verify_jwt = false
+
+# Invite System Functions
+[functions.validate-invite-code]
+verify_jwt = false
+
+[functions.get-platform-settings]
+verify_jwt = false
+
+[functions.redeem-invite-code]
+verify_jwt = true
+
+[functions.generate-invite-codes]
+verify_jwt = true
+
+[functions.update-platform-settings]
+verify_jwt = true
+
+[functions.get-invite-analytics]
+verify_jwt = true
+
+[functions.grant-quick-admin]
+verify_jwt = true

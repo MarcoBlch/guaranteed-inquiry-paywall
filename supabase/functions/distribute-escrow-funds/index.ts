@@ -48,13 +48,23 @@ serve(async (req) => {
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
     const totalAmountCents = Math.round(transaction.amount * 100)
 
-    // 2. Calculer distribution 75/25
-    const userAmountCents = Math.round(totalAmountCents * 0.75)    // 75%
-    const platformFeeCents = Math.round(totalAmountCents * 0.25)   // 25%
+    // 2. Fetch user's revenue percentage from user_tiers table
+    // Early adopters with 3+ referrals get 85%, standard users get 75%
+    const { data: userTier, error: tierError } = await supabase
+      .from('user_tiers')
+      .select('revenue_percentage, tier')
+      .eq('user_id', transaction.recipient_user_id)
+      .single()
 
-    console.log(`Distributing ${totalAmountCents} cents:`, {
-      user: userAmountCents,        // 75%
-      platform: platformFeeCents    // 25% (reste automatiquement)
+    // Default to 75% if no tier record exists
+    const recipientPercentage = userTier?.revenue_percentage ?? 0.75
+    const userAmountCents = Math.round(totalAmountCents * recipientPercentage)
+    const platformFeeCents = totalAmountCents - userAmountCents // Ensures no rounding errors
+
+    console.log(`Distributing ${totalAmountCents} cents (${userTier?.tier || 'standard'} tier at ${(recipientPercentage * 100).toFixed(0)}%):`, {
+      user: userAmountCents,
+      platform: platformFeeCents,
+      recipientPercentage: `${(recipientPercentage * 100).toFixed(0)}%`
     })
 
     // 3. Verify payment was captured (should already be 'succeeded' from immediate capture)

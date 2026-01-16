@@ -17,6 +17,7 @@ import AccountSettings from "./pages/AccountSettings";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminSetup from "./pages/AdminSetup";
+import AdminDashboard from "./pages/AdminDashboard";
 import EmailPreview from "./pages/EmailPreview";
 import EmailTest from "./pages/EmailTest";
 import Privacy from "./pages/Privacy";
@@ -116,6 +117,14 @@ const App = () => {
               <AuthProvider>
                 <AdminRoute>
                   <AdminSetup />
+                </AdminRoute>
+              </AuthProvider>
+            } />
+
+            <Route path="/admin" element={
+              <AuthProvider>
+                <AdminRoute>
+                  <AdminDashboard />
                 </AdminRoute>
               </AuthProvider>
             } />

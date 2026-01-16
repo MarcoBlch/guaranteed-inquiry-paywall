@@ -532,6 +532,148 @@ export type Database = {
         }
         Relationships: []
       }
+      invite_codes: {
+        Row: {
+          id: string
+          code: string
+          code_type: 'founder' | 'referral'
+          created_by_user_id: string | null
+          used_by_user_id: string | null
+          used_at: string | null
+          expires_at: string | null
+          is_active: boolean
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          code_type: 'founder' | 'referral'
+          created_by_user_id?: string | null
+          used_by_user_id?: string | null
+          used_at?: string | null
+          expires_at?: string | null
+          is_active?: boolean
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          code_type?: 'founder' | 'referral'
+          created_by_user_id?: string | null
+          used_by_user_id?: string | null
+          used_at?: string | null
+          expires_at?: string | null
+          is_active?: boolean
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_codes_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_codes_used_by_user_id_fkey"
+            columns: ["used_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      platform_settings: {
+        Row: {
+          id: string
+          setting_key: string
+          setting_value: Json
+          description: string | null
+          updated_by: string | null
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          setting_key: string
+          setting_value: Json
+          description?: string | null
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          description?: string | null
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_tiers: {
+        Row: {
+          id: string
+          user_id: string
+          tier: 'founder' | 'early_adopter' | 'standard'
+          revenue_percentage: number
+          invite_codes_limit: number
+          referral_count: number
+          tier_reason: string | null
+          tier_granted_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tier?: 'founder' | 'early_adopter' | 'standard'
+          revenue_percentage?: number
+          invite_codes_limit?: number
+          referral_count?: number
+          tier_reason?: string | null
+          tier_granted_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tier?: 'founder' | 'early_adopter' | 'standard'
+          revenue_percentage?: number
+          invite_codes_limit?: number
+          referral_count?: number
+          tier_reason?: string | null
+          tier_granted_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tiers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       email_service_stats: {
@@ -612,6 +754,9 @@ export type Database = {
       is_valid_email: { Args: { email_text: string }; Returns: boolean }
       is_verified_admin: { Args: never; Returns: boolean }
       sanitize_text: { Args: { input_text: string }; Returns: string }
+      generate_invite_code: { Args: { prefix?: string }; Returns: string }
+      is_invite_only_enabled: { Args: never; Returns: boolean }
+      get_user_revenue_percentage: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

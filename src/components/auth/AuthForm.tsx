@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
+import { InviteCodeInput } from '@/components/invite/InviteCodeInput';
+import { Loader2, Lock } from 'lucide-react';
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,6 +22,17 @@ const AuthForm = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Invite code state
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCodeValid, setInviteCodeValid] = useState(false);
+  const [inviteCodeDetails, setInviteCodeDetails] = useState<{
+    code: string;
+    code_type: string;
+    invite_code_id: string;
+  } | null>(null);
+  const [inviteOnlyMode, setInviteOnlyMode] = useState(false);
+  const [checkingInviteMode, setCheckingInviteMode] = useState(true);
+
   useEffect(() => {
     // Check if this is a password reset flow
     const isReset = searchParams.get('reset') === 'true';
@@ -29,7 +42,36 @@ const AuthForm = () => {
       setIsLogin(false);
       setIsForgotPassword(false);
     }
+
+    // Check for invite code in URL
+    const inviteParam = searchParams.get('invite');
+    if (inviteParam) {
+      setInviteCode(inviteParam.toUpperCase());
+      setIsLogin(false); // Switch to signup mode
+    }
+
+    // Check if invite-only mode is enabled
+    checkInviteOnlyMode();
   }, [searchParams]);
+
+  const checkInviteOnlyMode = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-platform-settings');
+      if (error) throw error;
+      setInviteOnlyMode(data?.settings?.invite_only_mode?.enabled ?? false);
+    } catch (error) {
+      console.error('Error checking invite mode:', error);
+      // Default to not requiring invite on error
+      setInviteOnlyMode(false);
+    } finally {
+      setCheckingInviteMode(false);
+    }
+  };
+
+  const handleInviteCodeValidation = (isValid: boolean, details?: { code: string; code_type: string; invite_code_id: string }) => {
+    setInviteCodeValid(isValid);
+    setInviteCodeDetails(details || null);
+  };
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,9 +196,15 @@ const AuthForm = () => {
         }
         navigate('/dashboard');
       } else {
+        // Signup flow
+        // Check if invite code is required and valid
+        if (inviteOnlyMode && !inviteCodeValid) {
+          throw new Error('A valid invite code is required to sign up');
+        }
+
         // SECURITY FIX: Add proper emailRedirectTo for signup
         const redirectUrl = `${window.location.origin}/auth`;
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -173,6 +221,27 @@ const AuthForm = () => {
             throw error;
           }
         }
+
+        // If we have a valid invite code, redeem it after signup
+        if (inviteCodeValid && inviteCodeDetails && signUpData.user) {
+          try {
+            const { error: redeemError } = await supabase.functions.invoke('redeem-invite-code', {
+              body: {
+                invite_code_id: inviteCodeDetails.invite_code_id,
+                user_id: signUpData.user.id
+              }
+            });
+            if (redeemError) {
+              console.error('Error redeeming invite code:', redeemError);
+              // Don't fail signup if code redemption fails
+            } else {
+              console.log('Invite code redeemed successfully');
+            }
+          } catch (redeemError) {
+            console.error('Error redeeming invite code:', redeemError);
+          }
+        }
+
         toast.success('Check your email to confirm your account!');
       }
     } catch (error: any) {
@@ -182,6 +251,21 @@ const AuthForm = () => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking invite mode
+  if (checkingInviteMode) {
+    return (
+      <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+        <CardContent className="py-12 flex flex-col items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#5cffb0] mb-4" />
+          <p className="text-[#B0B0B0]">Loading...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Determine if signup is blocked (invite-only mode without valid code)
+  const signupBlocked = !isLogin && inviteOnlyMode && !inviteCodeValid && inviteCode.length === 0;
 
   return (
     <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
@@ -194,7 +278,8 @@ const AuthForm = () => {
         <CardDescription className="text-[#B0B0B0]">
           {isPasswordReset ? 'Enter your new password below' :
            isForgotPassword ? 'Enter your email to receive a reset link' :
-           isLogin ? 'Welcome back!' : 'Create a new account'}
+           isLogin ? 'Welcome back!' :
+           inviteOnlyMode ? 'Beta access - Invite code required' : 'Create a new account'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -230,6 +315,16 @@ const AuthForm = () => {
             </>
           ) : (
             <>
+              {/* Invite Code Input - Only show in signup mode when invite-only is enabled */}
+              {!isLogin && !isForgotPassword && inviteOnlyMode && (
+                <InviteCodeInput
+                  value={inviteCode}
+                  onChange={setInviteCode}
+                  onValidation={handleInviteCodeValidation}
+                  disabled={loading}
+                />
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-[#5cffb0]">Email</Label>
                 <Input
@@ -258,10 +353,24 @@ const AuthForm = () => {
               )}
             </>
           )}
+
+          {/* Show blocked message if signup requires invite */}
+          {signupBlocked && (
+            <div className="p-4 rounded-lg bg-amber-900/20 border border-amber-500/30">
+              <div className="flex items-center gap-2 text-amber-400">
+                <Lock className="h-4 w-4" />
+                <p className="text-sm font-medium">Beta Access Required</p>
+              </div>
+              <p className="text-sm text-[#B0B0B0] mt-1">
+                Enter a valid invite code to create an account during our beta period.
+              </p>
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
-            disabled={loading}
+            disabled={loading || (!isLogin && inviteOnlyMode && !inviteCodeValid)}
           >
             {loading ? 'Loading...' :
              isPasswordReset ? 'Update Password' :

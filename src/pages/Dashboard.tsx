@@ -28,13 +28,15 @@ import {
   Settings,
   Link as LinkIcon,
   BarChart3,
-  CreditCard
+  CreditCard,
+  Gift
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
+import { MyInviteCodes, ReferralProgress } from '@/components/invite';
 
 interface Message {
   id: string;
@@ -87,6 +89,8 @@ const Dashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userFilter, setUserFilter] = useState('');
   const [dateRange, setDateRange] = useState('30');
+  const [referralCount, setReferralCount] = useState(0);
+  const [revenuePercentage, setRevenuePercentage] = useState(0.75);
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -367,6 +371,18 @@ const Dashboard = () => {
       const total = pendingTransactions.reduce((sum, t) => sum + t.amount, 0);
       setPendingFunds(total);
     }
+
+    // Fetch user tier data for referral system
+    const { data: tierData } = await supabase
+      .from('user_tiers')
+      .select('referral_count, revenue_percentage')
+      .eq('user_id', user.id)
+      .single();
+
+    if (tierData) {
+      setReferralCount(tierData.referral_count || 0);
+      setRevenuePercentage(tierData.revenue_percentage || 0.75);
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -520,6 +536,15 @@ const Dashboard = () => {
                   <CreditCard className="h-4 w-4 mr-2" />
                   Stripe
                 </TabsTrigger>
+                {stripeOnboarded && (
+                  <TabsTrigger
+                    value="referrals"
+                    className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    Referrals
+                  </TabsTrigger>
+                )}
                 {isAdmin && (
                   <TabsTrigger
                     value="analytics"
@@ -923,6 +948,78 @@ const Dashboard = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="referrals">
+                <div className="space-y-6">
+                  {/* Beta Badge Info */}
+                  <Card className="bg-gradient-to-r from-[#5cffb0]/10 to-transparent border border-[#5cffb0]/30">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#5cffb0]/20 flex items-center justify-center">
+                          <Mail className="h-5 w-5 text-[#5cffb0]" />
+                        </div>
+                        <div>
+                          <h3 className="text-[#5cffb0] font-semibold">Beta Bonus Program</h3>
+                          <p className="text-sm text-[#B0B0B0]">
+                            Invite 3 friends and unlock 85% revenue share (instead of 75%)
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Referral Progress Component */}
+                  <ReferralProgress
+                    referralCount={referralCount}
+                    revenuePercentage={revenuePercentage}
+                  />
+
+                  {/* My Invite Codes Component */}
+                  <MyInviteCodes />
+
+                  {/* How It Works */}
+                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20">
+                    <CardHeader>
+                      <CardTitle className="text-[#5cffb0] text-lg">How It Works</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-[#5cffb0]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[#5cffb0] text-sm font-bold">1</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Share your invite codes</p>
+                          <p className="text-sm text-[#B0B0B0]">
+                            Send your 3 unique codes to friends via Twitter, LinkedIn, or email
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-[#5cffb0]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[#5cffb0] text-sm font-bold">2</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Friends sign up</p>
+                          <p className="text-sm text-[#B0B0B0]">
+                            They create an account using your invite code during registration
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="h-6 w-6 rounded-full bg-[#5cffb0]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[#5cffb0] text-sm font-bold">3</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Unlock 85% revenue share</p>
+                          <p className="text-sm text-[#B0B0B0]">
+                            Once all 3 codes are used, your earnings increase from 75% to 85% on every message
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="analytics">
