@@ -6,10 +6,14 @@ import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
+import { InvitationRequestModal } from "@/components/invite/InvitationRequestModal";
+import { analytics } from "@/lib/analytics";
 
 const PaywallPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [invitationModalOpen, setInvitationModalOpen] = useState(false);
+  const [inviteOnlyMode, setInviteOnlyMode] = useState<boolean | null>(null);
   const navigate = useNavigate();
 
   // Track page view for analytics
@@ -24,6 +28,28 @@ const PaywallPage = () => {
 
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    const checkInviteMode = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('get-platform-settings');
+        setInviteOnlyMode(data?.settings?.invite_only_mode?.enabled ?? true);
+      } catch (error) {
+        console.error('Error checking invite mode:', error);
+        setInviteOnlyMode(true); // Default to true for safety
+      }
+    };
+    checkInviteMode();
+  }, []);
+
+  const handleCTAClick = () => {
+    if (inviteOnlyMode) {
+      setInvitationModalOpen(true);
+      analytics.invitationModalOpened();
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -55,7 +81,7 @@ const PaywallPage = () => {
               <div className="flex justify-center">
                 <Button
                   className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_25px_rgba(92,255,176,0.5)] hover:scale-[1.02]"
-                  onClick={() => navigate('/auth')}
+                  onClick={handleCTAClick}
                 >
                   Get your invitation
                 </Button>
@@ -146,7 +172,7 @@ const PaywallPage = () => {
                   <p className="text-[#B0B0B0] text-lg font-normal mb-6 leading-relaxed">Join professionals who are monetizing their time and expertise</p>
                   <Button
                     className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-colors duration-300"
-                    onClick={() => navigate('/auth')}
+                    onClick={handleCTAClick}
                   >
                     Start Earning Today
                   </Button>
@@ -280,6 +306,14 @@ const PaywallPage = () => {
           <p>© 2025 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>
+
+      {/* Invitation Request Modal - Only show when invite_only_mode is enabled */}
+      {inviteOnlyMode && (
+        <InvitationRequestModal
+          open={invitationModalOpen}
+          onOpenChange={setInvitationModalOpen}
+        />
+      )}
     </div>
   );
 };

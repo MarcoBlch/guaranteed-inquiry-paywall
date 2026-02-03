@@ -56,6 +56,13 @@ export const analytics = {
   bonusUnlocked: () =>
     trackEvent('85% Bonus Unlocked'),
 
+  // Invitation Request Events (Waitlist)
+  invitationModalOpened: () =>
+    trackEvent('Invitation Modal Opened'),
+
+  invitationRequestSubmitted: () =>
+    trackEvent('Invitation Request Submitted'),
+
   // Payment Events
   paymentPageViewed: (recipientUsername: string) =>
     trackEvent('Payment Page Viewed', { recipient: recipientUsername }),
