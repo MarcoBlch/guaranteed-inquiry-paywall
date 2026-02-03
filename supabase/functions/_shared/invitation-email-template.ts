@@ -58,8 +58,8 @@ export function generateInvitationEmailTemplate(data: InvitationEmailData): stri
                             <!-- Invitation Code Box -->
                             <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; border: 2px solid #667eea; margin: 25px 0; text-align: center;">
                                 <p style="margin: 0 0 10px 0; font-weight: bold; color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Your Invitation Code</p>
-                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 25px; border-radius: 6px; display: inline-block; margin: 10px 0;">
-                                    <p style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold; letter-spacing: 3px; font-family: 'Courier New', monospace;">
+                                <div style="background-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 25px; border-radius: 6px; display: inline-block; margin: 10px 0;">
+                                    <p style="margin: 0; color: #ffffff !important; font-size: 24px; font-weight: bold; letter-spacing: 3px; font-family: 'Courier New', monospace;">
                                         ${data.inviteCode}
                                     </p>
                                 </div>
@@ -68,7 +68,7 @@ export function generateInvitationEmailTemplate(data: InvitationEmailData): stri
 
                             <!-- CTA Button -->
                             <div style="text-align: center; margin: 30px 0;">
-                                <a href="${data.signupUrl}" target="_blank" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                                <a href="${data.signupUrl}" target="_blank" style="background-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff !important; text-decoration: none; padding: 15px 40px; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
                                     Get Started Now →
                                 </a>
                             </div>

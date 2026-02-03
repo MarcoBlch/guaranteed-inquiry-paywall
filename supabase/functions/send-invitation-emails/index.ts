@@ -233,8 +233,8 @@ serve(async (req) => {
               }
             ],
             Metadata: {
-              invitation_request_id: request.id,
-              invite_code: codeString,
+              request_id: request.id,
+              code: codeString,
               code_type: 'founder'
             }
           }),
@@ -289,9 +289,9 @@ serve(async (req) => {
           metadata: {
             to: postmarkResult.To,
             submitted_at: postmarkResult.SubmittedAt,
-            postmark_message_id: postmarkResult.MessageID,
-            invitation_request_id: request.id,
-            invite_code: codeString
+            postmark_id: postmarkResult.MessageID,
+            request_id: request.id,
+            code: codeString
           }
         })
 
