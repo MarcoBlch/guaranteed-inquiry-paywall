@@ -1,14 +1,17 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AuthForm from '@/components/auth/AuthForm';
 import { FastPassLogo } from '@/components/ui/FastPassLogo';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle } from 'lucide-react';
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   useEffect(() => {
     const handleAuthFlow = async () => {
@@ -16,6 +19,24 @@ const AuthPage = () => {
       const type = searchParams.get('type');
       const redirectTo = searchParams.get('redirect_to');
       const isPasswordReset = searchParams.get('reset') === 'true';
+
+      // Handle invitation code from URL
+      const inviteCodeFromUrl = searchParams.get('invite_code');
+      if (inviteCodeFromUrl) {
+        console.log('Invitation code detected in URL:', inviteCodeFromUrl);
+        // Store in localStorage to persist across auth flow
+        localStorage.setItem('pending_invite_code', inviteCodeFromUrl);
+        setInviteCode(inviteCodeFromUrl);
+        toast.success('Using invitation code: ' + inviteCodeFromUrl, {
+          description: 'Your code will be applied when you sign up'
+        });
+      } else {
+        // Check if there's a pending code in localStorage
+        const storedCode = localStorage.getItem('pending_invite_code');
+        if (storedCode) {
+          setInviteCode(storedCode);
+        }
+      }
 
       // If we're in password reset mode, don't do anything - just show the form
       if (isPasswordReset) {
@@ -76,7 +97,28 @@ const AuthPage = () => {
 
         {/* Main Content - Auth Form */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <AuthForm />
+          <div className="w-full max-w-md space-y-4">
+            {/* Invitation Code Badge */}
+            {inviteCode && (
+              <div className="bg-gradient-to-r from-[#5cffb0]/20 to-[#2C424C]/20 backdrop-blur-md border border-[#5cffb0]/30 rounded-lg p-4 shadow-[0_0_15px_rgba(92,255,176,0.2)]">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-5 w-5 text-[#5cffb0]" />
+                  <span className="text-[#5cffb0] font-semibold">Invitation Code Active</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#B0B0B0] text-sm">Code:</span>
+                  <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/30 font-mono">
+                    {inviteCode}
+                  </Badge>
+                </div>
+                <p className="text-[#B0B0B0]/80 text-xs mt-2">
+                  This code will be applied automatically when you sign up
+                </p>
+              </div>
+            )}
+
+            <AuthForm />
+          </div>
         </div>
 
         {/* Footer */}

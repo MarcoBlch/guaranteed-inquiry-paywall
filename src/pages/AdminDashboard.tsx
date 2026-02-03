@@ -32,11 +32,32 @@ import {
   AlertCircle,
   Crown,
   Activity,
-  Clock
+  Clock,
+  Mail,
+  Send,
+  Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { useInvitationRequests } from "@/hooks/useInvitationRequests";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface InviteAnalytics {
   overview: {
@@ -85,9 +106,15 @@ const AdminDashboard = () => {
   const [adminEmail, setAdminEmail] = useState('');
   const [codeCount, setCodeCount] = useState(5);
 
+  // Invitation requests state
+  const { stats: invitationStats, loading: invitationLoading, sending: sendingInvitations, fetchStats: fetchInvitationStats, sendInvitations } = useInvitationRequests();
+  const [batchSize, setBatchSize] = useState(10);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
   useEffect(() => {
     loadAnalytics();
-  }, []);
+    fetchInvitationStats();
+  }, [fetchInvitationStats]);
 
   const loadAnalytics = async () => {
     setRefreshing(true);
@@ -239,6 +266,15 @@ const AdminDashboard = () => {
       toast.error(`Failed to grant admin: ${error.message}`);
     } finally {
       setGrantingAdmin(false);
+    }
+  };
+
+  const handleSendInvitations = async () => {
+    setShowConfirmDialog(false);
+    const result = await sendInvitations(batchSize, false);
+    if (result && result.success) {
+      // Stats will be refreshed automatically by the hook
+      loadAnalytics(); // Also refresh main analytics
     }
   };
 
@@ -607,6 +643,203 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Invitation Requests Panel */}
+                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <CardHeader>
+                    <CardTitle className="text-[#5cffb0] text-xl flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Invitation Requests
+                    </CardTitle>
+                    <CardDescription className="text-[#B0B0B0]">
+                      Send invitation emails to waitlist users
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {invitationLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <RefreshCw className="h-8 w-8 text-[#5cffb0] animate-spin" />
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Stats Overview */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Clock className="h-4 w-4 text-[#5cffb0]" />
+                              <span className="text-sm text-[#B0B0B0]">Pending Requests</span>
+                            </div>
+                            <p className="text-2xl font-bold text-[#5cffb0]">
+                              {invitationStats?.pending_count || 0}
+                            </p>
+                          </div>
+                          <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Send className="h-4 w-4 text-[#5cffb0]" />
+                              <span className="text-sm text-[#B0B0B0]">Invited This Week</span>
+                            </div>
+                            <p className="text-2xl font-bold text-[#5cffb0]">
+                              {invitationStats?.invited_this_week || 0}
+                            </p>
+                          </div>
+                          <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle className="h-4 w-4 text-[#5cffb0]" />
+                              <span className="text-sm text-[#B0B0B0]">Redemption Rate</span>
+                            </div>
+                            <p className="text-2xl font-bold text-[#5cffb0]">
+                              {invitationStats?.redemption_rate || 0}%
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Send Invitations Section */}
+                        <div className="bg-[#1a1f2e]/50 p-6 rounded-lg border border-[#5cffb0]/20">
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="batchSize" className="text-[#B0B0B0]">
+                                Batch Size
+                              </Label>
+                              <Select
+                                value={batchSize.toString()}
+                                onValueChange={(value) => setBatchSize(parseInt(value))}
+                              >
+                                <SelectTrigger className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] focus:border-[#5cffb0]">
+                                  <SelectValue placeholder="Select batch size" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="5">5 invitations</SelectItem>
+                                  <SelectItem value="10">10 invitations (default)</SelectItem>
+                                  <SelectItem value="20">20 invitations</SelectItem>
+                                  <SelectItem value="50">50 invitations</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-[#B0B0B0]/70">
+                                Number of invitation emails to send from the waitlist (FIFO order)
+                              </p>
+                            </div>
+
+                            <Button
+                              onClick={() => setShowConfirmDialog(true)}
+                              disabled={sendingInvitations || (invitationStats?.pending_count || 0) === 0}
+                              className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                            >
+                              {sendingInvitations ? (
+                                <>
+                                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                  Sending Invitations...
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Send Next {Math.min(batchSize, invitationStats?.pending_count || 0)} Invitations
+                                </>
+                              )}
+                            </Button>
+
+                            {(invitationStats?.pending_count || 0) === 0 && (
+                              <div className="bg-blue-500/10 p-3 rounded-md border border-blue-500/30">
+                                <p className="text-xs text-blue-400">
+                                  No pending invitation requests at the moment
+                                </p>
+                              </div>
+                            )}
+
+                            {(invitationStats?.pending_count || 0) > 0 && (
+                              <div className="bg-[#5cffb0]/10 p-3 rounded-md border border-[#5cffb0]/30">
+                                <p className="text-xs text-[#5cffb0]">
+                                  <strong>Ready to send:</strong> {invitationStats?.pending_count} pending requests in queue
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Recent Invitations Table */}
+                        {invitationStats?.recent_invitations && invitationStats.recent_invitations.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-[#B0B0B0] mb-3">Recent Invitations</h4>
+                            <div className="overflow-x-auto rounded-lg border border-[#5cffb0]/20">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow className="border-[#5cffb0]/20 hover:bg-[#5cffb0]/5">
+                                    <TableHead className="text-[#5cffb0]">Email</TableHead>
+                                    <TableHead className="text-[#5cffb0]">Invited</TableHead>
+                                    <TableHead className="text-[#5cffb0]">Code</TableHead>
+                                    <TableHead className="text-[#5cffb0]">Status</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {invitationStats.recent_invitations.map((invitation, index) => (
+                                    <TableRow key={index} className="border-[#5cffb0]/10 hover:bg-[#5cffb0]/5">
+                                      <TableCell className="text-[#B0B0B0] font-mono text-sm">
+                                        {invitation.email}
+                                      </TableCell>
+                                      <TableCell className="text-[#B0B0B0] text-sm">
+                                        {formatDate(invitation.invited_at)}
+                                      </TableCell>
+                                      <TableCell className="text-[#5cffb0] font-mono text-sm">
+                                        {invitation.code}
+                                      </TableCell>
+                                      <TableCell>
+                                        {invitation.redeemed ? (
+                                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                            <CheckCircle className="h-3 w-3 mr-1" />
+                                            Redeemed
+                                          </Badge>
+                                        ) : (
+                                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            Pending
+                                          </Badge>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                  <AlertDialogContent className="bg-[#1a1f2e] border-[#5cffb0]/30">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-[#5cffb0]">
+                        Confirm Invitation Send
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-[#B0B0B0]">
+                        You are about to send <strong className="text-[#5cffb0]">{Math.min(batchSize, invitationStats?.pending_count || 0)} invitation emails</strong> to users in the waitlist.
+                        <br /><br />
+                        Each user will receive:
+                        <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                          <li>A unique founder-tier invitation code</li>
+                          <li>Direct signup link with pre-filled code</li>
+                          <li>Welcome email with next steps</li>
+                        </ul>
+                        <br />
+                        This action cannot be undone. Continue?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-[#1a1f2e] border-[#5cffb0]/30 text-[#B0B0B0] hover:bg-[#1a1f2e]/80">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleSendInvitations}
+                        className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] font-bold"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Send Invitations
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
 
                 {/* Top Referrers */}
                 {analytics.top_referrers.length > 0 && (

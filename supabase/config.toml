@@ -160,3 +160,9 @@ verify_jwt = true
 
 [functions.grant-quick-admin]
 verify_jwt = true
+
+[functions.send-invitation-emails]
+verify_jwt = true
+
+[functions.get-invitation-stats]
+verify_jwt = true
