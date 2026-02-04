@@ -246,7 +246,7 @@ const BlogPost = () => {
               Home
             </Link>
           </div>
-          <p>&copy; 2025 FastPass | Guaranteed Response Platform</p>
+          <p>&copy; 2026 FastPass | Guaranteed Response Platform</p>
         </footer>
       </div>
     </div>

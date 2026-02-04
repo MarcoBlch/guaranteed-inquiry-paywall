@@ -304,7 +304,7 @@ const CookieSettings = () => {
 
         {/* Footer */}
         <footer className="text-center py-6 text-white/60 text-sm border-t border-[#5cffb0]/20 mt-12">
-          <p>© 2025 FastPass • Guaranteed Response Platform</p>
+          <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>
     </div>

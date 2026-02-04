@@ -303,7 +303,7 @@ const PaywallPage = () => {
               Contact Us
             </a>
           </div>
-          <p>© 2025 FastPass • Guaranteed Response Platform</p>
+          <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>
 
