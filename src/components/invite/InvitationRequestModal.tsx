@@ -122,7 +122,7 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
           <DialogDescription className="text-[#B0B0B0]">
             {submitted
               ? "We'll review your request and send you an invitation code soon."
-              : "Join the FastPass beta and start monetizing your inbox attention."
+              : "Fastpass is reserved for selected creators."
             }
           </DialogDescription>
         </DialogHeader>

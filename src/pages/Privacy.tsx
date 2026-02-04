@@ -43,7 +43,7 @@ const Privacy = () => {
             Privacy Policy
           </h1>
           <p className="text-[#B0B0B0] text-sm mb-8">
-            Last Updated: November 24, 2025
+            Last Updated: February 4, 2026
           </p>
 
           {/* Introduction */}
@@ -552,7 +552,7 @@ const Privacy = () => {
 
         {/* Footer */}
         <footer className="text-center py-6 text-white/60 text-sm border-t border-[#5cffb0]/20 mt-12">
-          <p>© 2025 FastPass • Guaranteed Response Platform</p>
+          <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>
     </div>

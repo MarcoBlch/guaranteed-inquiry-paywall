@@ -122,7 +122,7 @@ const PaymentPage = () => {
           {/* Footer */}
           <footer className="text-center py-6 text-[#B0B0B0]/60 text-xs sm:text-sm px-4">
             <p>Secure payment • Full refund if no response • 24/7 support</p>
-            <p className="mt-2">© 2025 FastPass • Guaranteed Response Platform</p>
+            <p className="mt-2">© 2026 FastPass • Guaranteed Response Platform</p>
           </footer>
         </div>
       </div>

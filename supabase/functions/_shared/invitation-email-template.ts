@@ -138,7 +138,7 @@ export function generateInvitationEmailTemplate(data: InvitationEmailData): stri
                                 This invitation was sent to <strong>${data.recipientEmail}</strong>
                             </p>
                             <p style="margin: 0; color: #999; font-size: 12px;">
-                                © 2025 FASTPASS. All rights reserved.
+                                © 2026 FASTPASS. All rights reserved.
                             </p>
                         </td>
                     </tr>
@@ -197,7 +197,7 @@ Simply reply to this email and we'll get back to you quickly.
 
 This invitation was sent to: ${data.recipientEmail}
 
-© 2025 FASTPASS. All rights reserved.
+© 2026 FASTPASS. All rights reserved.
   `.trim();
 }
 

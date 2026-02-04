@@ -649,7 +649,7 @@ const AccountSettings = () => {
 
         {/* Footer */}
         <footer className="text-center py-6 text-[#B0B0B0]/60 text-sm">
-          <p>© 2025 FastPass • Guaranteed Response Platform</p>
+          <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>
     </div>
