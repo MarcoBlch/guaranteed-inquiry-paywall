@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Check, Twitter, Linkedin, Mail, Gift, Users } from 'lucide-react';
+import { Copy, Check, Twitter, Mail, Gift, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,11 +70,6 @@ Use my invite code: ${code}
 
 ${getInviteUrl(code)}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const shareOnLinkedIn = (code: string) => {
-    const url = getInviteUrl(code);
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
   };
 
   const shareByEmail = (code: string) => {
@@ -191,15 +186,6 @@ Sign up here: ${getInviteUrl(code)}`;
                 >
                   <Twitter className="h-4 w-4 mr-2" />
                   Twitter
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => shareOnLinkedIn(code.code)}
-                  className="flex-1 border-[#5cffb0]/30 text-[#B0B0B0] hover:text-[#5cffb0] hover:bg-[#5cffb0]/10"
-                >
-                  <Linkedin className="h-4 w-4 mr-2" />
-                  LinkedIn
                 </Button>
                 <Button
                   variant="outline"

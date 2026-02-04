@@ -47,7 +47,7 @@ export const analytics = {
   inviteCodeValidated: (codeType: string) =>
     trackEvent('Invite Code Validated', { code_type: codeType }),
 
-  inviteCodeShared: (platform: 'twitter' | 'linkedin' | 'email') =>
+  inviteCodeShared: (platform: 'twitter' | 'email') =>
     trackEvent('Invite Code Shared', { platform }),
 
   inviteCodeGenerated: (batchSize: number) =>
