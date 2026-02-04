@@ -115,6 +115,46 @@ const AuthCallback = () => {
             toast.success(`Welcome back, ${session.user.email}!`);
           }
 
+          // Handle invite code redemption for OAuth signups
+          const pendingInviteCodeStr = localStorage.getItem('pending_invite_code');
+          const inviteOnlyModeStr = localStorage.getItem('invite_only_mode');
+
+          if (pendingInviteCodeStr) {
+            try {
+              const inviteCodeDetails = JSON.parse(pendingInviteCodeStr);
+
+              console.log('Found pending invite code for OAuth user:', {
+                invite_code_id: inviteCodeDetails.invite_code_id,
+                user_id: session.user.id
+              });
+
+              // Attempt to redeem the invite code
+              const { data: redeemData, error: redeemError } = await supabase.functions.invoke('redeem-invite-code', {
+                body: {
+                  invite_code_id: inviteCodeDetails.invite_code_id,
+                  user_id: session.user.id
+                }
+              });
+
+              if (redeemError) {
+                console.error('Error redeeming invite code:', redeemError);
+                // Don't block login for existing users, just log the error
+                toast.warning('Invite code could not be applied. If this is a new account, please contact support.');
+              } else if (redeemData?.success) {
+                console.log('Invite code redeemed successfully for OAuth user');
+                toast.success('Welcome! Your invite code has been applied.');
+              }
+
+              // Clear stored invite code
+              localStorage.removeItem('pending_invite_code');
+              localStorage.removeItem('invite_only_mode');
+            } catch (error) {
+              console.error('Error processing pending invite code:', error);
+              localStorage.removeItem('pending_invite_code');
+              localStorage.removeItem('invite_only_mode');
+            }
+          }
+
           // Check if user has completed profile setup
           const { data: profile } = await supabase
             .from('profiles')

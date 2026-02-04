@@ -122,6 +122,25 @@ const AuthForm = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      // If invite-only mode is enabled, require valid invite code
+      if (inviteOnlyMode && !inviteCodeValid) {
+        toast.error('A valid invite code is required to sign up');
+        setLoading(false);
+        return;
+      }
+
+      // Store invite code details in localStorage for post-OAuth redemption
+      if (inviteCodeValid && inviteCodeDetails) {
+        localStorage.setItem('pending_invite_code', JSON.stringify({
+          code: inviteCodeDetails.code,
+          code_type: inviteCodeDetails.code_type,
+          invite_code_id: inviteCodeDetails.invite_code_id
+        }));
+      }
+
+      // Store invite-only mode state for callback validation
+      localStorage.setItem('invite_only_mode', JSON.stringify(inviteOnlyMode));
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -378,8 +397,8 @@ const AuthForm = () => {
              isLogin ? 'Login' : 'Sign Up'}
           </Button>
 
-          {/* OAuth Buttons - Currently disabled, uncomment to enable when OAuth is configured */}
-          {/* {!isPasswordReset && !isForgotPassword && (
+          {/* OAuth Buttons */}
+          {!isPasswordReset && !isForgotPassword && (
             <>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -433,7 +452,7 @@ const AuthForm = () => {
                 </Button>
               </div>
             </>
-          )} */}
+          )}
 
           {isPasswordReset ? (
             <Button
