@@ -60,6 +60,9 @@ supabase/functions/**/dist/
 *.sql
 backup-*.sql
 
+# Exception: Always track Supabase migrations
+!supabase/migrations/*.sql
+
 # Windows metadata files (NTFS alternate data streams)
 *:Zone.Identifier
 *:mshield
