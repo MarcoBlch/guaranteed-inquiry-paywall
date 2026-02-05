@@ -58,7 +58,13 @@ const AuthForm = () => {
     try {
       const { data, error } = await supabase.functions.invoke('get-platform-settings');
       if (error) throw error;
-      setInviteOnlyMode(data?.settings?.invite_only_mode?.enabled ?? false);
+      const inviteOnlyEnabled = data?.settings?.invite_only_mode?.enabled ?? false;
+      setInviteOnlyMode(inviteOnlyEnabled);
+
+      // Default to signup mode when invite-only is enabled (only on initial load)
+      if (inviteOnlyEnabled && isLogin) {
+        setIsLogin(false);
+      }
     } catch (error) {
       console.error('Error checking invite mode:', error);
       // Default to not requiring invite on error
@@ -67,13 +73,6 @@ const AuthForm = () => {
       setCheckingInviteMode(false);
     }
   };
-
-  // Default to signup mode when invite-only is enabled
-  useEffect(() => {
-    if (!checkingInviteMode && inviteOnlyMode && isLogin) {
-      setIsLogin(false);
-    }
-  }, [checkingInviteMode, inviteOnlyMode, isLogin]);
 
   const handleInviteCodeValidation = (isValid: boolean, details?: { code: string; code_type: string; invite_code_id: string }) => {
     setInviteCodeValid(isValid);
