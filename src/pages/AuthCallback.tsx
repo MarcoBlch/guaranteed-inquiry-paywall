@@ -1,12 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FastPassLogo } from '@/components/ui/FastPassLogo';
+import { getInviteCode, clearInviteCode } from '@/utils/inviteCodeStorage';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [loadingPhase, setLoadingPhase] = useState<
+    'verifying' | 'creating_profile' | 'redeeming_code' | 'complete'
+  >('verifying');
 
   useEffect(() => {
     // Prevent multiple executions
@@ -116,43 +120,118 @@ const AuthCallback = () => {
           }
 
           // Handle invite code redemption for OAuth signups
-          const pendingInviteCodeStr = localStorage.getItem('pending_invite_code');
+          setLoadingPhase('creating_profile');
+          const inviteCodeDetails = await getInviteCode();
           const inviteOnlyModeStr = localStorage.getItem('invite_only_mode');
 
-          if (pendingInviteCodeStr) {
+          if (inviteCodeDetails) {
             try {
-              const inviteCodeDetails = JSON.parse(pendingInviteCodeStr);
-
               console.log('Found pending invite code for OAuth user:', {
                 invite_code_id: inviteCodeDetails.invite_code_id,
                 user_id: session.user.id
               });
 
-              // Attempt to redeem the invite code
-              const { data: redeemData, error: redeemError } = await supabase.functions.invoke('redeem-invite-code', {
-                body: {
-                  invite_code_id: inviteCodeDetails.invite_code_id,
-                  user_id: session.user.id
-                }
-              });
+              // Wait for profile to be fully created by database triggers
+              const maxRetries = 5;
+              const retryDelay = 500; // ms
+              let profileReady = false;
 
-              if (redeemError) {
-                console.error('Error redeeming invite code:', redeemError);
-                // Don't block login for existing users, just log the error
-                toast.warning('Invite code could not be applied. If this is a new account, please contact support.');
-              } else if (redeemData?.success) {
-                console.log('Invite code redeemed successfully for OAuth user');
-                toast.success('Welcome! Your invite code has been applied.');
+              for (let attempt = 0; attempt < maxRetries; attempt++) {
+                const { data: profile, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('id, created_at')
+                  .eq('id', session.user.id)
+                  .single();
+
+                if (profile && !profileError) {
+                  // Also check user_tiers exists
+                  const { data: tier } = await supabase
+                    .from('user_tiers')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                  if (tier) {
+                    console.log('Profile and tier ready after', attempt + 1, 'attempts');
+                    profileReady = true;
+                    break;
+                  }
+                }
+
+                // Exponential backoff
+                if (attempt < maxRetries - 1) {
+                  console.log('Profile not ready, retrying...', attempt + 1);
+                  await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1)));
+                }
               }
 
-              // Clear stored invite code
-              localStorage.removeItem('pending_invite_code');
+              if (!profileReady) {
+                console.warn('Profile creation timed out, attempting redemption anyway');
+              }
+
+              // Attempt to redeem the invite code with retry logic
+              setLoadingPhase('redeeming_code');
+              let redeemSuccess = false;
+              const maxRedeemRetries = 3;
+
+              for (let attempt = 0; attempt < maxRedeemRetries; attempt++) {
+                const { data: redeemData, error: redeemError } = await supabase.functions.invoke('redeem-invite-code', {
+                  body: {
+                    invite_code_id: inviteCodeDetails.invite_code_id,
+                    user_id: session.user.id
+                  }
+                });
+
+                if (!redeemError && redeemData?.success) {
+                  redeemSuccess = true;
+                  console.log('Invite code redeemed successfully for OAuth user');
+
+                  // Show appropriate success message
+                  if (redeemData.already_redeemed) {
+                    toast.info('Welcome back! Your invite code is already active.');
+                  } else {
+                    toast.success('Welcome! Your invite code has been applied.');
+                  }
+                  break;
+                }
+
+                // Check if error is retryable
+                const errorMessage = redeemError?.message || '';
+                if (errorMessage.includes('profile not ready')) {
+                  console.log('Profile not ready for redemption, retrying...', attempt + 1);
+                  toast.info('Setting up your account, please wait...');
+                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                  continue;
+                } else {
+                  // Non-retryable error - show user-friendly message
+                  console.error('Invite redemption failed:', redeemError);
+
+                  if (errorMessage.includes('already used')) {
+                    toast.error('This invite code has already been used.');
+                  } else if (errorMessage.includes('expired')) {
+                    toast.error('This invite code has expired.');
+                  } else if (errorMessage.includes('already redeemed')) {
+                    toast.info('Welcome! Your invite code is already active.');
+                  } else {
+                    toast.warning('Welcome! We encountered an issue applying your invite code. Your account has been created.');
+                  }
+                  break;
+                }
+              }
+
+              // Clear stored invite code and mode
+              clearInviteCode();
               localStorage.removeItem('invite_only_mode');
+              setLoadingPhase('complete');
             } catch (error) {
               console.error('Error processing pending invite code:', error);
-              localStorage.removeItem('pending_invite_code');
+              toast.warning('Welcome! Your account has been created.');
+              clearInviteCode();
               localStorage.removeItem('invite_only_mode');
+              setLoadingPhase('complete');
             }
+          } else {
+            setLoadingPhase('complete');
           }
 
           // Check if user has completed profile setup
@@ -212,8 +291,18 @@ const AuthCallback = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#5cffb0]/20 border-t-[#5cffb0] mx-auto"></div>
                 <div className="absolute inset-0 rounded-full bg-[#5cffb0]/10 blur-xl animate-pulse"></div>
               </div>
-              <h2 className="text-xl font-semibold text-[#5cffb0] mb-2">Verifying your account...</h2>
-              <p className="text-[#B0B0B0]">Please wait while we complete the process</p>
+              <h2 className="text-xl font-semibold text-[#5cffb0] mb-2">
+                {loadingPhase === 'verifying' && 'Verifying your account...'}
+                {loadingPhase === 'creating_profile' && 'Setting up your profile...'}
+                {loadingPhase === 'redeeming_code' && 'Applying your invite code...'}
+                {loadingPhase === 'complete' && 'Almost there...'}
+              </h2>
+              <p className="text-[#B0B0B0]">
+                {loadingPhase === 'verifying' && 'Please wait while we complete the process'}
+                {loadingPhase === 'creating_profile' && 'Creating your account...'}
+                {loadingPhase === 'redeeming_code' && 'Validating your invitation...'}
+                {loadingPhase === 'complete' && 'Redirecting to dashboard...'}
+              </p>
             </div>
           </div>
         </div>

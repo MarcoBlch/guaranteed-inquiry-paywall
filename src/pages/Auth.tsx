@@ -7,6 +7,7 @@ import AuthForm from '@/components/auth/AuthForm';
 import { FastPassLogo } from '@/components/ui/FastPassLogo';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
+import { storeInviteCode, getInviteCodeSync } from '@/utils/inviteCodeStorage';
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -24,15 +25,36 @@ const AuthPage = () => {
       const inviteCodeFromUrl = searchParams.get('invite_code');
       if (inviteCodeFromUrl) {
         console.log('Invitation code detected in URL:', inviteCodeFromUrl);
-        // Store in localStorage to persist across auth flow
-        localStorage.setItem('pending_invite_code', inviteCodeFromUrl);
-        setInviteCode(inviteCodeFromUrl);
-        toast.success('Using invitation code: ' + inviteCodeFromUrl, {
-          description: 'Your code will be applied when you sign up'
-        });
+
+        // Validate and enrich the code before storing
+        try {
+          const { data, error } = await supabase.functions.invoke('validate-invite-code', {
+            body: { code: inviteCodeFromUrl }
+          });
+
+          if (error || !data?.valid) {
+            console.error('Invalid invite code from URL:', error);
+            toast.error('Invalid invitation code');
+          } else {
+            // Store enriched invite code data
+            storeInviteCode({
+              code: data.code,
+              code_type: data.code_type,
+              invite_code_id: data.invite_code_id,
+              stored_at: Date.now()
+            });
+            setInviteCode(data.code);
+            toast.success('Using invitation code: ' + data.code, {
+              description: 'Your code will be applied when you sign up'
+            });
+          }
+        } catch (error) {
+          console.error('Error validating invite code:', error);
+          toast.error('Failed to validate invitation code');
+        }
       } else {
         // Check if there's a pending code in localStorage
-        const storedCode = localStorage.getItem('pending_invite_code');
+        const storedCode = getInviteCodeSync();
         if (storedCode) {
           setInviteCode(storedCode);
         }

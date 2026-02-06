@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { InviteCodeInput } from '@/components/invite/InviteCodeInput';
 import { Loader2, Lock } from 'lucide-react';
+import { storeInviteCode, getInviteCode } from '@/utils/inviteCodeStorage';
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -137,11 +138,12 @@ const AuthForm = () => {
 
       // Store invite code details in localStorage for post-OAuth redemption
       if (inviteCodeValid && inviteCodeDetails) {
-        localStorage.setItem('pending_invite_code', JSON.stringify({
+        storeInviteCode({
           code: inviteCodeDetails.code,
           code_type: inviteCodeDetails.code_type,
-          invite_code_id: inviteCodeDetails.invite_code_id
-        }));
+          invite_code_id: inviteCodeDetails.invite_code_id,
+          stored_at: Date.now()
+        });
       }
 
       // Store invite-only mode state for callback validation
@@ -230,6 +232,7 @@ const AuthForm = () => {
         // If we have a valid invite code, redeem it after signup
         if (inviteCodeValid && inviteCodeDetails && signUpData.user) {
           try {
+            // Use the invite code details from state (already validated)
             const { error: redeemError } = await supabase.functions.invoke('redeem-invite-code', {
               body: {
                 invite_code_id: inviteCodeDetails.invite_code_id,
@@ -240,7 +243,7 @@ const AuthForm = () => {
               console.error('Error redeeming invite code:', redeemError);
               // Don't fail signup if code redemption fails
             } else {
-              console.log('Invite code redeemed successfully');
+              console.log('Invite code redeemed successfully for email signup');
             }
           } catch (redeemError) {
             console.error('Error redeeming invite code:', redeemError);

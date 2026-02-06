@@ -33,6 +33,83 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Verify profile is fully initialized (wait for triggers to complete)
+    const { data: profile, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('id, created_at, invited_by_code')
+      .eq('id', user_id)
+      .single()
+
+    if (profileCheckError || !profile) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'profile not ready',
+          message: 'User profile is still being created. Please try again in a moment.',
+          retryable: true
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 409 // Conflict - temporary issue
+        }
+      )
+    }
+
+    // Also check user_tiers exists (created by trigger)
+    const { data: tierCheck } = await supabase
+      .from('user_tiers')
+      .select('id')
+      .eq('user_id', user_id)
+      .single()
+
+    if (!tierCheck) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'profile not ready',
+          message: 'User account is still being initialized. Please try again in a moment.',
+          retryable: true
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 409
+        }
+      )
+    }
+
+    // Check if user already redeemed a code (idempotency protection)
+    if (profile.invited_by_code) {
+      if (profile.invited_by_code === invite_code_id) {
+        // Same code - idempotent success
+        console.log(`User ${user_id} already redeemed this code - returning success (idempotent)`)
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Invite code already applied',
+            already_redeemed: true
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          }
+        )
+      } else {
+        // Different code - user already used another code
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'already redeemed',
+            message: 'You have already used a different invite code',
+            retryable: false
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        )
+      }
+    }
+
     // Verify the code exists and is still available
     const { data: inviteCode, error: lookupError } = await supabase
       .from('invite_codes')
@@ -44,7 +121,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invite code not found'
+          error: 'not found',
+          message: 'Invite code not found',
+          retryable: false
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -59,7 +138,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'You cannot use your own invite code'
+          error: 'self invite',
+          message: 'You cannot use your own invite code',
+          retryable: false
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -73,7 +154,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'This invite code has already been used'
+          error: 'already used',
+          message: 'This invite code has already been used',
+          retryable: false
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -87,7 +170,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'This invite code has been deactivated'
+          error: 'deactivated',
+          message: 'This invite code has been deactivated',
+          retryable: false
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -101,7 +186,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'This invite code has expired'
+          error: 'expired',
+          message: 'This invite code has expired',
+          retryable: false
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -195,7 +282,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'An error occurred while redeeming the code'
+        error: 'server error',
+        message: 'An error occurred while redeeming the code. Please try again.',
+        retryable: true
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
