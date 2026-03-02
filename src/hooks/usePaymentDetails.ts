@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 interface PaymentDetails {
   userName: string;
   price: number;
+  dailyLimit: number;
+  messagesReceivedToday: number;
+  isLimitReached: boolean;
 }
 
 export const usePaymentDetails = (userId: string | undefined) => {
@@ -56,7 +59,10 @@ export const usePaymentDetails = (userId: string | undefined) => {
 
         setDetails({
           price: profile.price,
-          userName: profile.userName
+          userName: profile.userName,
+          dailyLimit: profile.dailyLimit ?? 5,
+          messagesReceivedToday: profile.messagesReceivedToday ?? 0,
+          isLimitReached: profile.isLimitReached ?? false,
         });
 
       } catch (err: any) {

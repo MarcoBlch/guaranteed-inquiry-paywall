@@ -94,24 +94,43 @@ const PaymentPage = () => {
                 <CardContent className="p-4 sm:p-6 lg:p-8">
                   {details && userId && (
                     <div className="space-y-4 sm:space-y-6">
-                      {/* Personal Message from Recipient */}
-                      <div className="bg-[#5cffb0]/10 border border-[#5cffb0]/30 rounded-lg p-4 sm:p-6">
-                        <div className="mb-3">
-                          <p className="text-[#B0B0B0] text-sm sm:text-base leading-relaxed italic">
-                            "I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter. If you want a real answer, or to collaborate, this is the best way to reach me directly."
+                      {details.isLimitReached ? (
+                        /* Inbox full — daily limit reached */
+                        <div className="text-center space-y-4 py-6">
+                          <div className="text-5xl">📬</div>
+                          <h2 className="text-[#5cffb0] text-xl font-bold">
+                            Inbox full for today
+                          </h2>
+                          <p className="text-[#B0B0B0] text-base leading-relaxed">
+                            <span className="font-semibold text-white">{details.userName}</span> has
+                            reached their daily message limit. Check back tomorrow!
+                          </p>
+                          <p className="text-[#B0B0B0]/60 text-sm">
+                            Limits reset every day at midnight UTC.
                           </p>
                         </div>
-                        <p className="text-[#5cffb0] text-sm sm:text-base font-semibold">
-                          — {details.userName}
-                        </p>
-                      </div>
+                      ) : (
+                        <>
+                          {/* Personal Message from Recipient */}
+                          <div className="bg-[#5cffb0]/10 border border-[#5cffb0]/30 rounded-lg p-4 sm:p-6">
+                            <div className="mb-3">
+                              <p className="text-[#B0B0B0] text-sm sm:text-base leading-relaxed italic">
+                                "I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter. If you want a real answer, or to collaborate, this is the best way to reach me directly."
+                              </p>
+                            </div>
+                            <p className="text-[#5cffb0] text-sm sm:text-base font-semibold">
+                              — {details.userName}
+                            </p>
+                          </div>
 
-                      <StripeEscrowForm
-                        userId={userId}
-                        basePrice={details.price}
-                        onSuccess={() => navigate('/payment-success')}
-                        onError={(message) => setPaymentError(message)}
-                      />
+                          <StripeEscrowForm
+                            userId={userId}
+                            basePrice={details.price}
+                            onSuccess={() => navigate('/payment-success')}
+                            onError={(message) => setPaymentError(message)}
+                          />
+                        </>
+                      )}
                     </div>
                   )}
                 </CardContent>
