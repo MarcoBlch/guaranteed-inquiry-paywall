@@ -451,27 +451,39 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          daily_limit_override: number | null
+          display_name: string | null
           id: string
+          invited_by_code: string | null
           is_admin: boolean | null
           price: number | null
+          signed_up_at: string | null
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          daily_limit_override?: number | null
+          display_name?: string | null
           id: string
+          invited_by_code?: string | null
           is_admin?: boolean | null
           price?: number | null
+          signed_up_at?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          daily_limit_override?: number | null
+          display_name?: string | null
           id?: string
+          invited_by_code?: string | null
           is_admin?: boolean | null
           price?: number | null
+          signed_up_at?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           updated_at?: string | null

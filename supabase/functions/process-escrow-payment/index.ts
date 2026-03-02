@@ -72,6 +72,43 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Check daily message limit for this recipient
+    const todayUTC = new Date()
+    todayUTC.setUTCHours(0, 0, 0, 0)
+
+    const { count: todayCount, error: countError } = await supabase
+      .from('escrow_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_user_id', messageData.userId)
+      .gte('created_at', todayUTC.toISOString())
+      .in('status', ['held', 'processing', 'released', 'pending_user_setup'])
+
+    if (countError) {
+      console.error('Failed to check daily limit:', countError)
+      throw new Error('Could not verify daily message limit')
+    }
+
+    // Fetch per-user override from profiles (null = use platform default of 5)
+    const { data: recipientProfile } = await supabase
+      .from('profiles')
+      .select('daily_limit_override')
+      .eq('id', messageData.userId)
+      .single()
+
+    const dailyLimit = recipientProfile?.daily_limit_override ?? 5
+
+    if ((todayCount ?? 0) >= dailyLimit) {
+      console.log(`Daily limit reached for recipient ${messageData.userId}: ${todayCount}/${dailyLimit}`)
+      return new Response(
+        JSON.stringify({
+          error: 'daily_limit_reached',
+          message: "This user's inbox is full for today. Try again tomorrow.",
+          limit: dailyLimit
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Insert message with sanitized content
     const { data: message, error: messageError } = await supabase
       .from('messages')

@@ -91,6 +91,8 @@ const Dashboard = () => {
   const [dateRange, setDateRange] = useState('30');
   const [referralCount, setReferralCount] = useState(0);
   const [revenuePercentage, setRevenuePercentage] = useState(0.75);
+  const [todayMessageCount, setTodayMessageCount] = useState(0);
+  const [dailyLimit, setDailyLimit] = useState(5);
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -350,7 +352,7 @@ const Dashboard = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name')
+      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override')
       .eq('id', user.id)
       .single();
 
@@ -359,7 +361,19 @@ const Dashboard = () => {
       setPrice(profile.price || 10);
       setIsAdmin(profile.is_admin || false);
       setDisplayName(profile.display_name || '');
+      setDailyLimit(profile.daily_limit_override ?? 5);
     }
+
+    // Count today's paid messages (UTC boundary, matching backend logic)
+    const todayUTC = new Date();
+    todayUTC.setUTCHours(0, 0, 0, 0);
+    const { count: todayCount } = await supabase
+      .from('escrow_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_user_id', user.id)
+      .gte('created_at', todayUTC.toISOString())
+      .in('status', ['held', 'processing', 'released', 'pending_user_setup']);
+    setTodayMessageCount(todayCount ?? 0);
 
     const { data: pendingTransactions } = await supabase
       .from('escrow_transactions')
@@ -559,10 +573,21 @@ const Dashboard = () => {
               <TabsContent value="messages">
                 <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Inbox</CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
-                      View every messages received
-                    </CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Inbox</CardTitle>
+                        <CardDescription className="text-[#B0B0B0]">
+                          View every messages received
+                        </CardDescription>
+                      </div>
+                      {/* Daily message counter */}
+                      <div className={`flex flex-col items-end shrink-0 px-3 py-2 rounded-lg border ${todayMessageCount >= dailyLimit ? 'border-red-400/50 bg-red-400/10' : 'border-[#5cffb0]/30 bg-[#5cffb0]/10'}`}>
+                        <span className="text-[#B0B0B0] text-xs font-medium">Today</span>
+                        <span className={`text-lg font-bold leading-tight ${todayMessageCount >= dailyLimit ? 'text-red-400' : 'text-[#5cffb0]'}`}>
+                          {todayMessageCount} / {dailyLimit}
+                        </span>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {loadingMessages ? (

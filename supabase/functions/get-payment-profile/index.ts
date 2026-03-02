@@ -127,10 +127,10 @@ serve(async (req) => {
 
     console.log('Fetching profile for userId:', userId);
 
-    // Query profile with service role permissions
+    // Query profile with service role permissions (include daily_limit_override for limit calculation)
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('price, stripe_onboarding_completed, stripe_account_id, display_name')
+      .select('price, stripe_onboarding_completed, stripe_account_id, display_name, daily_limit_override')
       .eq('id', userId)
       .maybeSingle();
 
@@ -158,6 +158,20 @@ serve(async (req) => {
       throw new Error('This user has not completed Stripe Connect setup yet');
     }
 
+    // Count today's paid messages for this recipient (UTC day boundary)
+    const todayUTC = new Date()
+    todayUTC.setUTCHours(0, 0, 0, 0)
+
+    const { count: todayCount } = await supabase
+      .from('escrow_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_user_id', userId)
+      .gte('created_at', todayUTC.toISOString())
+      .in('status', ['held', 'processing', 'released', 'pending_user_setup'])
+
+    const dailyLimit = profile.daily_limit_override ?? 5
+    const messagesReceivedToday = todayCount ?? 0
+
     // Return only the necessary information for payment
     return new Response(
       JSON.stringify({
@@ -165,7 +179,10 @@ serve(async (req) => {
         profile: {
           price: profile.price,
           stripeOnboardingCompleted: profile.stripe_onboarding_completed,
-          userName: profile.display_name || 'this professional' // User's display name or fallback
+          userName: profile.display_name || 'this professional',
+          dailyLimit,
+          messagesReceivedToday,
+          isLimitReached: messagesReceivedToday >= dailyLimit
         }
       }),
       {

@@ -6,6 +6,7 @@ import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
+import { useSEO } from '@/hooks/useSEO';
 import { InvitationRequestModal } from "@/components/invite/InvitationRequestModal";
 import { analytics } from "@/lib/analytics";
 
@@ -18,6 +19,63 @@ const PaywallPage = () => {
 
   // Track page view for analytics
   usePageViewTracking('/');
+
+  useSEO({
+    title: 'FastPass – Get Paid to Answer Messages | Monetize Your Inbox',
+    description: 'FastPass lets busy professionals get paid to respond to messages. Senders pay upfront for a guaranteed reply — or they get a full refund. Control your inbox. Earn what your time is worth.',
+    keywords: ['pay to reach', 'inbox monetization', 'guaranteed response', 'monetize attention', 'paid messages', 'creator economy', 'professional inbox', 'fastpass'],
+    canonicalUrl: 'https://fastpass.email/',
+    ogImage: 'https://fastpass.email/logo-final-optimized-final.png',
+    structuredData: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'FastPass',
+        url: 'https://fastpass.email',
+        logo: 'https://fastpass.email/logo-final-optimized-final.png',
+        description: 'FastPass is a pay-to-reach platform that lets professionals monetize their inbox attention. Senders guarantee a response by paying upfront.',
+        contactPoint: { '@type': 'ContactPoint', email: 'support@fastpass.email', contactType: 'customer support' },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'FastPass',
+        url: 'https://fastpass.email',
+        description: 'Get paid to answer messages. Senders pay upfront for a guaranteed reply or a full refund.',
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'What exactly is a FastPass and why should I register?',
+            acceptedAnswer: { '@type': 'Answer', text: 'A FastPass lets your audience skip the line to reach you directly. They buy a pass, send you a message, and get a guaranteed reply within 24 hours. It is how creators, founders and experts stay available, without giving away their time.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'How do I create my own FastPass link?',
+            acceptedAnswer: { '@type': 'Answer', text: 'It takes just a few minutes to become a member. Sign up, customize your profile, set your pricing per response, and publish your unique FastPass link. You can then share it on your website, LinkedIn, X (Twitter), Instagram bio, or anywhere else people try to reach you.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'Can I control how much people pay and how fast I need to answer?',
+            acceptedAnswer: { '@type': 'Answer', text: 'Absolutely. You choose your response price and your timeframe (for example: 24h, 72h, 7 days). This gives you full control: charge more for urgent questions, less for general inquiries.' },
+          },
+          {
+            '@type': 'Question',
+            name: 'What happens once someone uses my FastPass link to contact me?',
+            acceptedAnswer: { '@type': 'Answer', text: "You'll get a clear notification. The sender has already paid, so you know they are serious. You then reply directly through your dashboard or email, and once the response is delivered, your payout (minus platform fees) is automatically processed." },
+          },
+          {
+            '@type': 'Question',
+            name: "What happens if I don't answer or my answer isn't accepted?",
+            acceptedAnswer: { '@type': 'Answer', text: "If you don't reply within the timeframe you set, the sender is refunded and no payout is made. FastPass has a fair-use policy: most members give clear, professional answers and never face issues." },
+          },
+        ],
+      },
+    ],
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
