@@ -83,18 +83,21 @@ serve(async (req) => {
           continue
         }
 
-        // Verify no response was received in the last few minutes
+        // Verify no response was received in the last few minutes.
+        // maybeSingle() returns { data: null, error: null } when 0 rows exist,
+        // unlike single() which returns PGRST116 — causing the refund to be silently skipped.
         const { data: recentResponse, error: responseError } = await supabase
           .from('message_responses')
           .select('has_response, response_received_at')
           .eq('message_id', transaction.message_id)
-          .single()
+          .maybeSingle()
 
         if (responseError) {
           console.error(`Error checking response for transaction ${transaction.id}:`, responseError)
           errorCount++
           continue
         }
+        // recentResponse === null means no message_responses row → no response → proceed with refund
 
         // If response was received after expiry (grace period), honor it
         if (recentResponse?.has_response && recentResponse.response_received_at) {
