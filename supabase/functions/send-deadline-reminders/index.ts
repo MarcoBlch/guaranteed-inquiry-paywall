@@ -335,8 +335,8 @@ serve(async (req) => {
           if (emailResponse.ok) {
             const emailResult = await emailResponse.json()
 
-            // Log the reminder
-            await supabase.from('email_logs').insert({
+            // Log the reminder — MUST check result: if this fails, the next cron run will re-send
+            const { error: logError } = await supabase.from('email_logs').insert({
               message_id: transaction.message_id,
               recipient_email: recipientEmail,
               sender_email: 'FASTPASS <noreply@fastpass.email>',
@@ -355,6 +355,12 @@ serve(async (req) => {
                 submitted_at: emailResult.SubmittedAt
               }
             })
+
+            if (logError) {
+              console.error(`CRITICAL: Reminder email sent but log insert failed for message ${transaction.message_id}. The next cron run will re-send this reminder unless the DB constraint blocks it.`, logError)
+              errorCount++
+              continue
+            }
 
             console.log(`Reminder #${reminderNumber} sent for message ${transaction.message_id} to ${recipientEmail} (${reminderType})`)
             remindersSent++
