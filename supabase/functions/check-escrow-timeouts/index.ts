@@ -30,12 +30,16 @@ serve(async (req) => {
 
     if (error) throw error
 
-    // Filter to include only transactions without responses
-    // This includes both: (1) no message_responses record, OR (2) has_response = false
+    // Filter to include only transactions without responses.
+    // Supabase embedding returns an ARRAY for one-to-many relationships, never a single object.
+    // Accessing .has_response on an array gives undefined, so the old `responses.has_response === false`
+    // always evaluated to false, silently dropping every expired transaction (total_expired: 0).
     const expiredTransactions = allExpiredTransactions.filter(txn => {
-      const responses = txn.message_responses as any
-      // Include if no response record exists (null/undefined) or has_response is explicitly false
-      return !responses || responses.has_response === false
+      const responses = txn.message_responses as any[]
+      // No response record at all → eligible for refund
+      if (!responses || responses.length === 0) return true
+      // Response record exists but has_response is explicitly false → eligible for refund
+      return responses[0]?.has_response === false
     })
 
     console.log(`Found ${expiredTransactions.length} expired transactions`)
@@ -83,18 +87,21 @@ serve(async (req) => {
           continue
         }
 
-        // Verify no response was received in the last few minutes
+        // Verify no response was received in the last few minutes.
+        // maybeSingle() returns { data: null, error: null } when 0 rows exist,
+        // unlike single() which returns PGRST116 — causing the refund to be silently skipped.
         const { data: recentResponse, error: responseError } = await supabase
           .from('message_responses')
           .select('has_response, response_received_at')
           .eq('message_id', transaction.message_id)
-          .single()
+          .maybeSingle()
 
         if (responseError) {
           console.error(`Error checking response for transaction ${transaction.id}:`, responseError)
           errorCount++
           continue
         }
+        // recentResponse === null means no message_responses row → no response → proceed with refund
 
         // If response was received after expiry (grace period), honor it
         if (recentResponse?.has_response && recentResponse.response_received_at) {
@@ -307,7 +314,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         total_expired: expiredTransactions.length,
         refunded: refundedCount,
