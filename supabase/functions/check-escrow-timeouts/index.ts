@@ -314,7 +314,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         total_expired: expiredTransactions.length,
         refunded: refundedCount,
