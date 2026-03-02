@@ -30,12 +30,16 @@ serve(async (req) => {
 
     if (error) throw error
 
-    // Filter to include only transactions without responses
-    // This includes both: (1) no message_responses record, OR (2) has_response = false
+    // Filter to include only transactions without responses.
+    // Supabase embedding returns an ARRAY for one-to-many relationships, never a single object.
+    // Accessing .has_response on an array gives undefined, so the old `responses.has_response === false`
+    // always evaluated to false, silently dropping every expired transaction (total_expired: 0).
     const expiredTransactions = allExpiredTransactions.filter(txn => {
-      const responses = txn.message_responses as any
-      // Include if no response record exists (null/undefined) or has_response is explicitly false
-      return !responses || responses.has_response === false
+      const responses = txn.message_responses as any[]
+      // No response record at all → eligible for refund
+      if (!responses || responses.length === 0) return true
+      // Response record exists but has_response is explicitly false → eligible for refund
+      return responses[0]?.has_response === false
     })
 
     console.log(`Found ${expiredTransactions.length} expired transactions`)
