@@ -69,10 +69,10 @@ function generateReminderEmailTemplate(data: ReminderEmailData): string {
                             <!-- Response Instructions -->
                             <div style="background-color: #10B981; color: white; padding: 20px; border-radius: 6px; margin: 20px 0; text-align: center;">
                                 <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
-                                    📧 REPLY TO THE ORIGINAL EMAIL TO RESPOND
+                                    ✅ REPLY TO THIS EMAIL TO RESPOND
                                 </div>
                                 <div style="font-size: 14px; opacity: 0.95; line-height: 1.5;">
-                                    Simply reply to the message you received from reply+...@reply.fastpass.email<br>
+                                    Just hit <strong>Reply</strong> on this email with your response.<br>
                                     Don't miss this opportunity to earn €${data.earnings.toFixed(2)}!
                                 </div>
                             </div>
@@ -121,7 +121,7 @@ Deadline: ${data.expiresAt.toLocaleDateString('en-US')} at ${data.expiresAt.toLo
 ${data.messageContent.substring(0, 200)}${data.messageContent.length > 200 ? '...' : ''}
 
 HOW TO RESPOND:
-Reply to the original email you received from reply+...@reply.fastpass.email
+Simply reply to THIS email with your response.
 Don't miss this opportunity to earn €${data.earnings.toFixed(2)}!
 
 ⚠️ WARNING:
@@ -157,6 +157,8 @@ serve(async (req) => {
         expires_at,
         recipient_user_id,
         sender_email,
+        reminder_1_sent_at,
+        reminder_2_sent_at,
         messages(
           id,
           content,
@@ -214,21 +216,15 @@ serve(async (req) => {
         const halfwayPoint = new Date(createdAt.getTime() + (totalDuration / 2))
         const seventyFivePercentPoint = new Date(createdAt.getTime() + (totalDuration * 0.75))
 
-        // Count how many reminders have been sent (max 2 allowed)
-        const { count: reminderCount, error: countError } = await supabase
-          .from('email_logs')
-          .select('id', { count: 'exact', head: true })
-          .eq('message_id', transaction.message_id)
-          .eq('email_type', 'deadline_reminder')
+        // Check reminder state directly from escrow_transactions columns.
+        // Previously used email_logs count, but those inserts were silently failing
+        // (0 deadline_reminder records ever created), causing reminderCount to always
+        // return 0 and the cron to send a reminder on every run.
+        const reminder1Sent = !!transaction.reminder_1_sent_at
+        const reminder2Sent = !!transaction.reminder_2_sent_at
 
-        if (countError) {
-          console.error(`Failed to count reminders for ${transaction.message_id}:`, countError)
-          errorCount++
-          continue
-        }
-
-        // Skip if already sent 2 reminders
-        if (reminderCount !== null && reminderCount >= 2) {
+        // Skip if both reminders already sent
+        if (reminder1Sent && reminder2Sent) {
           remindersSkipped++
           continue // Max reminders already sent
         }
@@ -237,11 +233,11 @@ serve(async (req) => {
         let shouldSendReminder = false
         let reminderType = ''
 
-        if (reminderCount === 0 && now >= halfwayPoint) {
+        if (!reminder1Sent && now >= halfwayPoint) {
           // First reminder: at 50% of deadline
           shouldSendReminder = true
           reminderType = 'first_reminder_50_percent'
-        } else if (reminderCount === 1 && now >= seventyFivePercentPoint) {
+        } else if (reminder1Sent && !reminder2Sent && now >= seventyFivePercentPoint) {
           // Second reminder: at 75% of deadline
           shouldSendReminder = true
           reminderType = 'second_reminder_75_percent'
@@ -283,9 +279,10 @@ serve(async (req) => {
           const htmlContent = generateReminderEmailTemplate(emailData)
           const textContent = generateReminderEmailPlainText(emailData)
 
-          // Customize subject based on reminder number
-          const reminderNumber = (reminderCount || 0) + 1
-          const subjectPrefix = reminderNumber === 1 ? '⏰ REMINDER' : '🚨 FINAL REMINDER'
+          // Customize subject based on which reminder this is
+          const subjectPrefix = !reminder1Sent ? '⏰ REMINDER' : '🚨 FINAL REMINDER'
+
+          const reminderNumber = reminderType === 'first_reminder_50_percent' ? 1 : 2
 
           // Send reminder via Postmark
           const emailResponse = await fetch('https://api.postmarkapp.com/email', {
@@ -298,6 +295,9 @@ serve(async (req) => {
             body: JSON.stringify({
               From: 'FASTPASS <noreply@fastpass.email>',
               To: recipientEmail,
+              // ReplyTo embeds the messageId so the receiver can reply directly
+              // to this reminder email instead of finding the original message.
+              ReplyTo: `reply+${transaction.message_id}@reply.fastpass.email`,
               Subject: `${subjectPrefix} - Only ${hoursLeft}h left to earn €${earnings.toFixed(2)}`,
               HtmlBody: htmlContent,
               TextBody: textContent,
@@ -305,22 +305,10 @@ serve(async (req) => {
               TrackOpens: true,
               TrackLinks: 'HtmlAndText',
               Headers: [
-                {
-                  Name: 'X-Fastpass-Message-Id',
-                  Value: transaction.message_id
-                },
-                {
-                  Name: 'X-Fastpass-Reminder-Type',
-                  Value: reminderType
-                },
-                {
-                  Name: 'X-Fastpass-Reminder-Number',
-                  Value: reminderNumber.toString()
-                },
-                {
-                  Name: 'X-Fastpass-Hours-Left',
-                  Value: hoursLeft.toString()
-                }
+                { Name: 'X-Fastpass-Message-Id', Value: transaction.message_id },
+                { Name: 'X-Fastpass-Reminder-Type', Value: reminderType },
+                { Name: 'X-Fastpass-Reminder-Number', Value: reminderNumber.toString() },
+                { Name: 'X-Fastpass-Hours-Left', Value: hoursLeft.toString() }
               ],
               Metadata: {
                 messageId: transaction.message_id,
@@ -335,8 +323,22 @@ serve(async (req) => {
           if (emailResponse.ok) {
             const emailResult = await emailResponse.json()
 
-            // Log the reminder — MUST check result: if this fails, the next cron run will re-send
-            const { error: logError } = await supabase.from('email_logs').insert({
+            // Mark reminder as sent in escrow_transactions — atomic and race-condition safe.
+            // .is(column, null) ensures only the first concurrent update wins.
+            const columnToUpdate = reminderNumber === 1 ? 'reminder_1_sent_at' : 'reminder_2_sent_at'
+            const { error: updateError } = await supabase
+              .from('escrow_transactions')
+              .update({ [columnToUpdate]: now.toISOString() })
+              .eq('id', transaction.id)
+              .is(columnToUpdate, null)
+
+            if (updateError) {
+              console.error(`Failed to mark reminder_${reminderNumber}_sent_at for transaction ${transaction.id}:`, updateError)
+              // Don't abort — the email was already delivered. Log the error and continue.
+            }
+
+            // Keep email_logs insert as audit trail only (non-blocking if it fails)
+            supabase.from('email_logs').insert({
               message_id: transaction.message_id,
               recipient_email: recipientEmail,
               sender_email: 'FASTPASS <noreply@fastpass.email>',
@@ -349,18 +351,11 @@ serve(async (req) => {
                 earnings: earnings,
                 reminder_type: reminderType,
                 reminder_number: reminderNumber,
-                reminder_trigger: reminderNumber === 1 ? 'halfway_deadline' : 'seventy_five_percent_deadline',
                 postmark_message_id: emailResult.MessageID,
                 to: emailResult.To,
                 submitted_at: emailResult.SubmittedAt
               }
-            })
-
-            if (logError) {
-              console.error(`CRITICAL: Reminder email sent but log insert failed for message ${transaction.message_id}. The next cron run will re-send this reminder unless the DB constraint blocks it.`, logError)
-              errorCount++
-              continue
-            }
+            }).catch((err: unknown) => console.warn(`email_logs audit insert failed (non-blocking) for ${transaction.message_id}:`, err))
 
             console.log(`Reminder #${reminderNumber} sent for message ${transaction.message_id} to ${recipientEmail} (${reminderType})`)
             remindersSent++
