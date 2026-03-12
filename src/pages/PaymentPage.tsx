@@ -82,7 +82,7 @@ const PaymentPage = () => {
               <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
                 <CardHeader className="text-center p-6 sm:p-8 border-b border-[#5cffb0]/20">
                   <CardTitle className="text-[#5cffb0] text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">
-                    Skip the line
+                    SKIP THE LINE
                   </CardTitle>
                   <CardDescription className="text-[#B0B0B0] text-sm sm:text-base lg:text-lg">
                     Send your message with guaranteed response or full refund
