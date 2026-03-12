@@ -646,6 +646,11 @@ const Dashboard = () => {
                                   return <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border border-[#5cffb0]">
                                     Paid - €{(escrow.amount * 0.75).toFixed(2)}
                                   </Badge>;
+                                case 'transfer_failed':
+                                case 'processing':
+                                  return <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/50">
+                                    Payment on its way
+                                  </Badge>;
                                 case 'refunded':
                                   return <Badge className="bg-red-500/20 text-red-400 border border-red-500/50">
                                     Refunded
@@ -776,7 +781,9 @@ const Dashboard = () => {
                                 'expired': 'Expired',
                                 'refunded': 'Refunded',
                                 'held': 'Held',
-                                'released': 'Released'
+                                'released': 'Released',
+                                'transfer_failed': 'Payment on its way',
+                                'processing': 'Payment on its way'
                               };
 
                               const statusColor = {
@@ -786,7 +793,9 @@ const Dashboard = () => {
                                 'expired': 'bg-red-500/20 text-red-400 border-red-500/50',
                                 'refunded': 'bg-[#B0B0B0]/20 text-[#B0B0B0] border-[#B0B0B0]/50',
                                 'held': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-                                'released': 'bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50'
+                                'released': 'bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50',
+                                'transfer_failed': 'bg-amber-500/20 text-amber-400 border-amber-500/50',
+                                'processing': 'bg-amber-500/20 text-amber-400 border-amber-500/50'
                               };
 
                               return (
