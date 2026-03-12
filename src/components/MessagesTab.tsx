@@ -116,6 +116,9 @@ const MessagesTab: React.FC<MessagesTabProps> = ({ userId }) => {
         }
       case 'released':
         return <Badge className="bg-green-600">Paid - €{(escrow.amount * 0.75).toFixed(2)} received</Badge>;
+      case 'transfer_failed':
+      case 'processing':
+        return <Badge className="bg-amber-500">Payment on its way</Badge>;
       case 'refunded':
         return <Badge variant="destructive">Refunded - No response</Badge>;
       case 'pending_user_setup':
