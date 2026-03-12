@@ -24,6 +24,8 @@ import Privacy from "./pages/Privacy";
 import CookieSettings from "./pages/CookieSettings";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Terms from "./pages/Terms";
+import UnsolicitedDmSolution from "./pages/UnsolicitedDmSolution";
 import { CookieBanner } from "./components/CookieBanner";
 import { supabase } from "./integrations/supabase/client";
 
@@ -90,7 +92,11 @@ const App = () => {
 
             {/* LEGAL & PRIVACY ROUTES - Public access */}
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/cookie-settings" element={<CookieSettings />} />
+
+            {/* SEO LANDING PAGES - Public access */}
+            <Route path="/solution-unsolicited-dm" element={<UnsolicitedDmSolution />} />
 
             {/* BLOG ROUTES - Public access for SEO */}
             <Route path="/blog" element={<Blog />} />

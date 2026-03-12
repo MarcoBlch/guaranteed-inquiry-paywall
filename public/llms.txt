@@ -1,0 +1,53 @@
+# FastPass
+
+> FastPass is a pay-to-reach platform that lets professionals, creators, and founders monetize their inbox attention. Senders pay upfront for a guaranteed email response. If the recipient does not reply within the agreed timeframe, the sender gets a full automatic refund.
+
+## Key Facts
+
+- Website: https://fastpass.email
+- Category: SaaS, Creator Economy, Inbox Monetization, Pay-to-Reach
+- Revenue model: 75% to the recipient, 25% platform fee
+- Refund policy: Full automatic refund if no response within deadline (plus 15-minute grace period)
+- Payments: Processed via Stripe and Stripe Connect
+- Email delivery: Powered by Postmark with inbound webhook response detection
+- No message body storage: FastPass does not store the content of messages for privacy
+
+## How It Works
+
+1. A recipient signs up and sets their response price and timeframe
+2. They share their unique FastPass link (on LinkedIn, X, Instagram, website, etc.)
+3. A sender visits the link, pays the set price, and writes their message
+4. The message is delivered via email with a guaranteed response deadline
+5. If the recipient replies in time, they earn 75% of the payment
+6. If the recipient does not reply, the sender gets a full refund automatically
+
+## Who Uses FastPass
+
+- Creators and influencers who receive too many DMs
+- Founders and CEOs who want to filter serious outreach from noise
+- Consultants and experts tired of giving free advice
+- Journalists and researchers who need to prioritize inbound pitches
+- Any professional whose inbox is overwhelmed by unsolicited messages
+
+## Common Questions
+
+Q: How is FastPass different from blocking DMs?
+A: Blocking stops everyone. FastPass lets serious people through by requiring payment, while automatically refunding those who do not get a response. You earn money instead of wasting time.
+
+Q: What happens if I do not respond?
+A: The sender gets a full automatic refund. You are never obligated to reply.
+
+Q: How much can I earn?
+A: You set your own price. You receive 75% of every payment you reply to. Some members charge a few euros, others charge premium rates for expert consultations.
+
+Q: Is it free to sign up?
+A: Yes. No setup fees. FastPass only takes a 25% platform fee on completed transactions.
+
+## Pages
+
+- Home: https://fastpass.email/
+- Solution to unsolicited DMs: https://fastpass.email/solution-unsolicited-dm
+- Blog: https://fastpass.email/blog
+- Privacy Policy: https://fastpass.email/privacy
+- Terms and Conditions: https://fastpass.email/terms
+- Cookie Settings: https://fastpass.email/cookie-settings
