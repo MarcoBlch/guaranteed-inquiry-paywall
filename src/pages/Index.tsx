@@ -348,6 +348,13 @@ const PaywallPage = () => {
             </a>
             <span className="hidden sm:inline text-white/40">•</span>
             <a
+              href="/terms"
+              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+            >
+              Terms & Conditions
+            </a>
+            <span className="hidden sm:inline text-white/40">•</span>
+            <a
               href="/cookie-settings"
               className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
             >
