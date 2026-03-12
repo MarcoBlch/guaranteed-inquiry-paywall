@@ -127,7 +127,7 @@ const PaywallPage = () => {
           {/* Hero Text */}
           <div className="mb-8 sm:mb-12 max-w-2xl w-full">
             {/* H1: Main Headline - Neon Vert, Bold, text-5xl */}
-            <h1 className="text-[#5cffb0] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-[#5cffb0] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               CREATE PRIORITY ACCESS<br />TO YOUR INBOX
             </h1>
             {/* Body Text (Primary) - Light Gray, Regular, text-base/text-lg */}
@@ -169,7 +169,7 @@ const PaywallPage = () => {
                 {/* H3: Feature/Card Title - Neon Vert, Semibold, text-xl */}
                 <h3 className="font-semibold mb-2 text-lg sm:text-xl text-[#5cffb0]">Share Your Link</h3>
                 {/* Body Text (Primary) - Light Gray, Regular, text-base */}
-                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Promote your unique FastPass contact link and let people reach you directly.</p>
+                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Promote your unique FastPass link.</p>
               </CardContent>
             </Card>
 
@@ -181,7 +181,7 @@ const PaywallPage = () => {
                 {/* H3: Feature/Card Title - Neon Vert, Semibold, text-xl */}
                 <h3 className="font-semibold mb-2 text-lg sm:text-xl text-[#5cffb0]">Answer & Get Paid</h3>
                 {/* Body Text (Primary) - Light Gray, Regular, text-base */}
-                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Reply when it suits you and automatically earn 75% of every payout.</p>
+                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Reply fast and automatically earn 75%.</p>
               </CardContent>
             </Card>
           </div>

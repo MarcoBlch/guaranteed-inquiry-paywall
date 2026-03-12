@@ -72,10 +72,7 @@ const PaymentPage = () => {
           {/* Header */}
           <header className="p-4 sm:p-6 text-center">
             <div className="flex flex-col items-center">
-              <FastPassLogo size="lg" />
-              <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-12 sm:-mt-14">
-                SKIP THE LINE
-              </p>
+              <FastPassLogo size="xl" />
             </div>
           </header>
 
@@ -84,8 +81,8 @@ const PaymentPage = () => {
             <div className="w-full max-w-2xl">
               <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
                 <CardHeader className="text-center p-6 sm:p-8 border-b border-[#5cffb0]/20">
-                  <CardTitle className="text-[#5cffb0] text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                    Guaranteed Response Message
+                  <CardTitle className="text-[#5cffb0] text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">
+                    Skip the line
                   </CardTitle>
                   <CardDescription className="text-[#B0B0B0] text-sm sm:text-base lg:text-lg">
                     Send your message with guaranteed response or full refund
