@@ -27,15 +27,14 @@ const EmailPreview = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
 
       <div className="relative z-10 min-h-screen p-4">
         {/* Header */}
         <header className="p-4 text-center mb-8">
           <div className="flex flex-col items-center gap-2">
             <FastPassLogo size="md" />
-            <h1 className="text-3xl font-bold text-[#5cffb0] mb-2">Email Template Preview</h1>
-            <p className="text-[#B0B0B0]">Test the FastPass email template design</p>
+            <h1 className="text-3xl font-bold text-green-500 mb-2">Email Template Preview</h1>
+            <p className="text-slate-500 dark:text-slate-400">Test the FastPass email template design</p>
           </div>
         </header>
 
@@ -43,51 +42,51 @@ const EmailPreview = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Controls */}
-          <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20">
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             <CardHeader>
-              <CardTitle className="text-[#5cffb0]">Email Data</CardTitle>
+              <CardTitle className="text-green-500">Email Data</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="senderEmail" className="text-[#5cffb0]">Sender Email</Label>
+                <Label htmlFor="senderEmail" className="text-green-500">Sender Email</Label>
                 <Input
                   id="senderEmail"
                   value={previewData.senderEmail}
                   onChange={(e) => handleInputChange('senderEmail', e.target.value)}
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400"
                 />
               </div>
 
               <div>
-                <Label htmlFor="senderMessage" className="text-[#5cffb0]">Sender Message</Label>
+                <Label htmlFor="senderMessage" className="text-green-500">Sender Message</Label>
                 <Textarea
                   id="senderMessage"
                   value={previewData.senderMessage}
                   onChange={(e) => handleInputChange('senderMessage', e.target.value)}
                   rows={6}
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400"
                 />
               </div>
 
               <div>
-                <Label htmlFor="responseDeadline" className="text-[#5cffb0]">Response Deadline</Label>
+                <Label htmlFor="responseDeadline" className="text-green-500">Response Deadline</Label>
                 <Input
                   id="responseDeadline"
                   value={previewData.responseDeadline}
                   onChange={(e) => handleInputChange('responseDeadline', e.target.value)}
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400"
                 />
               </div>
 
               <div>
-                <Label htmlFor="paymentAmount" className="text-[#5cffb0]">Payment Amount (€)</Label>
+                <Label htmlFor="paymentAmount" className="text-green-500">Payment Amount (€)</Label>
                 <Input
                   id="paymentAmount"
                   type="number"
                   step="0.01"
                   value={previewData.paymentAmount}
                   onChange={(e) => handleInputChange('paymentAmount', parseFloat(e.target.value) || 0)}
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400"
                 />
               </div>
 
@@ -95,14 +94,14 @@ const EmailPreview = () => {
                 <Button
                   variant={viewMode === 'html' ? 'default' : 'outline'}
                   onClick={() => setViewMode('html')}
-                  className={viewMode === 'html' ? "flex-1 bg-gradient-to-r from-[#5cffb0] to-[#2C424C] text-[#0a0e1a]" : "flex-1 border-[#5cffb0]/50 text-[#5cffb0] bg-transparent"}
+                  className={viewMode === 'html' ? "flex-1 bg-green-500 hover:bg-green-400 text-white" : "flex-1 border-green-500/50 text-green-500 bg-transparent"}
                 >
                   HTML Preview
                 </Button>
                 <Button
                   variant={viewMode === 'text' ? 'default' : 'outline'}
                   onClick={() => setViewMode('text')}
-                  className={viewMode === 'text' ? "flex-1 bg-gradient-to-r from-[#5cffb0] to-[#2C424C] text-[#0a0e1a]" : "flex-1 border-[#5cffb0]/50 text-[#5cffb0] bg-transparent"}
+                  className={viewMode === 'text' ? "flex-1 bg-green-500 hover:bg-green-400 text-white" : "flex-1 border-green-500/50 text-green-500 bg-transparent"}
                 >
                   Plain Text
                 </Button>
@@ -111,13 +110,13 @@ const EmailPreview = () => {
           </Card>
 
           {/* Preview */}
-          <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20">
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             <CardHeader>
-              <CardTitle className="text-[#5cffb0]">Email Preview ({viewMode.toUpperCase()})</CardTitle>
+              <CardTitle className="text-green-500">Email Preview ({viewMode.toUpperCase()})</CardTitle>
             </CardHeader>
             <CardContent>
               {viewMode === 'html' ? (
-                <div className="border border-[#5cffb0]/30 rounded-lg overflow-hidden">
+                <div className="border border-green-500/30 rounded-md overflow-hidden">
                   <iframe
                     srcDoc={htmlContent}
                     className="w-full h-96"
@@ -126,8 +125,8 @@ const EmailPreview = () => {
                   />
                 </div>
               ) : (
-                <div className="bg-[#0a0e1a] p-4 rounded-lg border border-[#5cffb0]/30">
-                  <pre className="text-sm whitespace-pre-wrap font-mono text-[#B0B0B0]">
+                <div className="bg-slate-950 p-4 rounded-md border border-green-500/30">
+                  <pre className="text-sm whitespace-pre-wrap font-mono text-slate-500 dark:text-slate-400">
                     {textContent}
                   </pre>
                 </div>
@@ -146,7 +145,7 @@ const EmailPreview = () => {
                 newWindow.document.close();
               }
             }}
-            className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold"
+            className="bg-green-500 hover:bg-green-400 text-white font-bold"
           >
             Open Full Size Preview
           </Button>

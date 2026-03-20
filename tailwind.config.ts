@@ -18,7 +18,18 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				display: ['Instrument Serif', 'Georgia', 'serif'],
+				body: ['Geist Sans', 'system-ui', '-apple-system', 'sans-serif'],
+				mono: ['Geist Mono', 'SF Mono', 'Fira Code', 'monospace'],
+			},
 			colors: {
+				signal: {
+					DEFAULT: '#22c55e',
+					light: '#4ade80',
+					dark: '#16a34a',
+					subtle: '#f0fdf4',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

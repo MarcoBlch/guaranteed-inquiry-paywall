@@ -96,11 +96,10 @@ const CookieSettings = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
 
       <div className="relative z-10 min-h-screen">
         {/* Header */}
-        <header className="p-4 sm:p-6 text-center border-b border-[#5cffb0]/20">
+        <header className="p-4 sm:p-6 text-center border-b border-slate-200 dark:border-slate-700">
           <div className="flex flex-col items-center">
             <FastPassLogo size="md" />
           </div>
@@ -112,24 +111,24 @@ const CookieSettings = () => {
           <Button
             onClick={() => navigate('/')}
             variant="ghost"
-            className="mb-6 text-[#5cffb0] hover:text-[#4de89d] hover:bg-[#5cffb0]/10"
+            className="mb-6 text-green-500 hover:text-green-400 hover:bg-green-500/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Button>
 
           {/* Title */}
-          <h1 className="text-[#5cffb0] text-4xl sm:text-5xl font-bold mb-4">
+          <h1 className="text-green-500 text-4xl sm:text-5xl font-bold mb-4">
             Cookie Settings
           </h1>
-          <p className="text-[#B0B0B0] text-base sm:text-lg mb-8">
+          <p className="text-slate-500 dark:text-slate-400 text-base sm:text-lg mb-8">
             Manage your cookie preferences and control what data is stored on your device.
           </p>
 
           {/* Introduction */}
-          <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/30 shadow-[0_0_20px_rgba(92,255,176,0.2)] mb-8">
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 mb-8">
             <CardContent className="p-6 sm:p-8">
-              <p className="text-[#B0B0B0] text-base leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed">
                 FastPass uses cookies to provide secure authentication and enhance your experience. You
                 can customize your preferences below. Changes take effect immediately and can be updated
                 at any time.
@@ -140,7 +139,7 @@ const CookieSettings = () => {
           {/* Cookie Categories */}
           <div className="space-y-6 mb-8">
             {/* Essential Cookies */}
-            <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+            <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex items-start gap-4">
                   <Checkbox
@@ -151,7 +150,7 @@ const CookieSettings = () => {
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-[#5cffb0] text-xl sm:text-2xl font-semibold">
+                      <h2 className="text-green-500 text-xl sm:text-2xl font-semibold">
                         Essential Cookies
                       </h2>
                       <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded text-xs font-semibold">
@@ -159,27 +158,27 @@ const CookieSettings = () => {
                       </span>
                     </div>
 
-                    <p className="text-[#B0B0B0] text-base leading-relaxed mb-4">
+                    <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed mb-4">
                       These cookies are necessary for the website to function and cannot be switched off.
                       They are usually only set in response to actions made by you such as logging in,
                       managing your preferences, or filling in forms.
                     </p>
 
                     <div className="space-y-3">
-                      <h3 className="text-[#5cffb0] text-lg font-semibold">Cookies Used:</h3>
+                      <h3 className="text-green-500 text-lg font-semibold">Cookies Used:</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-start gap-2">
-                          <span className="text-[#5cffb0] flex-shrink-0">•</span>
+                          <span className="text-green-500 flex-shrink-0">•</span>
                           <div>
-                            <span className="font-mono text-[#5cffb0]">sb-access-token</span>
-                            <span className="text-[#B0B0B0]"> - Authentication session (1 hour)</span>
+                            <span className="font-mono text-green-500">sb-access-token</span>
+                            <span className="text-slate-500 dark:text-slate-400"> - Authentication session (1 hour)</span>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
-                          <span className="text-[#5cffb0] flex-shrink-0">•</span>
+                          <span className="text-green-500 flex-shrink-0">•</span>
                           <div>
-                            <span className="font-mono text-[#5cffb0]">sb-refresh-token</span>
-                            <span className="text-[#B0B0B0]"> - Session renewal (30 days)</span>
+                            <span className="font-mono text-green-500">sb-refresh-token</span>
+                            <span className="text-slate-500 dark:text-slate-400"> - Session renewal (30 days)</span>
                           </div>
                         </div>
                       </div>
@@ -190,7 +189,7 @@ const CookieSettings = () => {
             </Card>
 
             {/* Functional Cookies */}
-            <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+            <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex items-start gap-4">
                   <Checkbox
@@ -201,7 +200,7 @@ const CookieSettings = () => {
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-[#5cffb0] text-xl sm:text-2xl font-semibold">
+                      <h2 className="text-green-500 text-xl sm:text-2xl font-semibold">
                         Functional Cookies
                       </h2>
                       <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded text-xs font-semibold">
@@ -209,20 +208,20 @@ const CookieSettings = () => {
                       </span>
                     </div>
 
-                    <p className="text-[#B0B0B0] text-base leading-relaxed mb-4">
+                    <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed mb-4">
                       These cookies enable enhanced functionality and personalization, such as
                       remembering your preferences and settings. They may be set by us or by third-party
                       providers whose services we use.
                     </p>
 
                     <div className="space-y-3">
-                      <h3 className="text-[#5cffb0] text-lg font-semibold">Cookies Used:</h3>
+                      <h3 className="text-green-500 text-lg font-semibold">Cookies Used:</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-start gap-2">
-                          <span className="text-[#5cffb0] flex-shrink-0">•</span>
+                          <span className="text-green-500 flex-shrink-0">•</span>
                           <div>
-                            <span className="font-mono text-[#5cffb0]">cookie-consent</span>
-                            <span className="text-[#B0B0B0]">
+                            <span className="font-mono text-green-500">cookie-consent</span>
+                            <span className="text-slate-500 dark:text-slate-400">
                               {' '}
                               - Remembers your cookie preferences (1 year)
                             </span>
@@ -230,9 +229,9 @@ const CookieSettings = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 p-4 bg-[#5cffb0]/10 border border-[#5cffb0]/30 rounded-lg">
-                        <p className="text-[#B0B0B0] text-sm">
-                          <strong className="text-[#5cffb0]">What happens if I disable this?</strong>
+                      <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-md">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">
+                          <strong className="text-green-500">What happens if I disable this?</strong>
                           <br />
                           The cookie banner will appear on every visit, as we won't remember your
                           preference.
@@ -246,34 +245,34 @@ const CookieSettings = () => {
           </div>
 
           {/* Action Buttons */}
-          <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/30 shadow-[0_0_20px_rgba(92,255,176,0.2)] mb-8">
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 mb-8">
             <CardContent className="p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   onClick={handleSave}
                   disabled={!hasChanges}
-                  className="flex-1 bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save Preferences
                 </Button>
                 <Button
                   onClick={handleAcceptAll}
                   variant="outline"
-                  className="flex-1 border-2 border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0] font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+                  className="flex-1 border-2 border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-500 font-semibold py-3 px-6 rounded-md transition-all duration-300"
                 >
                   Accept All
                 </Button>
                 <Button
                   onClick={handleRejectAll}
                   variant="outline"
-                  className="flex-1 border-2 border-[#B0B0B0]/30 text-[#B0B0B0] hover:bg-[#B0B0B0]/10 hover:text-[#B0B0B0] font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+                  className="flex-1 border-2 border-slate-400/30 text-slate-500 dark:text-slate-400 hover:bg-slate-400/10 hover:text-slate-500 dark:hover:text-slate-400 font-semibold py-3 px-6 rounded-md transition-all duration-300"
                 >
                   Reject All
                 </Button>
               </div>
 
               {hasChanges && (
-                <p className="text-[#5cffb0] text-sm text-center mt-4">
+                <p className="text-green-500 text-sm text-center mt-4">
                   You have unsaved changes. Click "Save Preferences" to apply them.
                 </p>
               )}
@@ -281,12 +280,12 @@ const CookieSettings = () => {
           </Card>
 
           {/* Additional Information */}
-          <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-[#5cffb0] text-xl font-semibold mb-4">
+              <h2 className="text-green-500 text-xl font-semibold mb-4">
                 Learn More About Our Privacy Practices
               </h2>
-              <p className="text-[#B0B0B0] text-base leading-relaxed mb-4">
+              <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed mb-4">
                 For detailed information about how we collect, use, and protect your data, please read
                 our full Privacy Policy. You can also learn about your rights under GDPR and how to
                 exercise them.
@@ -294,7 +293,7 @@ const CookieSettings = () => {
               <Button
                 onClick={() => navigate('/privacy')}
                 variant="outline"
-                className="border-2 border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0] font-semibold px-6 py-2 rounded-lg transition-all duration-300"
+                className="border-2 border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-500 font-semibold px-6 py-2 rounded-md transition-all duration-300"
               >
                 Read Privacy Policy
               </Button>
@@ -303,7 +302,7 @@ const CookieSettings = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-white/60 text-sm border-t border-[#5cffb0]/20 mt-12">
+        <footer className="text-center py-6 text-white/60 text-sm border-t border-slate-200 dark:border-slate-700 mt-12">
           <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>

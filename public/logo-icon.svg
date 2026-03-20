@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <rect width="48" height="48" rx="10" fill="#0f172a"/>
+  <text x="8" y="34" font-family="monospace" font-size="28" font-weight="600" fill="#f1f5f9" letter-spacing="-2">FP</text>
+  <rect x="8" y="37" width="32" height="3" rx="1.5" fill="#22c55e"/>
+</svg>

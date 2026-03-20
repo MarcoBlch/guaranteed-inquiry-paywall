@@ -53,7 +53,7 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen relative overflow-hidden">
         <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <div className="animate-pulse text-[#5cffb0] text-lg">Loading article...</div>
+          <div className="animate-pulse text-green-500 text-lg">Loading article...</div>
         </div>
       </div>
     );
@@ -64,11 +64,11 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen relative overflow-hidden">
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
-          <h1 className="text-[#5cffb0] text-6xl font-bold mb-4">404</h1>
-          <p className="text-[#B0B0B0] text-lg mb-8">Blog post not found</p>
+          <h1 className="text-green-500 text-6xl font-bold mb-4">404</h1>
+          <p className="text-slate-400 text-lg mb-8">Blog post not found</p>
           <Button
             asChild
-            className="bg-[#5cffb0] text-[#0a0e1a] hover:bg-[#4de89d] font-semibold"
+            className="bg-green-500 hover:bg-green-400 text-white font-semibold"
           >
             <Link to="/blog">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -106,7 +106,7 @@ const BlogPost = () => {
     <div className="min-h-screen relative overflow-hidden">
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="p-4 sm:p-6 text-center border-b border-[#5cffb0]/20">
+        <header className="p-4 sm:p-6 text-center border-b border-slate-700">
           <Link to="/">
             <FastPassLogo size="md" />
           </Link>
@@ -118,7 +118,7 @@ const BlogPost = () => {
           <Button
             asChild
             variant="ghost"
-            className="mb-6 text-[#5cffb0] hover:text-[#4de89d] hover:bg-[#5cffb0]/10"
+            className="mb-6 text-green-500 hover:text-green-400 hover:bg-green-500/10"
           >
             <Link to="/blog">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -130,30 +130,30 @@ const BlogPost = () => {
           <header className="mb-8">
             <Badge
               variant="outline"
-              className="mb-4 text-[#5cffb0] border-[#5cffb0]/40 bg-[#5cffb0]/5"
+              className="mb-4 text-green-500 border-green-500/40 bg-green-500/5"
             >
               {post.category}
             </Badge>
 
-            <h1 className="text-[#5cffb0] text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+            <h1 className="text-green-500 text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
               {post.title}
             </h1>
 
             {/* Meta Info */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-[#B0B0B0]">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
               <span className="flex items-center gap-2">
-                <User className="w-4 h-4 text-[#5cffb0]/60" />
+                <User className="w-4 h-4 text-green-500/60" />
                 {post.author_name}
               </span>
               {formattedDate && (
                 <span className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#5cffb0]/60" />
+                  <Calendar className="w-4 h-4 text-green-500/60" />
                   {formattedDate}
                 </span>
               )}
               {post.reading_time_minutes && (
                 <span className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#5cffb0]/60" />
+                  <Clock className="w-4 h-4 text-green-500/60" />
                   {post.reading_time_minutes} min read
                 </span>
               )}
@@ -161,26 +161,26 @@ const BlogPost = () => {
           </header>
 
           {/* Article Content */}
-          <Card className="bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/30 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             <CardContent className="p-6 sm:p-8 lg:p-10">
               <article
                 className="
                   prose prose-invert prose-lg max-w-none
-                  prose-headings:text-[#5cffb0] prose-headings:font-semibold
+                  prose-headings:text-green-500 prose-headings:font-semibold
                   prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
                   prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-                  prose-p:text-[#B0B0B0] prose-p:leading-relaxed prose-p:mb-4
-                  prose-a:text-[#5cffb0] prose-a:no-underline hover:prose-a:underline
-                  prose-strong:text-[#5cffb0] prose-strong:font-semibold
-                  prose-ul:text-[#B0B0B0] prose-ol:text-[#B0B0B0]
+                  prose-p:text-slate-400 prose-p:leading-relaxed prose-p:mb-4
+                  prose-a:text-green-500 prose-a:no-underline hover:prose-a:underline
+                  prose-strong:text-green-500 prose-strong:font-semibold
+                  prose-ul:text-slate-400 prose-ol:text-slate-400
                   prose-li:my-2 prose-li:leading-relaxed
-                  prose-blockquote:border-l-[#5cffb0] prose-blockquote:border-l-4 prose-blockquote:pl-4 prose-blockquote:text-[#B0B0B0]/80 prose-blockquote:italic
-                  prose-code:text-[#5cffb0] prose-code:bg-[#0a0e1a]/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-                  [&_.lead]:text-lg [&_.lead]:text-[#B0B0B0] [&_.lead]:leading-relaxed [&_.lead]:mb-6
+                  prose-blockquote:border-l-green-500 prose-blockquote:border-l-4 prose-blockquote:pl-4 prose-blockquote:text-slate-400 prose-blockquote:italic
+                  prose-code:text-green-500 prose-code:bg-slate-950/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                  [&_.lead]:text-lg [&_.lead]:text-slate-400 [&_.lead]:leading-relaxed [&_.lead]:mb-6
                   [&_.faq-section]:mt-8 [&_.faq-section]:space-y-6
-                  [&_.faq-item]:bg-[#0a0e1a]/30 [&_.faq-item]:p-4 [&_.faq-item]:rounded-lg [&_.faq-item]:border [&_.faq-item]:border-[#5cffb0]/20
-                  [&_.faq-item_h3]:text-[#5cffb0] [&_.faq-item_h3]:text-lg [&_.faq-item_h3]:font-semibold [&_.faq-item_h3]:mb-2 [&_.faq-item_h3]:mt-0
-                  [&_.faq-item_p]:text-[#B0B0B0] [&_.faq-item_p]:mb-0
+                  [&_.faq-item]:bg-slate-950/30 [&_.faq-item]:p-4 [&_.faq-item]:rounded-md [&_.faq-item]:border [&_.faq-item]:border-green-500/20
+                  [&_.faq-item_h3]:text-green-500 [&_.faq-item_h3]:text-lg [&_.faq-item_h3]:font-semibold [&_.faq-item_h3]:mb-2 [&_.faq-item_h3]:mt-0
+                  [&_.faq-item_p]:text-slate-400 [&_.faq-item_p]:mb-0
                 "
                 dangerouslySetInnerHTML={{ __html: sanitizedContent }}
               />
@@ -194,7 +194,7 @@ const BlogPost = () => {
                 <Badge
                   key={tag}
                   variant="secondary"
-                  className="bg-[#5cffb0]/10 text-[#5cffb0] border-none text-xs"
+                  className="bg-green-500/10 text-green-500 border-none text-xs"
                 >
                   #{tag}
                 </Badge>
@@ -203,18 +203,18 @@ const BlogPost = () => {
           )}
 
           {/* CTA Section */}
-          <Card className="mt-12 bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/30">
+          <Card className="mt-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
             <CardContent className="p-6 sm:p-8 text-center">
-              <h2 className="text-[#5cffb0] text-2xl font-semibold mb-4">
+              <h2 className="text-green-500 text-2xl font-semibold mb-4">
                 Ready to monetize your inbox?
               </h2>
-              <p className="text-[#B0B0B0] mb-6 max-w-lg mx-auto">
+              <p className="text-slate-400 mb-6 max-w-lg mx-auto">
                 Join thousands of creators and professionals earning from every response. Set your
                 price and start getting paid for your attention.
               </p>
               <Button
                 asChild
-                className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 hover:shadow-[0_0_25px_rgba(92,255,176,0.5)]"
+                className="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-8 rounded-md transition-all duration-300"
               >
                 <Link to="/auth">Get Started Free</Link>
               </Button>
@@ -223,25 +223,25 @@ const BlogPost = () => {
         </main>
 
         {/* Footer */}
-        <footer className="text-center py-8 text-white/60 text-sm border-t border-[#5cffb0]/20">
+        <footer className="text-center py-8 text-white/60 text-sm border-t border-slate-700">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
             <Link
               to="/privacy"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+              className="text-green-500 hover:text-green-400 hover:underline transition-colors"
             >
               Privacy Policy
             </Link>
             <span className="hidden sm:inline text-white/40">|</span>
             <Link
               to="/blog"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+              className="text-green-500 hover:text-green-400 hover:underline transition-colors"
             >
               Blog
             </Link>
             <span className="hidden sm:inline text-white/40">|</span>
             <Link
               to="/"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+              className="text-green-500 hover:text-green-400 hover:underline transition-colors"
             >
               Home
             </Link>

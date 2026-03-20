@@ -263,10 +263,10 @@ const AuthForm = () => {
   // Show loading while checking invite mode
   if (checkingInviteMode) {
     return (
-      <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+      <Card className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <CardContent className="py-12 flex flex-col items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#5cffb0] mb-4" />
-          <p className="text-[#B0B0B0]">Loading...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-green-500 mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">Loading...</p>
         </CardContent>
       </Card>
     );
@@ -276,14 +276,14 @@ const AuthForm = () => {
   const signupBlocked = !isLogin && inviteOnlyMode && !inviteCodeValid && inviteCode.length === 0;
 
   return (
-    <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+    <Card className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
       <CardHeader>
-        <CardTitle className="text-[#5cffb0] text-2xl font-bold">
+        <CardTitle className="text-green-500 text-2xl font-bold">
           {isPasswordReset ? 'Set New Password' :
            isForgotPassword ? 'Reset Password' :
            isLogin ? 'Login' : 'Sign Up'}
         </CardTitle>
-        <CardDescription className="text-[#B0B0B0]">
+        <CardDescription className="text-slate-500 dark:text-slate-400">
           {isPasswordReset ? 'Enter your new password below' :
            isForgotPassword ? 'Enter your email to receive a reset link' :
            isLogin ? 'Welcome back!' :
@@ -295,7 +295,7 @@ const AuthForm = () => {
           {isPasswordReset ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-[#5cffb0]">New Password</Label>
+                <Label htmlFor="newPassword" className="text-green-500">New Password</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -304,11 +304,11 @@ const AuthForm = () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400 placeholder:text-slate-400/50 focus:border-green-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-[#5cffb0]">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-green-500">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -317,7 +317,7 @@ const AuthForm = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400 placeholder:text-slate-400/50 focus:border-green-500"
                 />
               </div>
             </>
@@ -334,7 +334,7 @@ const AuthForm = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[#5cffb0]">Email</Label>
+                <Label htmlFor="email" className="text-green-500">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -342,12 +342,12 @@ const AuthForm = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                  className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400 placeholder:text-slate-400/50 focus:border-green-500"
                 />
               </div>
               {!isForgotPassword && (
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[#5cffb0]">Password</Label>
+                  <Label htmlFor="password" className="text-green-500">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -355,7 +355,7 @@ const AuthForm = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                    className="bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400 placeholder:text-slate-400/50 focus:border-green-500"
                   />
                 </div>
               )}
@@ -364,12 +364,12 @@ const AuthForm = () => {
 
           {/* Show blocked message if signup requires invite */}
           {signupBlocked && (
-            <div className="p-4 rounded-lg bg-amber-900/20 border border-amber-500/30">
+            <div className="p-4 rounded-md bg-amber-900/20 border border-amber-500/30">
               <div className="flex items-center gap-2 text-amber-400">
                 <Lock className="h-4 w-4" />
                 <p className="text-sm font-medium">Beta Access Required</p>
               </div>
-              <p className="text-sm text-[#B0B0B0] mt-1">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Enter a valid invite code to create an account during our beta period.
               </p>
             </div>
@@ -377,7 +377,7 @@ const AuthForm = () => {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+            className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
             disabled={loading || (!isLogin && inviteOnlyMode && !inviteCodeValid)}
           >
             {loading ? 'Loading...' :
@@ -391,15 +391,15 @@ const AuthForm = () => {
             <>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-[#5cffb0]/30" />
+                  <span className="w-full border-t border-green-500/30" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-[#1a1f2e] px-2 text-[#B0B0B0]">Or continue with</span>
+                  <span className="bg-white dark:bg-slate-900 px-2 text-slate-500 dark:text-slate-400">Or continue with</span>
                 </div>
               </div>
 
               {inviteOnlyMode && !inviteCodeValid && (
-                <p className="text-sm text-[#B0B0B0] text-center -mt-2">
+                <p className="text-sm text-slate-500 dark:text-slate-400 text-center -mt-2">
                   Enter your invite code above before continuing with social login
                 </p>
               )}
@@ -409,7 +409,7 @@ const AuthForm = () => {
                 variant="outline"
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full border-[#5cffb0]/50 text-[#B0B0B0] bg-transparent hover:bg-[#5cffb0]/10 hover:text-[#5cffb0]"
+                className="w-full border-green-500/50 text-slate-500 dark:text-slate-400 bg-transparent hover:bg-green-500/10 hover:text-green-500"
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -438,7 +438,7 @@ const AuthForm = () => {
             <Button
               type="button"
               variant="link"
-              className="w-full text-[#5cffb0] hover:text-[#4de89d]"
+              className="w-full text-green-500 hover:text-green-400"
               onClick={() => {
                 setIsPasswordReset(false);
                 setIsLogin(true);
@@ -452,7 +452,7 @@ const AuthForm = () => {
             <Button
               type="button"
               variant="link"
-              className="w-full text-[#5cffb0] hover:text-[#4de89d]"
+              className="w-full text-green-500 hover:text-green-400"
               onClick={() => {
                 setIsForgotPassword(false);
                 setIsLogin(true);
@@ -466,7 +466,7 @@ const AuthForm = () => {
                 <Button
                   type="button"
                   variant="link"
-                  className="w-full text-sm text-[#B0B0B0] hover:text-[#5cffb0]"
+                  className="w-full text-sm text-slate-500 dark:text-slate-400 hover:text-green-500"
                   onClick={() => setIsForgotPassword(true)}
                 >
                   Forgot Password?
@@ -475,7 +475,7 @@ const AuthForm = () => {
               <Button
                 type="button"
                 variant="link"
-                className="w-full text-[#5cffb0] hover:text-[#4de89d]"
+                className="w-full text-green-500 hover:text-green-400"
                 onClick={() => setIsLogin(!isLogin)}
               >
                 {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}

@@ -72,7 +72,7 @@ const Blog = () => {
     <div className="min-h-screen relative overflow-hidden">
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="p-4 sm:p-6 text-center border-b border-[#5cffb0]/20">
+        <header className="p-4 sm:p-6 text-center border-b border-slate-700">
           <Link to="/">
             <FastPassLogo size="md" />
           </Link>
@@ -84,7 +84,7 @@ const Blog = () => {
           <Button
             asChild
             variant="ghost"
-            className="mb-6 text-[#5cffb0] hover:text-[#4de89d] hover:bg-[#5cffb0]/10"
+            className="mb-6 text-green-500 hover:text-green-400 hover:bg-green-500/10"
           >
             <Link to="/">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -93,8 +93,8 @@ const Blog = () => {
           </Button>
 
           {/* Page Title */}
-          <h1 className="text-[#5cffb0] text-4xl sm:text-5xl font-bold mb-4">Blog</h1>
-          <p className="text-[#B0B0B0] text-lg mb-12 max-w-2xl">
+          <h1 className="text-green-500 text-4xl sm:text-5xl font-bold mb-4">Blog</h1>
+          <p className="text-slate-400 text-lg mb-12 max-w-2xl">
             Insights on pay-to-reach, inbox monetization, and the attention economy. Learn how
             creators and professionals are taking control of their inboxes.
           </p>
@@ -105,12 +105,12 @@ const Blog = () => {
               {[1, 2, 3, 4].map((i) => (
                 <Card
                   key={i}
-                  className="bg-[#1a1f2e]/90 border border-[#5cffb0]/20 animate-pulse"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 animate-pulse"
                 >
                   <CardContent className="p-6">
-                    <div className="h-6 bg-[#5cffb0]/20 rounded mb-4 w-3/4" />
-                    <div className="h-4 bg-[#5cffb0]/10 rounded mb-2" />
-                    <div className="h-4 bg-[#5cffb0]/10 rounded w-2/3" />
+                    <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded mb-4 w-3/4" />
+                    <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded mb-2" />
+                    <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-2/3" />
                   </CardContent>
                 </Card>
               ))}
@@ -120,7 +120,7 @@ const Blog = () => {
               {/* Featured Posts */}
               {featuredPosts.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="text-[#5cffb0] text-2xl font-semibold mb-6">Featured</h2>
+                  <h2 className="text-green-500 text-2xl font-semibold mb-6">Featured</h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {featuredPosts.map((post) => (
                       <BlogCard key={post.id} post={post} featured />
@@ -132,7 +132,7 @@ const Blog = () => {
               {/* All Posts */}
               {regularPosts.length > 0 && (
                 <section>
-                  <h2 className="text-[#5cffb0] text-2xl font-semibold mb-6">All Articles</h2>
+                  <h2 className="text-green-500 text-2xl font-semibold mb-6">All Articles</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {regularPosts.map((post) => (
                       <BlogCard key={post.id} post={post} />
@@ -143,9 +143,9 @@ const Blog = () => {
 
               {/* Empty state */}
               {posts?.length === 0 && (
-                <Card className="bg-[#1a1f2e]/90 border border-[#5cffb0]/20">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardContent className="p-8 text-center">
-                    <p className="text-[#B0B0B0]">No blog posts yet. Check back soon!</p>
+                    <p className="text-slate-400">No blog posts yet. Check back soon!</p>
                   </CardContent>
                 </Card>
               )}
@@ -154,18 +154,18 @@ const Blog = () => {
         </main>
 
         {/* Footer */}
-        <footer className="text-center py-8 text-white/60 text-sm border-t border-[#5cffb0]/20">
+        <footer className="text-center py-8 text-white/60 text-sm border-t border-slate-700">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
             <Link
               to="/privacy"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+              className="text-green-500 hover:text-green-400 hover:underline transition-colors"
             >
               Privacy Policy
             </Link>
             <span className="hidden sm:inline text-white/40">|</span>
             <Link
               to="/"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
+              className="text-green-500 hover:text-green-400 hover:underline transition-colors"
             >
               Home
             </Link>

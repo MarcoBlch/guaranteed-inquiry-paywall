@@ -8,7 +8,6 @@ import { useEffect } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/auth/AdminRoute";
-import { StaticBackground } from "./components/ui/StaticBackground";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
@@ -58,9 +57,6 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {/* Static Background - appears behind all content */}
-        <StaticBackground />
-
         {/* Toast notifications */}
         <Toaster
           position="top-right"
@@ -153,13 +149,13 @@ const App = () => {
 
             {/* Route 404 - Fallback */}
             <Route path="*" element={
-              <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+              <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950">
                 <div className="text-center p-8">
-                  <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
-                  <p className="text-gray-600 mb-6">Page not found</p>
+                  <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">404</h1>
+                  <p className="text-slate-500 mb-6">Page not found</p>
                   <a
                     href="/"
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-400 transition-colors"
                   >
                     Back to Home
                   </a>

@@ -58,8 +58,8 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
       <div className="min-h-screen relative overflow-hidden">
         <div className="relative z-10 min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#5cffb0]/20 border-t-[#5cffb0] mx-auto mb-4"></div>
-            <p className="text-[#B0B0B0]">Loading...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500/20 border-t-green-500 mx-auto mb-4"></div>
+            <p className="text-slate-500 dark:text-slate-400">Loading...</p>
           </div>
         </div>
       </div>
@@ -86,20 +86,20 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
           </header>
 
           <div className="flex-1 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+            <Card className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               <CardHeader className="text-center">
                 <div className="text-6xl mb-4">🔒</div>
-                <CardTitle className="text-[#5cffb0] text-2xl font-bold">
+                <CardTitle className="text-green-500 text-2xl font-bold">
                   Access Denied
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-4">
-                <p className="text-[#B0B0B0]">
+                <p className="text-slate-500 dark:text-slate-400">
                   This page is restricted to administrators only.
                 </p>
                 <Button
                   onClick={() => window.location.href = '/dashboard'}
-                  className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold"
+                  className="bg-green-500 hover:bg-green-400 text-white font-bold"
                 >
                   Go to Dashboard
                 </Button>
@@ -107,7 +107,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
             </Card>
           </div>
 
-          <footer className="text-center py-6 text-[#B0B0B0]/60 text-xs sm:text-sm px-4">
+          <footer className="text-center py-6 text-slate-500/60 text-xs sm:text-sm px-4">
             <p>© 2026 FastPass • Guaranteed Response Platform</p>
           </footer>
         </div>
