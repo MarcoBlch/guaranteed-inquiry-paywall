@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AuthForm from '@/components/auth/AuthForm';
 import { FastPassLogo } from '@/components/ui/FastPassLogo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 import { storeInviteCode, getInviteCodeSync } from '@/utils/inviteCodeStorage';
@@ -103,16 +104,19 @@ const AuthPage = () => {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-slate-950">
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header with Logo */}
-        <header className="p-4 sm:p-6 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <FastPassLogo size="lg" />
-            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-4 sm:-mt-5">
-              GUARANTEED RESPONSES
-            </p>
+        <header className="p-4 sm:p-6">
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <div className="flex flex-col">
+              <FastPassLogo size="lg" />
+              <p className="text-slate-400 dark:text-slate-500 text-[10px] sm:text-xs font-mono font-medium tracking-[0.2em] uppercase mt-1">
+                GUARANTEED RESPONSES
+              </p>
+            </div>
+            <ThemeToggle />
           </div>
         </header>
 
@@ -143,8 +147,8 @@ const AuthPage = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-slate-500 text-sm">
-          <p>© 2026 FastPass • Guaranteed Response Platform</p>
+        <footer className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} FastPass</p>
         </footer>
       </div>
     </div>

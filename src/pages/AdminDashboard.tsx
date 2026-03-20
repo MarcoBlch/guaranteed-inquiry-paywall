@@ -40,6 +40,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useInvitationRequests } from "@/hooks/useInvitationRequests";
 import {
   Select,
@@ -294,11 +295,11 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-slate-950">
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="p-4 sm:p-6">
+        <header className="border-b border-slate-200 dark:border-slate-800 p-4 sm:p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               {/* Logo and Title */}
@@ -306,12 +307,13 @@ const AdminDashboard = () => {
                 <FastPassLogo size="sm" />
                 <div>
                   <h1 className="text-green-500 text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
-                  <p className="text-slate-400 text-sm sm:text-base">Manage invite system & platform settings</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Manage invite system & platform settings</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <ThemeToggle />
                 <Button
                   onClick={loadAnalytics}
                   disabled={refreshing}
@@ -330,7 +332,7 @@ const AdminDashboard = () => {
                 </Button>
                 <Button
                   onClick={handleLogout}
-                  className="bg-transparent border border-green-500/50 text-slate-400 hover:bg-green-500/10 hover:text-green-500 flex-1 sm:flex-none"
+                  className="bg-transparent border border-slate-300 dark:border-green-500/50 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-green-500/10 hover:text-slate-900 dark:hover:text-green-500 flex-1 sm:flex-none"
                   size="sm"
                 >
                   Logout
@@ -348,7 +350,7 @@ const AdminDashboard = () => {
             {refreshing && !analytics && (
               <div className="flex items-center justify-center py-20">
                 <RefreshCw className="h-12 w-12 text-green-500 animate-spin" />
-                <span className="ml-4 text-slate-400 text-lg">Loading analytics...</span>
+                <span className="ml-4 text-slate-500 dark:text-slate-400 text-lg">Loading analytics...</span>
               </div>
             )}
 
@@ -357,15 +359,15 @@ const AdminDashboard = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Total Codes */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-400">Total Codes</p>
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Codes</p>
                           <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.overview.total_codes}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {analytics.overview.available_codes} available
                           </p>
                         </div>
@@ -375,15 +377,15 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Redemption Rate */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-400">Redemption Rate</p>
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Redemption Rate</p>
                           <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.overview.redemption_rate}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {analytics.overview.used_codes} used
                           </p>
                         </div>
@@ -393,15 +395,15 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Total Users */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-400">Total Users</p>
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Users</p>
                           <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.user_tiers.total}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {analytics.user_tiers.founder} founders
                           </p>
                         </div>
@@ -411,15 +413,15 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Recent Activity */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-400">Last 7 Days</p>
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Last 7 Days</p>
                           <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.overview.recent_usage_7d}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">codes redeemed</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">codes redeemed</p>
                         </div>
                         <Activity className="w-10 h-10 text-green-500" />
                       </div>
@@ -428,41 +430,41 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* User Tiers Breakdown */}
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                       <Crown className="h-5 w-5" />
                       User Tiers Distribution
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Breakdown of users by tier level
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="bg-slate-950 p-4 rounded-lg border border-slate-700">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <Crown className="h-8 w-8 text-[#FFD700]" />
                           <div>
-                            <p className="text-sm font-medium text-slate-400">Founder</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Founder</p>
                             <p className="text-2xl font-bold text-green-500">{analytics.user_tiers.founder}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="bg-slate-950 p-4 rounded-lg border border-slate-700">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <UserPlus className="h-8 w-8 text-green-500" />
                           <div>
-                            <p className="text-sm font-medium text-slate-400">Early Adopter</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Early Adopter</p>
                             <p className="text-2xl font-bold text-green-500">{analytics.user_tiers.early_adopter}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="bg-slate-950 p-4 rounded-lg border border-slate-700">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <Users className="h-8 w-8 text-slate-400" />
                           <div>
-                            <p className="text-sm font-medium text-slate-400">Standard</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Standard</p>
                             <p className="text-2xl font-bold text-green-500">{analytics.user_tiers.standard}</p>
                           </div>
                         </div>
@@ -474,7 +476,7 @@ const AdminDashboard = () => {
                 {/* Actions Panel */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Generate Codes */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-lg flex items-center gap-2">
                         <Key className="h-5 w-5" />
@@ -483,7 +485,7 @@ const AdminDashboard = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="codeCount" className="text-slate-400">
+                        <Label htmlFor="codeCount" className="text-slate-500 dark:text-slate-400">
                           Number of Founder Codes
                         </Label>
                         <Input
@@ -493,7 +495,7 @@ const AdminDashboard = () => {
                           max="20"
                           value={codeCount}
                           onChange={(e) => setCodeCount(parseInt(e.target.value) || 1)}
-                          className="bg-slate-950 border-slate-700 text-slate-400 focus:border-green-500"
+                          className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:border-green-500"
                         />
                         <p className="text-xs text-slate-500">
                           Maximum 20 codes per batch
@@ -532,7 +534,7 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Invite Mode Toggle */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-lg flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5" />
@@ -540,9 +542,9 @@ const AdminDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-700">
+                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-400 mb-1">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                             Registration Status
                           </p>
                           <p className="text-xs text-slate-500">
@@ -579,8 +581,8 @@ const AdminDashboard = () => {
                           )}
                         </p>
                       </div>
-                      <div className="bg-slate-950 p-3 rounded-lg border border-slate-700">
-                        <p className="text-xs text-slate-400">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           <strong>Kill Switch:</strong> Enable this to restrict platform access to invited users only during beta.
                         </p>
                       </div>
@@ -588,7 +590,7 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Grant Admin */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-lg flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5" />
@@ -597,7 +599,7 @@ const AdminDashboard = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="adminEmail" className="text-slate-400">
+                        <Label htmlFor="adminEmail" className="text-slate-500 dark:text-slate-400">
                           User Email Address
                         </Label>
                         <Input
@@ -606,7 +608,7 @@ const AdminDashboard = () => {
                           placeholder="user@example.com"
                           value={adminEmail}
                           onChange={(e) => setAdminEmail(e.target.value)}
-                          className="bg-slate-950 border-slate-700 text-slate-400 focus:border-green-500"
+                          className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:border-green-500"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !grantingAdmin) {
                               handleGrantAdmin();
@@ -644,13 +646,13 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Invitation Requests Panel */}
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                       <Mail className="h-5 w-5" />
                       Invitation Requests
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Send invitation emails to waitlist users
                     </CardDescription>
                   </CardHeader>
@@ -663,28 +665,28 @@ const AdminDashboard = () => {
                       <div className="space-y-6">
                         {/* Stats Overview */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-slate-950 p-4 rounded-lg border border-slate-700">
+                          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-2">
                               <Clock className="h-4 w-4 text-green-500" />
-                              <span className="text-sm text-slate-400">Pending Requests</span>
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Pending Requests</span>
                             </div>
                             <p className="text-2xl font-bold text-green-500">
                               {invitationStats?.pending_count || 0}
                             </p>
                           </div>
-                          <div className="bg-slate-950 p-4 rounded-lg border border-slate-700">
+                          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-2">
                               <Send className="h-4 w-4 text-green-500" />
-                              <span className="text-sm text-slate-400">Invited This Week</span>
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Invited This Week</span>
                             </div>
                             <p className="text-2xl font-bold text-green-500">
                               {invitationStats?.invited_this_week || 0}
                             </p>
                           </div>
-                          <div className="bg-slate-950 p-4 rounded-lg border border-slate-700">
+                          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-2">
                               <CheckCircle className="h-4 w-4 text-green-500" />
-                              <span className="text-sm text-slate-400">Redemption Rate</span>
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Redemption Rate</span>
                             </div>
                             <p className="text-2xl font-bold text-green-500">
                               {invitationStats?.redemption_rate || 0}%
@@ -693,17 +695,17 @@ const AdminDashboard = () => {
                         </div>
 
                         {/* Send Invitations Section */}
-                        <div className="bg-slate-950 p-6 rounded-lg border border-slate-700">
+                        <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <Label htmlFor="batchSize" className="text-slate-400">
+                              <Label htmlFor="batchSize" className="text-slate-500 dark:text-slate-400">
                                 Batch Size
                               </Label>
                               <Select
                                 value={batchSize.toString()}
                                 onValueChange={(value) => setBatchSize(parseInt(value))}
                               >
-                                <SelectTrigger className="bg-slate-950 border-slate-700 text-slate-400 focus:border-green-500">
+                                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:border-green-500">
                                   <SelectValue placeholder="Select batch size" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -758,10 +760,10 @@ const AdminDashboard = () => {
                         {invitationStats?.recent_invitations && invitationStats.recent_invitations.length > 0 && (
                           <div>
                             <h4 className="text-sm font-semibold text-slate-400 mb-3">Recent Invitations</h4>
-                            <div className="overflow-x-auto rounded-lg border border-slate-700">
+                            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                               <Table>
                                 <TableHeader>
-                                  <TableRow className="border-slate-700 hover:bg-green-500/5">
+                                  <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                                     <TableHead className="text-green-500">Email</TableHead>
                                     <TableHead className="text-green-500">Invited</TableHead>
                                     <TableHead className="text-green-500">Code</TableHead>
@@ -770,7 +772,7 @@ const AdminDashboard = () => {
                                 </TableHeader>
                                 <TableBody>
                                   {invitationStats.recent_invitations.map((invitation, index) => (
-                                    <TableRow key={index} className="border-slate-700 hover:bg-green-500/5">
+                                    <TableRow key={index} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                                       <TableCell className="text-slate-400 font-mono text-sm">
                                         {invitation.email}
                                       </TableCell>
@@ -807,12 +809,12 @@ const AdminDashboard = () => {
 
                 {/* Confirmation Dialog */}
                 <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                  <AlertDialogContent className="bg-slate-900 border-slate-700">
+                  <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-green-500">
                         Confirm Invitation Send
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-slate-400">
+                      <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
                         You are about to send <strong className="text-green-500">{Math.min(batchSize, invitationStats?.pending_count || 0)} invitation emails</strong> to users in the waitlist.
                         <br /><br />
                         Each user will receive:
@@ -826,7 +828,7 @@ const AdminDashboard = () => {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800">
+                      <AlertDialogCancel className="bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800">
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction
@@ -842,13 +844,13 @@ const AdminDashboard = () => {
 
                 {/* Top Referrers */}
                 {analytics.top_referrers.length > 0 && (
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                         <TrendingUp className="h-5 w-5" />
                         Top Referrers
                       </CardTitle>
-                      <CardDescription className="text-slate-400">
+                      <CardDescription className="text-slate-500 dark:text-slate-400">
                         Users with the most successful referrals
                       </CardDescription>
                     </CardHeader>
@@ -856,7 +858,7 @@ const AdminDashboard = () => {
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-slate-700 hover:bg-green-500/5">
+                            <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                               <TableHead className="text-green-500">Rank</TableHead>
                               <TableHead className="text-green-500">User</TableHead>
                               <TableHead className="text-green-500">Email</TableHead>
@@ -867,14 +869,14 @@ const AdminDashboard = () => {
                           </TableHeader>
                           <TableBody>
                             {analytics.top_referrers.map((referrer, index) => (
-                              <TableRow key={referrer.email} className="border-slate-700 hover:bg-green-500/5">
+                              <TableRow key={referrer.email} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                                 <TableCell className="text-sm font-bold text-green-500">
                                   {index + 1}
                                 </TableCell>
-                                <TableCell className="text-sm text-slate-400">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {referrer.display_name || 'Anonymous'}
                                 </TableCell>
-                                <TableCell className="text-sm text-slate-400">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {referrer.email}
                                 </TableCell>
                                 <TableCell>
@@ -891,7 +893,7 @@ const AdminDashboard = () => {
                                 <TableCell className="text-sm font-medium text-green-500">
                                   {referrer.referral_count}
                                 </TableCell>
-                                <TableCell className="text-sm text-slate-400">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {referrer.revenue_percentage}
                                 </TableCell>
                               </TableRow>
@@ -904,13 +906,13 @@ const AdminDashboard = () => {
                 )}
 
                 {/* Recent Codes Table */}
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                       <Clock className="h-5 w-5" />
                       Recent Invite Codes
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Last 20 generated invite codes
                     </CardDescription>
                   </CardHeader>
@@ -921,7 +923,7 @@ const AdminDashboard = () => {
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-slate-700 hover:bg-green-500/5">
+                            <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                               <TableHead className="text-green-500">Code</TableHead>
                               <TableHead className="text-green-500">Type</TableHead>
                               <TableHead className="text-green-500">Status</TableHead>
@@ -931,7 +933,7 @@ const AdminDashboard = () => {
                           </TableHeader>
                           <TableBody>
                             {analytics.recent_codes.map((code) => (
-                              <TableRow key={code.code} className="border-slate-700 hover:bg-green-500/5">
+                              <TableRow key={code.code} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                                 <TableCell className="font-mono text-sm text-green-500">
                                   {code.code}
                                 </TableCell>
@@ -962,10 +964,10 @@ const AdminDashboard = () => {
                                     </Badge>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-sm text-slate-400">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {formatDate(code.created_at)}
                                 </TableCell>
-                                <TableCell className="text-sm text-slate-400">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {code.used_at ? formatDate(code.used_at) : '-'}
                                 </TableCell>
                               </TableRow>
@@ -979,41 +981,41 @@ const AdminDashboard = () => {
 
                 {/* Code Type Breakdown */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-lg">Founder Codes</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
-                        <span className="text-sm font-medium text-slate-400">Total Generated</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Generated</span>
                         <span className="font-bold text-green-500">{analytics.by_type.founder.total}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
-                        <span className="text-sm font-medium text-slate-400">Used</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Used</span>
                         <span className="font-bold text-green-500">{analytics.by_type.founder.used}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
-                        <span className="text-sm font-medium text-slate-400">Available</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Available</span>
                         <span className="font-bold text-green-500">{analytics.by_type.founder.available}</span>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-lg">Referral Codes</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
-                        <span className="text-sm font-medium text-slate-400">Total Generated</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Generated</span>
                         <span className="font-bold text-green-500">{analytics.by_type.referral.total}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
-                        <span className="text-sm font-medium text-slate-400">Used</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Used</span>
                         <span className="font-bold text-green-500">{analytics.by_type.referral.used}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
-                        <span className="text-sm font-medium text-slate-400">Available</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Available</span>
                         <span className="font-bold text-green-500">{analytics.by_type.referral.available}</span>
                       </div>
                     </CardContent>

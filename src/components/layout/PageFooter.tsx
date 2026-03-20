@@ -28,6 +28,12 @@ const PageFooter = () => {
               Terms & Conditions
             </a>
             <a
+              href="/faq"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+            >
+              FAQ
+            </a>
+            <a
               href="/cookie-settings"
               className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
             >

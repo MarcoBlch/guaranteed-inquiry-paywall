@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 import { MyInviteCodes, ReferralProgress } from '@/components/invite';
 
@@ -458,11 +459,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-slate-950">
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="p-4 sm:p-6">
+        <header className="border-b border-slate-200 dark:border-slate-800 p-4 sm:p-6">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               {/* Logo and Title */}
@@ -470,12 +471,13 @@ const Dashboard = () => {
                 <FastPassLogo size="sm" />
                 <div>
                   <h1 className="text-green-500 text-2xl sm:text-3xl font-bold">Dashboard</h1>
-                  <p className="text-slate-400 text-sm sm:text-base">Manage your inbox earnings</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Manage your inbox earnings</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <ThemeToggle />
                 <Button
                   onClick={refreshData}
                   disabled={refreshing}
@@ -495,7 +497,7 @@ const Dashboard = () => {
                 </Button>
                 <Button
                   onClick={handleLogout}
-                  className="bg-transparent border border-green-500/50 text-slate-400 hover:bg-green-500/10 hover:text-green-500 flex-1 sm:flex-none"
+                  className="bg-transparent border border-slate-300 dark:border-green-500/50 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-green-500/10 hover:text-slate-900 dark:hover:text-green-500 flex-1 sm:flex-none"
                   size="sm"
                 >
                   Logout
@@ -513,38 +515,38 @@ const Dashboard = () => {
               if (value === 'transactions') loadTransactions();
               if (value === 'analytics') loadAnalytics();
             }}>
-              <TabsList className="mb-6 bg-transparent backdrop-blur-sm border border-slate-700 p-1 flex-wrap gap-2">
+              <TabsList className="mb-6 bg-transparent backdrop-blur-sm border border-slate-200 dark:border-slate-700 p-1 flex-wrap gap-2">
                 <TabsTrigger
                   value="messages"
-                  className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Messages ({messages.filter(m => !m.read).length})
                 </TabsTrigger>
                 <TabsTrigger
                   value="transactions"
-                  className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <Euro className="h-4 w-4 mr-2" />
                   Transactions
                 </TabsTrigger>
                 <TabsTrigger
                   value="settings"
-                  className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </TabsTrigger>
                 <TabsTrigger
                   value="payments"
-                  className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <LinkIcon className="h-4 w-4 mr-2" />
                   Payment Link
                 </TabsTrigger>
                 <TabsTrigger
                   value="stripe"
-                  className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Stripe
@@ -552,7 +554,7 @@ const Dashboard = () => {
                 {stripeOnboarded && (
                   <TabsTrigger
                     value="referrals"
-                    className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                    className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                   >
                     <Gift className="h-4 w-4 mr-2" />
                     Referrals
@@ -561,7 +563,7 @@ const Dashboard = () => {
                 {isAdmin && (
                   <TabsTrigger
                     value="analytics"
-                    className="text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
+                    className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                   >
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Analytics
@@ -570,12 +572,12 @@ const Dashboard = () => {
               </TabsList>
 
               <TabsContent value="messages">
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <CardTitle className="text-green-500 text-xl sm:text-2xl">Inbox</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardDescription className="text-slate-500 dark:text-slate-400">
                           View every messages received
                         </CardDescription>
                       </div>
@@ -604,7 +606,7 @@ const Dashboard = () => {
                         </div>
 
                         {messages.length === 0 ? (
-                        <Card className="bg-transparent border border-slate-700">
+                        <Card className="bg-transparent border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-8 text-center">
                             <p className="text-slate-400 text-lg">No messages received yet</p>
                             <p className="text-slate-500 text-sm mt-2">
@@ -668,7 +670,7 @@ const Dashboard = () => {
                             return (
                               <Card
                                 key={message.id}
-                                className="bg-slate-900 border border-slate-700 hover:border-slate-600 transition-all"
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
                               >
                                 <CardHeader>
                                   <div className="flex justify-between items-start">
@@ -694,7 +696,7 @@ const Dashboard = () => {
                                 <CardContent>
                                   <div className="space-y-4">
                                     {/* Original message */}
-                                    <div className="bg-slate-950 p-3 rounded-md border border-slate-700">
+                                    <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-md border border-slate-200 dark:border-slate-700">
                                       <h4 className="font-medium text-sm mb-2 text-green-500">📝 Message:</h4>
                                       <p className="text-sm text-slate-400">{message.content}</p>
                                     </div>
@@ -737,13 +739,13 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="transactions">
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl sm:text-2xl flex items-center gap-2">
                       <Euro className="h-5 w-5" />
                       Transaction History
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Track the status of all your received payments
                     </CardDescription>
                   </CardHeader>
@@ -761,7 +763,7 @@ const Dashboard = () => {
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-slate-700 hover:bg-green-500/5">
+                            <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                               <TableHead className="text-green-500">Date</TableHead>
                               <TableHead className="text-green-500">Sender</TableHead>
                               <TableHead className="text-green-500">Message</TableHead>
@@ -798,7 +800,7 @@ const Dashboard = () => {
                               };
 
                               return (
-                                <TableRow key={transaction.id} className="border-slate-700 hover:bg-green-500/5">
+                                <TableRow key={transaction.id} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
                                   <TableCell className="text-sm text-slate-400">
                                     {new Date(transaction.created_at).toLocaleDateString()}
                                   </TableCell>
@@ -833,10 +835,10 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="settings">
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl sm:text-2xl">Profile & Pricing Settings</CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Configure your public profile and guaranteed response pricing
                     </CardDescription>
                   </CardHeader>
@@ -849,7 +851,7 @@ const Dashboard = () => {
                         placeholder="e.g., John Smith, Dr. Johnson, TechGuru"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        className="bg-slate-950 border-slate-700 text-slate-400 placeholder:text-slate-600 focus:border-green-500"
+                        className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 placeholder:text-slate-600 focus:border-green-500"
                         maxLength={50}
                       />
                       <p className="text-xs text-slate-500">
@@ -866,7 +868,7 @@ const Dashboard = () => {
                         max="500"
                         value={price}
                         onChange={(e) => setPrice(Number(e.target.value))}
-                        className="bg-slate-950 border-slate-700 text-slate-400 focus:border-green-500"
+                        className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 focus:border-green-500"
                       />
                       <div className="text-sm text-slate-400 space-y-1 mt-3">
                         <p>• 24h response: €{(price * 1.5).toFixed(2)} (premium)</p>
@@ -891,15 +893,15 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="payments">
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl sm:text-2xl">Your Payment Link</CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Share this Link to your Audience for them to reach you exclusively
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="p-4 bg-slate-950 rounded-md flex items-center justify-between border border-slate-700">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-md flex items-center justify-between border border-slate-200 dark:border-slate-700">
                       <code className="text-sm text-green-500 break-all">{generatePaymentLink()}</code>
                       <Button
                         onClick={() => {
@@ -939,10 +941,10 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="stripe">
-                <Card className="bg-slate-900 border border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="text-green-500 text-xl sm:text-2xl">Stripe Payment Setup</CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Configure your Stripe account to receive payments
                     </CardDescription>
                   </CardHeader>
@@ -1012,7 +1014,7 @@ const Dashboard = () => {
                   <MyInviteCodes />
 
                   {/* How It Works */}
-                  <Card className="bg-slate-900 border border-slate-700">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
                       <CardTitle className="text-green-500 text-lg">How It Works</CardTitle>
                     </CardHeader>
@@ -1022,7 +1024,7 @@ const Dashboard = () => {
                           <span className="text-green-500 text-sm font-bold">1</span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">Share your invite codes</p>
+                          <p className="text-slate-900 dark:text-white font-medium">Share your invite codes</p>
                           <p className="text-sm text-slate-400">
                             Send your 3 unique codes to friends via Twitter, LinkedIn, or email
                           </p>
@@ -1033,7 +1035,7 @@ const Dashboard = () => {
                           <span className="text-green-500 text-sm font-bold">2</span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">Friends sign up</p>
+                          <p className="text-slate-900 dark:text-white font-medium">Friends sign up</p>
                           <p className="text-sm text-slate-400">
                             They create an account using your invite code during registration
                           </p>
@@ -1044,7 +1046,7 @@ const Dashboard = () => {
                           <span className="text-green-500 text-sm font-bold">3</span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">Unlock 85% revenue share</p>
+                          <p className="text-slate-900 dark:text-white font-medium">Unlock 85% revenue share</p>
                           <p className="text-sm text-slate-400">
                             Once all 3 codes are used, your earnings increase from 75% to 85% on every message
                           </p>
@@ -1061,7 +1063,7 @@ const Dashboard = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {loadingAnalytics ? (
                       Array.from({ length: 4 }).map((_, i) => (
-                        <Card key={i} className="bg-slate-900 border border-slate-700">
+                        <Card key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="animate-pulse">
                               <div className="h-4 bg-green-500/20 rounded w-1/2 mb-2"></div>
@@ -1072,7 +1074,7 @@ const Dashboard = () => {
                       ))
                     ) : analytics ? (
                       <>
-                        <Card className="bg-slate-900 border border-slate-700">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
@@ -1088,7 +1090,7 @@ const Dashboard = () => {
                           </CardContent>
                         </Card>
 
-                        <Card className="bg-slate-900 border border-slate-700">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
@@ -1104,7 +1106,7 @@ const Dashboard = () => {
                           </CardContent>
                         </Card>
 
-                        <Card className="bg-slate-900 border border-slate-700">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
@@ -1118,7 +1120,7 @@ const Dashboard = () => {
                           </CardContent>
                         </Card>
 
-                        <Card className="bg-slate-900 border border-slate-700">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
@@ -1139,10 +1141,10 @@ const Dashboard = () => {
 
                   {/* Admin Controls */}
                   {isAdmin && (
-                    <Card className="bg-slate-900 border border-slate-700">
+                    <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                       <CardHeader>
                         <CardTitle className="text-green-500 text-xl">Admin Controls</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardDescription className="text-slate-500 dark:text-slate-400">
                           Platform-wide analytics and filtering options
                         </CardDescription>
                       </CardHeader>
@@ -1157,7 +1159,7 @@ const Dashboard = () => {
                                 setDateRange(e.target.value);
                                 loadAnalytics();
                               }}
-                              className="w-full p-2 border border-slate-700 rounded-md bg-slate-950 text-slate-400"
+                              className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400"
                             >
                               <option value="7">Last 7 days</option>
                               <option value="30">Last 30 days</option>
@@ -1173,7 +1175,7 @@ const Dashboard = () => {
                               placeholder="user@example.com"
                               value={userFilter}
                               onChange={(e) => setUserFilter(e.target.value)}
-                              className="bg-slate-950 border-slate-700 text-slate-400"
+                              className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400"
                             />
                           </div>
 
@@ -1196,27 +1198,27 @@ const Dashboard = () => {
                   {/* Performance Metrics */}
                   {analytics && !loadingAnalytics && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Card className="bg-slate-900 border border-slate-700">
+                      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                         <CardHeader>
                           <CardTitle className="text-green-500 text-xl">Performance Metrics</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
+                          <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span className="text-sm font-medium text-slate-400">
                               {isAdmin ? `Messages (${dateRange} days)` : 'Monthly Messages'}
                             </span>
                             <span className="font-bold text-green-500">{analytics.monthlyMessages}</span>
                           </div>
-                          <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
+                          <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span className="text-sm font-medium text-slate-400">Avg. Transaction Value</span>
                             <span className="font-bold text-green-500">€{analytics.averageTransactionValue.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
+                          <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span className="text-sm font-medium text-slate-400">Pending Transactions</span>
                             <span className="font-bold text-orange-400">{analytics.pendingTransactions}</span>
                           </div>
                           {isAdmin && analytics.refundedTransactions !== undefined && (
-                            <div className="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-700">
+                            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
                               <span className="text-sm font-medium text-slate-400">Refunded Transactions</span>
                               <span className="font-bold text-red-400">{analytics.refundedTransactions}</span>
                             </div>
@@ -1224,7 +1226,7 @@ const Dashboard = () => {
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-slate-900 border border-slate-700">
+                      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                         <CardHeader>
                           <CardTitle className="text-green-500 text-xl">Quick Actions</CardTitle>
                         </CardHeader>
@@ -1257,8 +1259,8 @@ const Dashboard = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-slate-500 text-sm">
-          <p>© 2026 FastPass • Guaranteed Response Platform</p>
+        <footer className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} FastPass</p>
         </footer>
       </div>
     </div>
