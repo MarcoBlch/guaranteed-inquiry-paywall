@@ -92,6 +92,7 @@ const PaywallPage = () => {
         links={[
           { label: 'How it works', href: '#how' },
           { label: 'Pricing', href: '#pricing' },
+          { label: 'Directory', href: '/directory' },
           { label: 'Log in', href: '/auth' },
         ]}
         showCTA={authChecked && !isAuthenticated}

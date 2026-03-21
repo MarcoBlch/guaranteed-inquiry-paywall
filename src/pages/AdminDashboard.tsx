@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AdminDirectoryManager from "@/components/admin/AdminDirectoryManager";
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -1024,6 +1025,11 @@ const AdminDashboard = () => {
               </>
             )}
           </div>
+        </div>
+
+        {/* Directory Management */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-8">
+          <AdminDirectoryManager />
         </div>
 
         {/* Footer */}

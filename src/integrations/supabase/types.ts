@@ -448,8 +448,145 @@ export type Database = {
           },
         ]
       }
+      directory_requests: {
+        Row: {
+          id: string
+          target_name: string
+          target_slug: string
+          target_description: string | null
+          target_avatar_url: string | null
+          target_category: string | null
+          request_count: number
+          status: string
+          invited_at: string | null
+          onboarded_user_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          target_name: string
+          target_slug: string
+          target_description?: string | null
+          target_avatar_url?: string | null
+          target_category?: string | null
+          request_count?: number
+          status?: string
+          invited_at?: string | null
+          onboarded_user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          target_name?: string
+          target_slug?: string
+          target_description?: string | null
+          target_avatar_url?: string | null
+          target_category?: string | null
+          request_count?: number
+          status?: string
+          invited_at?: string | null
+          onboarded_user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_requests_onboarded_user_id_fkey"
+            columns: ["onboarded_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_request_emails: {
+        Row: {
+          id: string
+          directory_request_id: string
+          requester_name: string
+          email: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          directory_request_id: string
+          requester_name: string
+          email: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          directory_request_id?: string
+          requester_name?: string
+          email?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_request_emails_directory_request_id_fkey"
+            columns: ["directory_request_id"]
+            isOneToOne: false
+            referencedRelation: "directory_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_ratings: {
+        Row: {
+          id: string
+          transaction_id: string
+          message_id: string
+          rating: number
+          comment: string | null
+          rating_token_hash: string
+          sender_email: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          transaction_id: string
+          message_id: string
+          rating: number
+          comment?: string | null
+          rating_token_hash: string
+          sender_email?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          transaction_id?: string
+          message_id?: string
+          rating?: number
+          comment?: string | null
+          rating_token_hash?: string
+          sender_email?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_ratings_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_ratings_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
+          avg_rating: number | null
+          avg_response_hours: number | null
+          bio_quote: string | null
           created_at: string | null
           daily_limit_override: number | null
           display_name: string | null
@@ -457,12 +594,18 @@ export type Database = {
           invited_by_code: string | null
           is_admin: boolean | null
           price: number | null
+          response_rate: number | null
           signed_up_at: string | null
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
+          total_ratings: number | null
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          avg_rating?: number | null
+          avg_response_hours?: number | null
+          bio_quote?: string | null
           created_at?: string | null
           daily_limit_override?: number | null
           display_name?: string | null
@@ -470,12 +613,18 @@ export type Database = {
           invited_by_code?: string | null
           is_admin?: boolean | null
           price?: number | null
+          response_rate?: number | null
           signed_up_at?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
+          total_ratings?: number | null
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          avg_rating?: number | null
+          avg_response_hours?: number | null
+          bio_quote?: string | null
           created_at?: string | null
           daily_limit_override?: number | null
           display_name?: string | null
@@ -483,9 +632,11 @@ export type Database = {
           invited_by_code?: string | null
           is_admin?: boolean | null
           price?: number | null
+          response_rate?: number | null
           signed_up_at?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
+          total_ratings?: number | null
           updated_at?: string | null
         }
         Relationships: []

@@ -166,3 +166,16 @@ verify_jwt = true
 
 [functions.get-invitation-stats]
 verify_jwt = true
+
+# Directory + Rating System Functions
+[functions.get-directory-profiles]
+verify_jwt = false
+
+[functions.submit-directory-request]
+verify_jwt = false
+
+[functions.admin-manage-directory]
+verify_jwt = true
+
+[functions.submit-rating]
+verify_jwt = false

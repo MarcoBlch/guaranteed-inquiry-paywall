@@ -29,11 +29,14 @@ import {
   Link as LinkIcon,
   BarChart3,
   CreditCard,
-  Gift
+  Gift,
+  Camera
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
@@ -77,6 +80,9 @@ interface EscrowTransaction {
 const Dashboard = () => {
   const [price, setPrice] = useState(10);
   const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [bioQuote, setBioQuote] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [pendingFunds, setPendingFunds] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -353,7 +359,7 @@ const Dashboard = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override')
+      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override, avatar_url, bio_quote')
       .eq('id', user.id)
       .single();
 
@@ -362,6 +368,8 @@ const Dashboard = () => {
       setPrice(profile.price || 10);
       setIsAdmin(profile.is_admin || false);
       setDisplayName(profile.display_name || '');
+      setAvatarUrl(profile.avatar_url || null);
+      setBioQuote(profile.bio_quote || '');
       setDailyLimit(profile.daily_limit_override ?? 5);
     }
 
@@ -409,7 +417,8 @@ const Dashboard = () => {
         .from('profiles')
         .update({
           price: price,
-          display_name: displayName.trim() || null
+          display_name: displayName.trim() || null,
+          bio_quote: bioQuote.trim() || null
         })
         .eq('id', user.id);
 
@@ -419,6 +428,53 @@ const Dashboard = () => {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files?.[0]) return;
+
+    const file = e.target.files[0];
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Please upload a JPG, PNG, or WebP image');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-avatars')
+        .getPublicUrl(filePath);
+
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlWithCacheBust })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(urlWithCacheBust);
+      toast.success('Profile photo updated');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -843,6 +899,39 @@ const Dashboard = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Profile Photo */}
+                    <div className="flex items-center gap-6">
+                      <div className="relative group">
+                        <Avatar className="h-20 w-20">
+                          {avatarUrl ? (
+                            <AvatarImage src={avatarUrl} alt="Profile photo" />
+                          ) : null}
+                          <AvatarFallback className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-2xl">
+                            {displayName ? displayName.charAt(0).toUpperCase() : '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <label
+                          htmlFor="avatar-upload"
+                          className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        >
+                          <Camera className="h-6 w-6 text-white" />
+                        </label>
+                        <input
+                          id="avatar-upload"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Profile Photo</p>
+                        <p className="text-xs text-slate-500">JPG, PNG, or WebP. Max 2MB.</p>
+                        {uploadingAvatar && <p className="text-xs text-green-500 mt-1">Uploading...</p>}
+                      </div>
+                    </div>
+
+                    {/* Display Name */}
                     <div className="space-y-2">
                       <Label htmlFor="displayName" className="text-green-500">Display Name</Label>
                       <Input
@@ -856,6 +945,23 @@ const Dashboard = () => {
                       />
                       <p className="text-xs text-slate-500">
                         This name will appear on your payment page. Leave empty to show "this professional".
+                      </p>
+                    </div>
+
+                    {/* Personal Quote */}
+                    <div className="space-y-2">
+                      <Label htmlFor="bioQuote" className="text-green-500">Personal Quote</Label>
+                      <Textarea
+                        id="bioQuote"
+                        placeholder="I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter..."
+                        value={bioQuote}
+                        onChange={(e) => setBioQuote(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 placeholder:text-slate-600 focus:border-green-500"
+                        maxLength={200}
+                        rows={3}
+                      />
+                      <p className="text-xs text-slate-500">
+                        {bioQuote.length}/200 characters. Shown on your payment page.
                       </p>
                     </div>
 

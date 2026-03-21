@@ -315,6 +315,37 @@ serve(async (req) => {
 
     console.log('✅ Successfully processed response for message:', messageId)
 
+    // Generate HMAC rating link (non-blocking — failure never prevents forwarding)
+    let ratingSection = ''
+    let ratingTextSection = ''
+    try {
+      const ratingSecret = Deno.env.get('RATING_SECRET')
+      if (ratingSecret) {
+        const encoder = new TextEncoder()
+        const key = await crypto.subtle.importKey(
+          'raw',
+          encoder.encode(ratingSecret),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        )
+        const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(transaction.id))
+        const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
+
+        const rateUrl = `https://fastpass.email/rate?token=${encodeURIComponent(token)}&tx=${transaction.id}`
+
+        ratingSection = `
+          <div style="margin-top:32px;padding-top:24px;border-top:1px solid #e2e8f0;text-align:center;">
+            <p style="color:#64748b;font-size:14px;margin-bottom:12px;">How was this response?</p>
+            <a href="${rateUrl}" style="display:inline-block;padding:10px 24px;background:#22c55e;color:white;text-decoration:none;border-radius:6px;font-weight:600;">Rate this response</a>
+          </div>
+        `
+        ratingTextSection = `\n\n---\nHow was this response? Rate it here: ${rateUrl}`
+      }
+    } catch (ratingError) {
+      console.error('⚠️ Failed to generate rating link (non-blocking):', ratingError)
+    }
+
     // Forward response to original sender
     const postmarkServerToken = Deno.env.get('POSTMARK_SERVER_TOKEN')
     if (postmarkServerToken && transaction.sender_email) {
@@ -330,8 +361,8 @@ serve(async (req) => {
             From: 'FASTPASS <noreply@fastpass.email>',
             To: transaction.sender_email,
             Subject: `Re: ${inboundEmail.Subject}`,
-            TextBody: inboundEmail.TextBody,
-            HtmlBody: inboundEmail.HtmlBody || `<p>${inboundEmail.TextBody}</p>`,
+            TextBody: (inboundEmail.TextBody || '') + ratingTextSection,
+            HtmlBody: (inboundEmail.HtmlBody || `<p>${inboundEmail.TextBody}</p>`) + ratingSection,
             MessageStream: 'outbound',
           })
         })

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import StripeEscrowForm from "@/components/payment/StripeEscrowForm";
@@ -11,6 +12,7 @@ import { usePaymentDetails } from "@/hooks/usePaymentDetails";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
+import { CheckCircle, Shield, Clock, Star } from 'lucide-react';
 
 // Load Stripe with publishable key from environment variable
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -80,10 +82,10 @@ const PaymentPage = () => {
             <div className="w-full max-w-2xl">
               <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                 <CardHeader className="text-center p-6 sm:p-8 border-b border-slate-200 dark:border-slate-700">
-                  <CardTitle className="text-green-500 text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">
+                  <CardTitle className="font-display italic text-green-500 text-3xl sm:text-4xl lg:text-5xl mb-2">
                     SKIP THE LINE
                   </CardTitle>
-                  <CardDescription className="text-slate-500 dark:text-slate-400 text-sm sm:text-base lg:text-lg">
+                  <CardDescription className="font-body text-slate-500 dark:text-slate-400 text-sm sm:text-base lg:text-lg">
                     Send your message with guaranteed response or full refund
                   </CardDescription>
                 </CardHeader>
@@ -93,7 +95,6 @@ const PaymentPage = () => {
                       {details.isLimitReached ? (
                         /* Inbox full — daily limit reached */
                         <div className="text-center space-y-4 py-6">
-                          <div className="text-5xl">📬</div>
                           <h2 className="text-green-500 text-xl font-bold">
                             Inbox full for today
                           </h2>
@@ -107,24 +108,88 @@ const PaymentPage = () => {
                         </div>
                       ) : (
                         <>
-                          {/* Personal Message from Recipient */}
-                          <div className="bg-green-500/10 border border-green-500/30 rounded-md p-4 sm:p-6">
-                            <div className="mb-3">
-                              <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base leading-relaxed italic">
-                                "I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter. If you want a real answer, or to collaborate, this is the best way to reach me directly."
-                              </p>
+                          {/* Profile card with avatar + bio quote */}
+                          <div className="border border-slate-200 dark:border-slate-700 rounded-md p-4 sm:p-6">
+                            <div className="flex items-start gap-4">
+                              <Avatar className="h-14 w-14 shrink-0">
+                                {details.avatarUrl ? (
+                                  <AvatarImage src={details.avatarUrl} alt={details.userName} />
+                                ) : null}
+                                <AvatarFallback className="bg-slate-100 dark:bg-slate-800 text-slate-500 text-xl font-display">
+                                  {details.userName.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-body text-slate-500 dark:text-slate-400 text-sm sm:text-base leading-relaxed italic">
+                                  "{details.bioQuote || 'I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter. If you want a real answer, or to collaborate, this is the best way to reach me directly.'}"
+                                </p>
+                                <p className="text-green-500 text-sm font-medium mt-2">
+                                  — {details.userName}
+                                </p>
+
+                                {/* Star rating */}
+                                {details.totalRatings > 0 && (
+                                  <div className="flex items-center gap-1.5 mt-2">
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                      <Star
+                                        key={n}
+                                        className={`h-4 w-4 ${
+                                          n <= Math.round(details.avgRating || 0)
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-slate-300 dark:text-slate-600'
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-xs text-slate-400 ml-1">
+                                      {details.avgRating?.toFixed(1)} ({details.totalRatings})
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Response stats */}
+                                {(details.responseRate !== null || details.avgResponseHours !== null) && (
+                                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                                    {details.responseRate !== null && (
+                                      <span className="flex items-center gap-1">
+                                        <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                                        {details.responseRate}% response rate
+                                      </span>
+                                    )}
+                                    {details.avgResponseHours !== null && (
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="h-3.5 w-3.5 text-green-500" />
+                                        ~{details.avgResponseHours < 1 ? '<1h' : `${Math.round(details.avgResponseHours)}h`} avg response
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-green-500 text-sm sm:text-base font-semibold">
-                              — {details.userName}
-                            </p>
                           </div>
 
                           <StripeEscrowForm
                             userId={userId}
                             basePrice={details.price}
+                            userName={details.userName}
                             onSuccess={() => navigate('/payment-success')}
                             onError={(message) => setPaymentError(message)}
                           />
+
+                          {/* Trust signals */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                            <div className="flex flex-col items-center gap-1.5 p-3">
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                              <span className="text-xs text-slate-500 dark:text-slate-400">Response guaranteed or full refund</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-1.5 p-3">
+                              <Shield className="h-5 w-5 text-green-500" />
+                              <span className="text-xs text-slate-500 dark:text-slate-400">Secure payment by Stripe</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-1.5 p-3">
+                              <Clock className="h-5 w-5 text-green-500" />
+                              <span className="text-xs text-slate-500 dark:text-slate-400">Timed escrow protection</span>
+                            </div>
+                          </div>
                         </>
                       )}
                     </div>

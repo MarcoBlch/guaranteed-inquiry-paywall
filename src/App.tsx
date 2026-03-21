@@ -26,6 +26,8 @@ import BlogPost from "./pages/BlogPost";
 import Terms from "./pages/Terms";
 import FAQ from "./pages/FAQ";
 import UnsolicitedDmSolution from "./pages/UnsolicitedDmSolution";
+import Directory from "./pages/Directory";
+import RatePage from "./pages/RatePage";
 import { CookieBanner } from "./components/CookieBanner";
 import { supabase } from "./integrations/supabase/client";
 
@@ -81,6 +83,7 @@ const App = () => {
             <Route path="/pay/:userId" element={<PaymentPage />} />
             <Route path="/payment/:userId" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/rate" element={<RatePage />} />
 
             {/* AUTHENTICATION ROUTES - For login/signup only */}
             <Route path="/auth" element={<Auth />} />
@@ -92,6 +95,9 @@ const App = () => {
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookie-settings" element={<CookieSettings />} />
             <Route path="/faq" element={<FAQ />} />
+
+            {/* DIRECTORY - Public access */}
+            <Route path="/directory" element={<Directory />} />
 
             {/* SEO LANDING PAGES - Public access */}
             <Route path="/solution-unsolicited-dm" element={<UnsolicitedDmSolution />} />
