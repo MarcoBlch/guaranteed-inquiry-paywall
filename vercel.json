@@ -8,7 +8,7 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://znncfayiwfamujvrprvf.supabase.co/functions/v1/generate-sitemap"
+      "destination": "/api/sitemap.xml"
     },
     {
       "source": "/(.*)",
