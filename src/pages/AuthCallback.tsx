@@ -270,7 +270,6 @@ const AuthCallback = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
@@ -285,19 +284,18 @@ const AuthCallback = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="bg-[#1a1f2e]/95 backdrop-blur-md rounded-2xl p-8 shadow-[0_0_20px_rgba(92,255,176,0.2)] border border-[#5cffb0]/20">
+          <div className="bg-white dark:bg-slate-900 rounded-md p-8 border border-slate-200 dark:border-slate-700">
             <div className="text-center">
               <div className="relative inline-block mb-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#5cffb0]/20 border-t-[#5cffb0] mx-auto"></div>
-                <div className="absolute inset-0 rounded-full bg-[#5cffb0]/10 blur-xl animate-pulse"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500/20 border-t-green-500 mx-auto"></div>
               </div>
-              <h2 className="text-xl font-semibold text-[#5cffb0] mb-2">
+              <h2 className="text-xl font-semibold text-green-500 mb-2">
                 {loadingPhase === 'verifying' && 'Verifying your account...'}
                 {loadingPhase === 'creating_profile' && 'Setting up your profile...'}
                 {loadingPhase === 'redeeming_code' && 'Applying your invite code...'}
                 {loadingPhase === 'complete' && 'Almost there...'}
               </h2>
-              <p className="text-[#B0B0B0]">
+              <p className="text-slate-400">
                 {loadingPhase === 'verifying' && 'Please wait while we complete the process'}
                 {loadingPhase === 'creating_profile' && 'Creating your account...'}
                 {loadingPhase === 'redeeming_code' && 'Validating your invitation...'}
@@ -308,7 +306,7 @@ const AuthCallback = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-[#B0B0B0]/60 text-xs sm:text-sm px-4">
+        <footer className="text-center py-6 text-slate-500 text-xs sm:text-sm px-4">
           <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>

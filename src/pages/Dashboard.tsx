@@ -29,12 +29,16 @@ import {
   Link as LinkIcon,
   BarChart3,
   CreditCard,
-  Gift
+  Gift,
+  Camera
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 import { MyInviteCodes, ReferralProgress } from '@/components/invite';
 
@@ -76,6 +80,9 @@ interface EscrowTransaction {
 const Dashboard = () => {
   const [price, setPrice] = useState(10);
   const [displayName, setDisplayName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [bioQuote, setBioQuote] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
   const [pendingFunds, setPendingFunds] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -352,7 +359,7 @@ const Dashboard = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override')
+      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override, avatar_url, bio_quote')
       .eq('id', user.id)
       .single();
 
@@ -361,6 +368,8 @@ const Dashboard = () => {
       setPrice(profile.price || 10);
       setIsAdmin(profile.is_admin || false);
       setDisplayName(profile.display_name || '');
+      setAvatarUrl(profile.avatar_url || null);
+      setBioQuote(profile.bio_quote || '');
       setDailyLimit(profile.daily_limit_override ?? 5);
     }
 
@@ -408,7 +417,8 @@ const Dashboard = () => {
         .from('profiles')
         .update({
           price: price,
-          display_name: displayName.trim() || null
+          display_name: displayName.trim() || null,
+          bio_quote: bioQuote.trim() || null
         })
         .eq('id', user.id);
 
@@ -418,6 +428,53 @@ const Dashboard = () => {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files?.[0]) return;
+
+    const file = e.target.files[0];
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Please upload a JPG, PNG, or WebP image');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-avatars')
+        .getPublicUrl(filePath);
+
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlWithCacheBust })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(urlWithCacheBust);
+      toast.success('Profile photo updated');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -458,29 +515,29 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-slate-950">
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="p-4 sm:p-6">
+        <header className="border-b border-slate-200 dark:border-slate-800 p-4 sm:p-6">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               {/* Logo and Title */}
               <div className="flex items-center gap-4">
                 <FastPassLogo size="sm" />
                 <div>
-                  <h1 className="text-[#5cffb0] text-2xl sm:text-3xl font-bold">Dashboard</h1>
-                  <p className="text-[#B0B0B0] text-sm sm:text-base">Manage your inbox earnings</p>
+                  <h1 className="text-green-500 text-2xl sm:text-3xl font-bold">Dashboard</h1>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Manage your inbox earnings</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <ThemeToggle />
                 <Button
                   onClick={refreshData}
                   disabled={refreshing}
-                  className="bg-transparent border border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 flex-1 sm:flex-none"
+                  className="bg-transparent border border-green-500 text-green-500 hover:bg-green-500/10 flex-1 sm:flex-none"
                   size="sm"
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
@@ -488,7 +545,7 @@ const Dashboard = () => {
                 </Button>
                 <Button
                   onClick={() => navigate('/settings')}
-                  className="bg-transparent border border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 flex-1 sm:flex-none"
+                  className="bg-transparent border border-green-500 text-green-500 hover:bg-green-500/10 flex-1 sm:flex-none"
                   size="sm"
                 >
                   <Settings className="h-4 w-4 mr-2" />
@@ -496,7 +553,7 @@ const Dashboard = () => {
                 </Button>
                 <Button
                   onClick={handleLogout}
-                  className="bg-transparent border border-[#5cffb0]/50 text-[#B0B0B0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0] flex-1 sm:flex-none"
+                  className="bg-transparent border border-slate-300 dark:border-green-500/50 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-green-500/10 hover:text-slate-900 dark:hover:text-green-500 flex-1 sm:flex-none"
                   size="sm"
                 >
                   Logout
@@ -514,38 +571,38 @@ const Dashboard = () => {
               if (value === 'transactions') loadTransactions();
               if (value === 'analytics') loadAnalytics();
             }}>
-              <TabsList className="mb-6 bg-transparent backdrop-blur-sm border border-[#5cffb0]/30 p-1 flex-wrap gap-2">
+              <TabsList className="mb-6 bg-transparent backdrop-blur-sm border border-slate-200 dark:border-slate-700 p-1 flex-wrap gap-2">
                 <TabsTrigger
                   value="messages"
-                  className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Messages ({messages.filter(m => !m.read).length})
                 </TabsTrigger>
                 <TabsTrigger
                   value="transactions"
-                  className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <Euro className="h-4 w-4 mr-2" />
                   Transactions
                 </TabsTrigger>
                 <TabsTrigger
                   value="settings"
-                  className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </TabsTrigger>
                 <TabsTrigger
                   value="payments"
-                  className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <LinkIcon className="h-4 w-4 mr-2" />
                   Payment Link
                 </TabsTrigger>
                 <TabsTrigger
                   value="stripe"
-                  className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                  className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Stripe
@@ -553,7 +610,7 @@ const Dashboard = () => {
                 {stripeOnboarded && (
                   <TabsTrigger
                     value="referrals"
-                    className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                    className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                   >
                     <Gift className="h-4 w-4 mr-2" />
                     Referrals
@@ -562,7 +619,7 @@ const Dashboard = () => {
                 {isAdmin && (
                   <TabsTrigger
                     value="analytics"
-                    className="text-[#B0B0B0] data-[state=active]:bg-[#5cffb0]/20 data-[state=active]:text-[#5cffb0] border border-transparent data-[state=active]:border-[#5cffb0]/50"
+                    className="text-slate-500 dark:text-slate-400 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 border border-transparent data-[state=active]:border-green-500/50"
                   >
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Analytics
@@ -571,19 +628,19 @@ const Dashboard = () => {
               </TabsList>
 
               <TabsContent value="messages">
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Inbox</CardTitle>
-                        <CardDescription className="text-[#B0B0B0]">
+                        <CardTitle className="text-green-500 text-xl sm:text-2xl">Inbox</CardTitle>
+                        <CardDescription className="text-slate-500 dark:text-slate-400">
                           View every messages received
                         </CardDescription>
                       </div>
                       {/* Daily message counter */}
-                      <div className={`flex flex-col items-end shrink-0 px-3 py-2 rounded-lg border ${todayMessageCount >= dailyLimit ? 'border-red-400/50 bg-red-400/10' : 'border-[#5cffb0]/30 bg-[#5cffb0]/10'}`}>
-                        <span className="text-[#B0B0B0] text-xs font-medium">Today</span>
-                        <span className={`text-lg font-bold leading-tight ${todayMessageCount >= dailyLimit ? 'text-red-400' : 'text-[#5cffb0]'}`}>
+                      <div className={`flex flex-col items-end shrink-0 px-3 py-2 rounded-md border ${todayMessageCount >= dailyLimit ? 'border-red-400/50 bg-red-400/10' : 'border-green-500/30 bg-green-500/10'}`}>
+                        <span className="text-slate-400 text-xs font-medium">Today</span>
+                        <span className={`text-lg font-bold leading-tight ${todayMessageCount >= dailyLimit ? 'text-red-400' : 'text-green-500'}`}>
                           {todayMessageCount} / {dailyLimit}
                         </span>
                       </div>
@@ -592,23 +649,23 @@ const Dashboard = () => {
                   <CardContent>
                     {loadingMessages ? (
                       <div className="flex items-center justify-center py-12">
-                        <RefreshCw className="h-8 w-8 text-[#5cffb0] animate-spin" />
-                        <span className="ml-3 text-[#B0B0B0]">Loading messages...</span>
+                        <RefreshCw className="h-8 w-8 text-green-500 animate-spin" />
+                        <span className="ml-3 text-slate-400">Loading messages...</span>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <h3 className="text-[#5cffb0] text-lg font-semibold">Messages Received</h3>
-                          <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border border-[#5cffb0]/50">
+                          <h3 className="text-green-500 text-lg font-semibold">Messages Received</h3>
+                          <Badge className="bg-green-500/20 text-green-500 border border-green-500/50">
                             {messages.length} total
                           </Badge>
                         </div>
 
                         {messages.length === 0 ? (
-                        <Card className="bg-transparent backdrop-blur-sm border border-[#5cffb0]/30">
+                        <Card className="bg-transparent border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-8 text-center">
-                            <p className="text-[#B0B0B0] text-lg">No messages received yet</p>
-                            <p className="text-[#B0B0B0]/80 text-sm mt-2">
+                            <p className="text-slate-400 text-lg">No messages received yet</p>
+                            <p className="text-slate-500 text-sm mt-2">
                               Share your payment link to receive guaranteed messages
                             </p>
                           </CardContent>
@@ -621,13 +678,13 @@ const Dashboard = () => {
 
                             const getStatusBadge = () => {
                               if (!escrow) return (
-                                <Badge className="bg-[#B0B0B0]/20 text-[#B0B0B0]">No payment</Badge>
+                                <Badge className="bg-slate-500/20 text-slate-400">No payment</Badge>
                               );
 
                               switch (escrow.status) {
                                 case 'held':
                                   if (hasResponse) {
-                                    return <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border border-[#5cffb0]">
+                                    return <Badge className="bg-green-500/20 text-green-500 border border-green-500">
                                       Responded - Processing
                                     </Badge>;
                                   }
@@ -643,7 +700,7 @@ const Dashboard = () => {
                                     </Badge>;
                                   }
                                 case 'released':
-                                  return <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border border-[#5cffb0]">
+                                  return <Badge className="bg-green-500/20 text-green-500 border border-green-500">
                                     Paid - €{(escrow.amount * 0.75).toFixed(2)}
                                   </Badge>;
                                 case 'transfer_failed':
@@ -660,7 +717,7 @@ const Dashboard = () => {
                                     Setup Required
                                   </Badge>;
                                 default:
-                                  return <Badge className="bg-[#B0B0B0]/20 text-[#B0B0B0]">
+                                  return <Badge className="bg-slate-500/20 text-slate-400">
                                     {escrow.status}
                                   </Badge>;
                               }
@@ -669,22 +726,22 @@ const Dashboard = () => {
                             return (
                               <Card
                                 key={message.id}
-                                className="bg-transparent backdrop-blur-sm border border-[#5cffb0]/30 shadow-[0_0_15px_rgba(92,255,176,0.1)] hover:shadow-[0_0_20px_rgba(92,255,176,0.2)] transition-all"
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
                               >
                                 <CardHeader>
                                   <div className="flex justify-between items-start">
                                     <div>
-                                      <CardTitle className="text-[#5cffb0] text-base">
+                                      <CardTitle className="text-green-500 text-base">
                                         From: {message.sender_email}
                                       </CardTitle>
-                                      <CardDescription className="text-[#B0B0B0]/80">
+                                      <CardDescription className="text-slate-500">
                                         {new Date(message.created_at).toLocaleString('en-US')}
                                       </CardDescription>
                                     </div>
                                     <div className="text-right">
                                       {getStatusBadge()}
                                       {escrow && (
-                                        <div className="text-sm text-[#5cffb0] mt-1">
+                                        <div className="text-sm text-green-500 mt-1">
                                           €{escrow.amount.toFixed(2)}
                                         </div>
                                       )}
@@ -695,15 +752,15 @@ const Dashboard = () => {
                                 <CardContent>
                                   <div className="space-y-4">
                                     {/* Original message */}
-                                    <div className="bg-[#1a1f2e]/50 p-3 rounded-md border border-[#5cffb0]/10">
-                                      <h4 className="font-medium text-sm mb-2 text-[#5cffb0]">📝 Message:</h4>
-                                      <p className="text-sm text-[#B0B0B0]">{message.content}</p>
+                                    <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-md border border-slate-200 dark:border-slate-700">
+                                      <h4 className="font-medium text-sm mb-2 text-green-500">📝 Message:</h4>
+                                      <p className="text-sm text-slate-400">{message.content}</p>
                                     </div>
 
                                     {/* Response if exists */}
                                     {hasResponse && (
-                                      <div className="bg-[#5cffb0]/10 p-3 rounded-md border-l-4 border-[#5cffb0]">
-                                        <h4 className="font-medium text-sm mb-2 text-[#5cffb0]">
+                                      <div className="bg-green-500/10 p-3 rounded-md border-l-4 border-green-500">
+                                        <h4 className="font-medium text-sm mb-2 text-green-500">
                                           ✅ Response sent on {message.message_responses
                                             .find(r => r.response_received_at)?.response_received_at &&
                                             new Date(message.message_responses
@@ -718,7 +775,7 @@ const Dashboard = () => {
                                       {escrow?.status === 'pending_user_setup' && (
                                         <Button
                                           onClick={handleStripeOnboarding}
-                                          className="border border-[#5cffb0] text-[#5cffb0] bg-transparent hover:bg-[#5cffb0]/10"
+                                          className="border border-green-500 text-green-500 bg-transparent hover:bg-green-500/10"
                                         >
                                           ⚙️ Setup Stripe (€{(escrow.amount * 0.75).toFixed(2)})
                                         </Button>
@@ -738,37 +795,37 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="transactions">
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl flex items-center gap-2">
+                    <CardTitle className="text-green-500 text-xl sm:text-2xl flex items-center gap-2">
                       <Euro className="h-5 w-5" />
                       Transaction History
                     </CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Track the status of all your received payments
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {loadingTransactions ? (
                       <div className="flex items-center justify-center py-12">
-                        <RefreshCw className="h-8 w-8 text-[#5cffb0] animate-spin" />
-                        <span className="ml-3 text-[#B0B0B0]">Loading transactions...</span>
+                        <RefreshCw className="h-8 w-8 text-green-500 animate-spin" />
+                        <span className="ml-3 text-slate-400">Loading transactions...</span>
                       </div>
                     ) : transactions.length === 0 ? (
-                      <p className="text-[#B0B0B0] text-center py-8">
+                      <p className="text-slate-400 text-center py-8">
                         No transactions yet
                       </p>
                     ) : (
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-[#5cffb0]/20 hover:bg-[#5cffb0]/5">
-                              <TableHead className="text-[#5cffb0]">Date</TableHead>
-                              <TableHead className="text-[#5cffb0]">Sender</TableHead>
-                              <TableHead className="text-[#5cffb0]">Message</TableHead>
-                              <TableHead className="text-[#5cffb0]">Amount</TableHead>
-                              <TableHead className="text-[#5cffb0]">Status</TableHead>
-                              <TableHead className="text-[#5cffb0]">Expires</TableHead>
+                            <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                              <TableHead className="text-green-500">Date</TableHead>
+                              <TableHead className="text-green-500">Sender</TableHead>
+                              <TableHead className="text-green-500">Message</TableHead>
+                              <TableHead className="text-green-500">Amount</TableHead>
+                              <TableHead className="text-green-500">Status</TableHead>
+                              <TableHead className="text-green-500">Expires</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -789,27 +846,27 @@ const Dashboard = () => {
                               const statusColor = {
                                 'pending': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
                                 'pending_user_setup': 'bg-orange-500/20 text-orange-400 border-orange-500/50',
-                                'completed': 'bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50',
+                                'completed': 'bg-green-500/20 text-green-500 border-green-500/50',
                                 'expired': 'bg-red-500/20 text-red-400 border-red-500/50',
-                                'refunded': 'bg-[#B0B0B0]/20 text-[#B0B0B0] border-[#B0B0B0]/50',
+                                'refunded': 'bg-slate-500/20 text-slate-400 border-slate-500/50',
                                 'held': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-                                'released': 'bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50',
+                                'released': 'bg-green-500/20 text-green-500 border-green-500/50',
                                 'transfer_failed': 'bg-amber-500/20 text-amber-400 border-amber-500/50',
                                 'processing': 'bg-amber-500/20 text-amber-400 border-amber-500/50'
                               };
 
                               return (
-                                <TableRow key={transaction.id} className="border-[#5cffb0]/10 hover:bg-[#5cffb0]/5">
-                                  <TableCell className="text-sm text-[#B0B0B0]">
+                                <TableRow key={transaction.id} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                                  <TableCell className="text-sm text-slate-400">
                                     {new Date(transaction.created_at).toLocaleDateString()}
                                   </TableCell>
-                                  <TableCell className="text-sm text-[#B0B0B0]">
+                                  <TableCell className="text-sm text-slate-400">
                                     {transaction.sender_email}
                                   </TableCell>
-                                  <TableCell className="text-sm text-[#B0B0B0] max-w-xs truncate">
+                                  <TableCell className="text-sm text-slate-400 max-w-xs truncate">
                                     {transaction.messages?.content || 'N/A'}
                                   </TableCell>
-                                  <TableCell className="text-sm font-medium text-[#5cffb0]">
+                                  <TableCell className="text-sm font-medium text-green-500">
                                     €{transaction.amount.toFixed(2)}
                                   </TableCell>
                                   <TableCell>
@@ -817,7 +874,7 @@ const Dashboard = () => {
                                       {statusMap[transaction.status as keyof typeof statusMap] || transaction.status}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell className="text-sm text-[#B0B0B0]">
+                                  <TableCell className="text-sm text-slate-400">
                                     <span className={isExpired ? 'text-red-400 font-medium' : ''}>
                                       {new Date(transaction.expires_at).toLocaleDateString()}
                                     </span>
@@ -834,32 +891,82 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="settings">
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Profile & Pricing Settings</CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardTitle className="text-green-500 text-xl sm:text-2xl">Profile & Pricing Settings</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Configure your public profile and guaranteed response pricing
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Profile Photo */}
+                    <div className="flex items-center gap-6">
+                      <div className="relative group">
+                        <Avatar className="h-20 w-20">
+                          {avatarUrl ? (
+                            <AvatarImage src={avatarUrl} alt="Profile photo" />
+                          ) : null}
+                          <AvatarFallback className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-2xl">
+                            {displayName ? displayName.charAt(0).toUpperCase() : '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <label
+                          htmlFor="avatar-upload"
+                          className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        >
+                          <Camera className="h-6 w-6 text-white" />
+                        </label>
+                        <input
+                          id="avatar-upload"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Profile Photo</p>
+                        <p className="text-xs text-slate-500">JPG, PNG, or WebP. Max 2MB.</p>
+                        {uploadingAvatar && <p className="text-xs text-green-500 mt-1">Uploading...</p>}
+                      </div>
+                    </div>
+
+                    {/* Display Name */}
                     <div className="space-y-2">
-                      <Label htmlFor="displayName" className="text-[#5cffb0]">Display Name</Label>
+                      <Label htmlFor="displayName" className="text-green-500">Display Name</Label>
                       <Input
                         id="displayName"
                         type="text"
                         placeholder="e.g., John Smith, Dr. Johnson, TechGuru"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                        className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 placeholder:text-slate-600 focus:border-green-500"
                         maxLength={50}
                       />
-                      <p className="text-xs text-[#B0B0B0]/70">
+                      <p className="text-xs text-slate-500">
                         This name will appear on your payment page. Leave empty to show "this professional".
                       </p>
                     </div>
 
+                    {/* Personal Quote */}
                     <div className="space-y-2">
-                      <Label htmlFor="price" className="text-[#5cffb0]">Base Price (€)</Label>
+                      <Label htmlFor="bioQuote" className="text-green-500">Personal Quote</Label>
+                      <Textarea
+                        id="bioQuote"
+                        placeholder="I receive hundreds of messages every week. FastPass helps me focus on the ones that truly matter..."
+                        value={bioQuote}
+                        onChange={(e) => setBioQuote(e.target.value)}
+                        className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 placeholder:text-slate-600 focus:border-green-500"
+                        maxLength={200}
+                        rows={3}
+                      />
+                      <p className="text-xs text-slate-500">
+                        {bioQuote.length}/200 characters. Shown on your payment page.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="price" className="text-green-500">Base Price (€)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -867,23 +974,23 @@ const Dashboard = () => {
                         max="500"
                         value={price}
                         onChange={(e) => setPrice(Number(e.target.value))}
-                        className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] focus:border-[#5cffb0]"
+                        className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 focus:border-green-500"
                       />
-                      <div className="text-sm text-[#B0B0B0] space-y-1 mt-3">
+                      <div className="text-sm text-slate-400 space-y-1 mt-3">
                         <p>• 24h response: €{(price * 1.5).toFixed(2)} (premium)</p>
                         <p>• 48h response: €{(price * 1.2).toFixed(2)} (standard)</p>
                         <p>• 72h response: €{price.toFixed(2)} (basic)</p>
                       </div>
-                      <div className="bg-[#5cffb0]/10 p-4 rounded-md text-sm border border-[#5cffb0]/30 mt-4">
-                        <p className="text-[#5cffb0]"><strong>Your earnings (75%):</strong> €{(price * 0.75).toFixed(2)} - €{(price * 1.5 * 0.75).toFixed(2)}</p>
-                        <p className="text-[#B0B0B0] mt-1"><strong>Platform commission (25%):</strong> €{(price * 0.25).toFixed(2)} - €{(price * 1.5 * 0.25).toFixed(2)}</p>
+                      <div className="bg-green-500/10 p-4 rounded-md text-sm border border-green-500/30 mt-4">
+                        <p className="text-green-500"><strong>Your earnings (75%):</strong> €{(price * 0.75).toFixed(2)} - €{(price * 1.5 * 0.75).toFixed(2)}</p>
+                        <p className="text-slate-400 mt-1"><strong>Platform commission (25%):</strong> €{(price * 0.25).toFixed(2)} - €{(price * 1.5 * 0.25).toFixed(2)}</p>
                       </div>
                     </div>
 
                     <Button
                       onClick={handleSaveSettings}
                       disabled={loading}
-                      className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                      className="bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
                     >
                       {loading ? 'Saving...' : 'Save Settings'}
                     </Button>
@@ -892,22 +999,22 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="payments">
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Your Payment Link</CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardTitle className="text-green-500 text-xl sm:text-2xl">Your Payment Link</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Share this Link to your Audience for them to reach you exclusively
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="p-4 bg-[#1a1f2e]/50 rounded-md flex items-center justify-between border border-[#5cffb0]/30">
-                      <code className="text-sm text-[#5cffb0] break-all">{generatePaymentLink()}</code>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-md flex items-center justify-between border border-slate-200 dark:border-slate-700">
+                      <code className="text-sm text-green-500 break-all">{generatePaymentLink()}</code>
                       <Button
                         onClick={() => {
                           navigator.clipboard.writeText(generatePaymentLink());
                           toast.success('Link copied to clipboard!');
                         }}
-                        className="ml-3 border border-[#5cffb0] text-[#5cffb0] bg-transparent hover:bg-[#5cffb0]/10"
+                        className="ml-3 border border-green-500 text-green-500 bg-transparent hover:bg-green-500/10"
                       >
                         Copy
                       </Button>
@@ -922,14 +1029,14 @@ const Dashboard = () => {
                     )}
 
                     {pendingFunds > 0 && (
-                      <div className="bg-[#5cffb0]/10 p-4 rounded-md border border-[#5cffb0]/30">
-                        <p className="text-[#5cffb0]">
+                      <div className="bg-green-500/10 p-4 rounded-md border border-green-500/30">
+                        <p className="text-green-500">
                           <strong>💰 €{pendingFunds.toFixed(2)} pending</strong> - Complete Stripe setup
                         </p>
                         <Button
                           onClick={handleStripeOnboarding}
                           size="sm"
-                          className="mt-3 bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold"
+                          className="mt-3 bg-green-500 hover:bg-green-400 text-white font-bold"
                         >
                           Setup Stripe to receive your funds
                         </Button>
@@ -940,10 +1047,10 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="stripe">
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl sm:text-2xl">Stripe Payment Setup</CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardTitle className="text-green-500 text-xl sm:text-2xl">Stripe Payment Setup</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Configure your Stripe account to receive payments
                     </CardDescription>
                   </CardHeader>
@@ -955,26 +1062,26 @@ const Dashboard = () => {
                             ⚠️ Complete Stripe setup to receive 75% of payments immediately
                           </p>
                         </div>
-                        <p className="text-sm text-[#B0B0B0]">
+                        <p className="text-sm text-slate-400">
                           Without Stripe setup, your earnings will be held until you complete the configuration.
                         </p>
                         <Button
                           onClick={handleStripeOnboarding}
                           disabled={loading}
-                          className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                          className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
                         >
                           {loading ? 'Setting up...' : 'Complete Stripe Setup'}
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="bg-[#5cffb0]/10 p-4 rounded-md border border-[#5cffb0]/30">
-                          <p className="text-[#5cffb0]">✅ Stripe account configured successfully!</p>
-                          <p className="text-sm text-[#B0B0B0] mt-1">You can now receive payments immediately.</p>
+                        <div className="bg-green-500/10 p-4 rounded-md border border-green-500/30">
+                          <p className="text-green-500">✅ Stripe account configured successfully!</p>
+                          <p className="text-sm text-slate-400 mt-1">You can now receive payments immediately.</p>
                         </div>
                         <Button
                           onClick={handleStripeOnboarding}
-                          className="border border-[#5cffb0] text-[#5cffb0] bg-transparent hover:bg-[#5cffb0]/10"
+                          className="border border-green-500 text-green-500 bg-transparent hover:bg-green-500/10"
                         >
                           Update Stripe Settings
                         </Button>
@@ -987,15 +1094,15 @@ const Dashboard = () => {
               <TabsContent value="referrals">
                 <div className="space-y-6">
                   {/* Beta Badge Info */}
-                  <Card className="bg-gradient-to-r from-[#5cffb0]/10 to-transparent border border-[#5cffb0]/30">
+                  <Card className="bg-green-500/10 border border-green-500/30">
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#5cffb0]/20 flex items-center justify-center">
-                          <Mail className="h-5 w-5 text-[#5cffb0]" />
+                        <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <Mail className="h-5 w-5 text-green-500" />
                         </div>
                         <div>
-                          <h3 className="text-[#5cffb0] font-semibold">Beta Bonus Program</h3>
-                          <p className="text-sm text-[#B0B0B0]">
+                          <h3 className="text-green-500 font-semibold">Beta Bonus Program</h3>
+                          <p className="text-sm text-slate-400">
                             Invite 3 friends and unlock 85% revenue share (instead of 75%)
                           </p>
                         </div>
@@ -1013,40 +1120,40 @@ const Dashboard = () => {
                   <MyInviteCodes />
 
                   {/* How It Works */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-lg">How It Works</CardTitle>
+                      <CardTitle className="text-green-500 text-lg">How It Works</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex gap-3">
-                        <div className="h-6 w-6 rounded-full bg-[#5cffb0]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[#5cffb0] text-sm font-bold">1</span>
+                        <div className="h-6 w-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-green-500 text-sm font-bold">1</span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">Share your invite codes</p>
-                          <p className="text-sm text-[#B0B0B0]">
+                          <p className="text-slate-900 dark:text-white font-medium">Share your invite codes</p>
+                          <p className="text-sm text-slate-400">
                             Send your 3 unique codes to friends via Twitter, LinkedIn, or email
                           </p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="h-6 w-6 rounded-full bg-[#5cffb0]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[#5cffb0] text-sm font-bold">2</span>
+                        <div className="h-6 w-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-green-500 text-sm font-bold">2</span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">Friends sign up</p>
-                          <p className="text-sm text-[#B0B0B0]">
+                          <p className="text-slate-900 dark:text-white font-medium">Friends sign up</p>
+                          <p className="text-sm text-slate-400">
                             They create an account using your invite code during registration
                           </p>
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <div className="h-6 w-6 rounded-full bg-[#5cffb0]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[#5cffb0] text-sm font-bold">3</span>
+                        <div className="h-6 w-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-green-500 text-sm font-bold">3</span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">Unlock 85% revenue share</p>
-                          <p className="text-sm text-[#B0B0B0]">
+                          <p className="text-slate-900 dark:text-white font-medium">Unlock 85% revenue share</p>
+                          <p className="text-sm text-slate-400">
                             Once all 3 codes are used, your earnings increase from 75% to 85% on every message
                           </p>
                         </div>
@@ -1062,75 +1169,75 @@ const Dashboard = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {loadingAnalytics ? (
                       Array.from({ length: 4 }).map((_, i) => (
-                        <Card key={i} className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20">
+                        <Card key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="animate-pulse">
-                              <div className="h-4 bg-[#5cffb0]/20 rounded w-1/2 mb-2"></div>
-                              <div className="h-8 bg-[#5cffb0]/20 rounded w-3/4"></div>
+                              <div className="h-4 bg-green-500/20 rounded w-1/2 mb-2"></div>
+                              <div className="h-8 bg-green-500/20 rounded w-3/4"></div>
                             </div>
                           </CardContent>
                         </Card>
                       ))
                     ) : analytics ? (
                       <>
-                        <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-[#B0B0B0]">
+                                <p className="text-sm font-medium text-slate-400">
                                   {isAdmin ? 'Platform Revenue (25%)' : 'Total Revenue'}
                                 </p>
-                                <p className="text-2xl font-bold text-[#5cffb0]">
+                                <p className="text-2xl font-bold text-green-500">
                                   €{analytics.totalRevenue.toFixed(2)}
                                 </p>
                               </div>
-                              <Euro className="w-8 h-8 text-[#5cffb0]" />
+                              <Euro className="w-8 h-8 text-green-500" />
                             </div>
                           </CardContent>
                         </Card>
 
-                        <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-[#B0B0B0]">
+                                <p className="text-sm font-medium text-slate-400">
                                   Last {dateRange} Days
                                 </p>
-                                <p className="text-2xl font-bold text-[#5cffb0]">
+                                <p className="text-2xl font-bold text-green-500">
                                   €{analytics.monthlyRevenue.toFixed(2)}
                                 </p>
                               </div>
-                              <Euro className="w-8 h-8 text-[#5cffb0]" />
+                              <Euro className="w-8 h-8 text-green-500" />
                             </div>
                           </CardContent>
                         </Card>
 
-                        <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-[#B0B0B0]">Response Rate</p>
-                                <p className="text-2xl font-bold text-[#5cffb0]">
+                                <p className="text-sm font-medium text-slate-400">Response Rate</p>
+                                <p className="text-2xl font-bold text-green-500">
                                   {analytics.responseRate.toFixed(1)}%
                                 </p>
                               </div>
-                              <CheckCircle className="w-8 h-8 text-[#5cffb0]" />
+                              <CheckCircle className="w-8 h-8 text-green-500" />
                             </div>
                           </CardContent>
                         </Card>
 
-                        <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-[#B0B0B0]">
+                                <p className="text-sm font-medium text-slate-400">
                                   {isAdmin ? 'Active Users' : 'Total Messages'}
                                 </p>
-                                <p className="text-2xl font-bold text-[#5cffb0]">
+                                <p className="text-2xl font-bold text-green-500">
                                   {isAdmin ? analytics.totalUsers : analytics.totalMessages}
                                 </p>
                               </div>
-                              <Mail className="w-8 h-8 text-[#5cffb0]" />
+                              <Mail className="w-8 h-8 text-green-500" />
                             </div>
                           </CardContent>
                         </Card>
@@ -1140,17 +1247,17 @@ const Dashboard = () => {
 
                   {/* Admin Controls */}
                   {isAdmin && (
-                    <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                    <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                       <CardHeader>
-                        <CardTitle className="text-[#5cffb0] text-xl">Admin Controls</CardTitle>
-                        <CardDescription className="text-[#B0B0B0]">
+                        <CardTitle className="text-green-500 text-xl">Admin Controls</CardTitle>
+                        <CardDescription className="text-slate-500 dark:text-slate-400">
                           Platform-wide analytics and filtering options
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="dateRange" className="text-[#5cffb0]">Date Range</Label>
+                            <Label htmlFor="dateRange" className="text-green-500">Date Range</Label>
                             <select
                               id="dateRange"
                               value={dateRange}
@@ -1158,7 +1265,7 @@ const Dashboard = () => {
                                 setDateRange(e.target.value);
                                 loadAnalytics();
                               }}
-                              className="w-full p-2 border border-[#5cffb0]/30 rounded-md bg-[#1a1f2e]/50 text-[#B0B0B0]"
+                              className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400"
                             >
                               <option value="7">Last 7 days</option>
                               <option value="30">Last 30 days</option>
@@ -1168,22 +1275,22 @@ const Dashboard = () => {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="userFilter" className="text-[#5cffb0]">Filter by User Email</Label>
+                            <Label htmlFor="userFilter" className="text-green-500">Filter by User Email</Label>
                             <Input
                               id="userFilter"
                               placeholder="user@example.com"
                               value={userFilter}
                               onChange={(e) => setUserFilter(e.target.value)}
-                              className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0]"
+                              className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400"
                             />
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-[#5cffb0]">Actions</Label>
+                            <Label className="text-green-500">Actions</Label>
                             <Button
                               onClick={loadAnalytics}
                               disabled={loadingAnalytics}
-                              className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold"
+                              className="w-full bg-green-500 hover:bg-green-400 text-white font-bold"
                             >
                               <RefreshCw className={`h-4 w-4 mr-2 ${loadingAnalytics ? 'animate-spin' : ''}`} />
                               Refresh Data
@@ -1197,43 +1304,43 @@ const Dashboard = () => {
                   {/* Performance Metrics */}
                   {analytics && !loadingAnalytics && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                         <CardHeader>
-                          <CardTitle className="text-[#5cffb0] text-xl">Performance Metrics</CardTitle>
+                          <CardTitle className="text-green-500 text-xl">Performance Metrics</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                            <span className="text-sm font-medium text-[#B0B0B0]">
+                          <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span className="text-sm font-medium text-slate-400">
                               {isAdmin ? `Messages (${dateRange} days)` : 'Monthly Messages'}
                             </span>
-                            <span className="font-bold text-[#5cffb0]">{analytics.monthlyMessages}</span>
+                            <span className="font-bold text-green-500">{analytics.monthlyMessages}</span>
                           </div>
-                          <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                            <span className="text-sm font-medium text-[#B0B0B0]">Avg. Transaction Value</span>
-                            <span className="font-bold text-[#5cffb0]">€{analytics.averageTransactionValue.toFixed(2)}</span>
+                          <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span className="text-sm font-medium text-slate-400">Avg. Transaction Value</span>
+                            <span className="font-bold text-green-500">€{analytics.averageTransactionValue.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                            <span className="text-sm font-medium text-[#B0B0B0]">Pending Transactions</span>
+                          <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span className="text-sm font-medium text-slate-400">Pending Transactions</span>
                             <span className="font-bold text-orange-400">{analytics.pendingTransactions}</span>
                           </div>
                           {isAdmin && analytics.refundedTransactions !== undefined && (
-                            <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                              <span className="text-sm font-medium text-[#B0B0B0]">Refunded Transactions</span>
+                            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                              <span className="text-sm font-medium text-slate-400">Refunded Transactions</span>
                               <span className="font-bold text-red-400">{analytics.refundedTransactions}</span>
                             </div>
                           )}
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                         <CardHeader>
-                          <CardTitle className="text-[#5cffb0] text-xl">Quick Actions</CardTitle>
+                          <CardTitle className="text-green-500 text-xl">Quick Actions</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                           <Button
                             onClick={refreshData}
                             disabled={refreshing}
-                            className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                            className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
                           >
                             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                             Refresh All Data
@@ -1243,7 +1350,7 @@ const Dashboard = () => {
                               navigator.clipboard.writeText(generatePaymentLink());
                               toast.success('Link copied!');
                             }}
-                            className="w-full border border-[#5cffb0] text-[#5cffb0] bg-transparent hover:bg-[#5cffb0]/10"
+                            className="w-full border border-green-500 text-green-500 bg-transparent hover:bg-green-500/10"
                           >
                             📋 Copy Payment Link
                           </Button>
@@ -1258,8 +1365,8 @@ const Dashboard = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-[#B0B0B0]/60 text-sm">
-          <p>© 2026 FastPass • Guaranteed Response Platform</p>
+        <footer className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} FastPass</p>
         </footer>
       </div>
     </div>

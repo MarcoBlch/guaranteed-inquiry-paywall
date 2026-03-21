@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AdminDirectoryManager from "@/components/admin/AdminDirectoryManager";
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -40,6 +41,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FastPassLogo } from "@/components/ui/FastPassLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useInvitationRequests } from "@/hooks/useInvitationRequests";
 import {
   Select,
@@ -294,29 +296,29 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-slate-950">
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="p-4 sm:p-6">
+        <header className="border-b border-slate-200 dark:border-slate-800 p-4 sm:p-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               {/* Logo and Title */}
               <div className="flex items-center gap-4">
                 <FastPassLogo size="sm" />
                 <div>
-                  <h1 className="text-[#5cffb0] text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
-                  <p className="text-[#B0B0B0] text-sm sm:text-base">Manage invite system & platform settings</p>
+                  <h1 className="text-green-500 text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Manage invite system & platform settings</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <ThemeToggle />
                 <Button
                   onClick={loadAnalytics}
                   disabled={refreshing}
-                  className="bg-transparent border border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 flex-1 sm:flex-none"
+                  className="bg-transparent border border-green-500 text-green-500 hover:bg-green-500/10 flex-1 sm:flex-none"
                   size="sm"
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
@@ -324,14 +326,14 @@ const AdminDashboard = () => {
                 </Button>
                 <Button
                   onClick={() => navigate('/dashboard')}
-                  className="bg-transparent border border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 flex-1 sm:flex-none"
+                  className="bg-transparent border border-green-500 text-green-500 hover:bg-green-500/10 flex-1 sm:flex-none"
                   size="sm"
                 >
                   Dashboard
                 </Button>
                 <Button
                   onClick={handleLogout}
-                  className="bg-transparent border border-[#5cffb0]/50 text-[#B0B0B0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0] flex-1 sm:flex-none"
+                  className="bg-transparent border border-slate-300 dark:border-green-500/50 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-green-500/10 hover:text-slate-900 dark:hover:text-green-500 flex-1 sm:flex-none"
                   size="sm"
                 >
                   Logout
@@ -348,8 +350,8 @@ const AdminDashboard = () => {
             {/* Loading State */}
             {refreshing && !analytics && (
               <div className="flex items-center justify-center py-20">
-                <RefreshCw className="h-12 w-12 text-[#5cffb0] animate-spin" />
-                <span className="ml-4 text-[#B0B0B0] text-lg">Loading analytics...</span>
+                <RefreshCw className="h-12 w-12 text-green-500 animate-spin" />
+                <span className="ml-4 text-slate-500 dark:text-slate-400 text-lg">Loading analytics...</span>
               </div>
             )}
 
@@ -358,113 +360,113 @@ const AdminDashboard = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Total Codes */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[#B0B0B0]">Total Codes</p>
-                          <p className="text-3xl font-bold text-[#5cffb0] mt-1">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Codes</p>
+                          <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.overview.total_codes}
                           </p>
-                          <p className="text-xs text-[#B0B0B0] mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {analytics.overview.available_codes} available
                           </p>
                         </div>
-                        <Key className="w-10 h-10 text-[#5cffb0]" />
+                        <Key className="w-10 h-10 text-green-500" />
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Redemption Rate */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[#B0B0B0]">Redemption Rate</p>
-                          <p className="text-3xl font-bold text-[#5cffb0] mt-1">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Redemption Rate</p>
+                          <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.overview.redemption_rate}
                           </p>
-                          <p className="text-xs text-[#B0B0B0] mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {analytics.overview.used_codes} used
                           </p>
                         </div>
-                        <TrendingUp className="w-10 h-10 text-[#5cffb0]" />
+                        <TrendingUp className="w-10 h-10 text-green-500" />
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Total Users */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[#B0B0B0]">Total Users</p>
-                          <p className="text-3xl font-bold text-[#5cffb0] mt-1">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Users</p>
+                          <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.user_tiers.total}
                           </p>
-                          <p className="text-xs text-[#B0B0B0] mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {analytics.user_tiers.founder} founders
                           </p>
                         </div>
-                        <Users className="w-10 h-10 text-[#5cffb0]" />
+                        <Users className="w-10 h-10 text-green-500" />
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Recent Activity */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[#B0B0B0]">Last 7 Days</p>
-                          <p className="text-3xl font-bold text-[#5cffb0] mt-1">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Last 7 Days</p>
+                          <p className="text-3xl font-bold text-green-500 mt-1">
                             {analytics.overview.recent_usage_7d}
                           </p>
-                          <p className="text-xs text-[#B0B0B0] mt-1">codes redeemed</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">codes redeemed</p>
                         </div>
-                        <Activity className="w-10 h-10 text-[#5cffb0]" />
+                        <Activity className="w-10 h-10 text-green-500" />
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* User Tiers Breakdown */}
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl flex items-center gap-2">
+                    <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                       <Crown className="h-5 w-5" />
                       User Tiers Distribution
                     </CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Breakdown of users by tier level
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/10">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <Crown className="h-8 w-8 text-[#FFD700]" />
                           <div>
-                            <p className="text-sm font-medium text-[#B0B0B0]">Founder</p>
-                            <p className="text-2xl font-bold text-[#5cffb0]">{analytics.user_tiers.founder}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Founder</p>
+                            <p className="text-2xl font-bold text-green-500">{analytics.user_tiers.founder}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/10">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-3">
-                          <UserPlus className="h-8 w-8 text-[#5cffb0]" />
+                          <UserPlus className="h-8 w-8 text-green-500" />
                           <div>
-                            <p className="text-sm font-medium text-[#B0B0B0]">Early Adopter</p>
-                            <p className="text-2xl font-bold text-[#5cffb0]">{analytics.user_tiers.early_adopter}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Early Adopter</p>
+                            <p className="text-2xl font-bold text-green-500">{analytics.user_tiers.early_adopter}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/10">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-3">
-                          <Users className="h-8 w-8 text-[#B0B0B0]" />
+                          <Users className="h-8 w-8 text-slate-400" />
                           <div>
-                            <p className="text-sm font-medium text-[#B0B0B0]">Standard</p>
-                            <p className="text-2xl font-bold text-[#5cffb0]">{analytics.user_tiers.standard}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Standard</p>
+                            <p className="text-2xl font-bold text-green-500">{analytics.user_tiers.standard}</p>
                           </div>
                         </div>
                       </div>
@@ -475,16 +477,16 @@ const AdminDashboard = () => {
                 {/* Actions Panel */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Generate Codes */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-lg flex items-center gap-2">
+                      <CardTitle className="text-green-500 text-lg flex items-center gap-2">
                         <Key className="h-5 w-5" />
                         Generate Codes
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="codeCount" className="text-[#B0B0B0]">
+                        <Label htmlFor="codeCount" className="text-slate-500 dark:text-slate-400">
                           Number of Founder Codes
                         </Label>
                         <Input
@@ -494,16 +496,16 @@ const AdminDashboard = () => {
                           max="20"
                           value={codeCount}
                           onChange={(e) => setCodeCount(parseInt(e.target.value) || 1)}
-                          className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] focus:border-[#5cffb0]"
+                          className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:border-green-500"
                         />
-                        <p className="text-xs text-[#B0B0B0]/70">
+                        <p className="text-xs text-slate-500">
                           Maximum 20 codes per batch
                         </p>
                       </div>
                       <Button
                         onClick={handleGenerateCodes}
                         disabled={generatingCodes || analytics.by_type.founder.total >= 20}
-                        className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                        className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
                       >
                         {generatingCodes ? (
                           <>
@@ -524,8 +526,8 @@ const AdminDashboard = () => {
                           </p>
                         </div>
                       )}
-                      <div className="bg-[#5cffb0]/10 p-3 rounded-md border border-[#5cffb0]/30">
-                        <p className="text-xs text-[#5cffb0]">
+                      <div className="bg-green-500/10 p-3 rounded-md border border-green-500/30">
+                        <p className="text-xs text-green-500">
                           <strong>Current:</strong> {analytics.by_type.founder.total}/20 founder codes created
                         </p>
                       </div>
@@ -533,20 +535,20 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Invite Mode Toggle */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-lg flex items-center gap-2">
+                      <CardTitle className="text-green-500 text-lg flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5" />
                         Invite-Only Mode
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
+                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-[#B0B0B0] mb-1">
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
                             Registration Status
                           </p>
-                          <p className="text-xs text-[#B0B0B0]/70">
+                          <p className="text-xs text-slate-500">
                             {inviteOnlyMode
                               ? 'Only users with invite codes can register'
                               : 'Public registration is enabled'}
@@ -556,16 +558,16 @@ const AdminDashboard = () => {
                           checked={inviteOnlyMode}
                           onCheckedChange={handleToggleInviteMode}
                           disabled={loading}
-                          className="data-[state=checked]:bg-[#5cffb0]"
+                          className="data-[state=checked]:bg-green-500"
                         />
                       </div>
                       <div className={`p-3 rounded-md border ${
                         inviteOnlyMode
-                          ? 'bg-[#5cffb0]/10 border-[#5cffb0]/30'
+                          ? 'bg-green-500/10 border-green-500/30'
                           : 'bg-orange-500/10 border-orange-500/30'
                       }`}>
                         <p className={`text-xs font-medium flex items-center gap-2 ${
-                          inviteOnlyMode ? 'text-[#5cffb0]' : 'text-orange-400'
+                          inviteOnlyMode ? 'text-green-500' : 'text-orange-400'
                         }`}>
                           {inviteOnlyMode ? (
                             <>
@@ -580,8 +582,8 @@ const AdminDashboard = () => {
                           )}
                         </p>
                       </div>
-                      <div className="bg-[#1a1f2e]/50 p-3 rounded-lg border border-[#5cffb0]/10">
-                        <p className="text-xs text-[#B0B0B0]">
+                      <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           <strong>Kill Switch:</strong> Enable this to restrict platform access to invited users only during beta.
                         </p>
                       </div>
@@ -589,16 +591,16 @@ const AdminDashboard = () => {
                   </Card>
 
                   {/* Grant Admin */}
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-lg flex items-center gap-2">
+                      <CardTitle className="text-green-500 text-lg flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5" />
                         Grant Admin Access
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="adminEmail" className="text-[#B0B0B0]">
+                        <Label htmlFor="adminEmail" className="text-slate-500 dark:text-slate-400">
                           User Email Address
                         </Label>
                         <Input
@@ -607,21 +609,21 @@ const AdminDashboard = () => {
                           placeholder="user@example.com"
                           value={adminEmail}
                           onChange={(e) => setAdminEmail(e.target.value)}
-                          className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] focus:border-[#5cffb0]"
+                          className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:border-green-500"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !grantingAdmin) {
                               handleGrantAdmin();
                             }
                           }}
                         />
-                        <p className="text-xs text-[#B0B0B0]/70">
+                        <p className="text-xs text-slate-500">
                           User must have an existing account
                         </p>
                       </div>
                       <Button
                         onClick={handleGrantAdmin}
                         disabled={grantingAdmin || !adminEmail.trim()}
-                        className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                        className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
                       >
                         {grantingAdmin ? (
                           <>
@@ -645,66 +647,66 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Invitation Requests Panel */}
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl flex items-center gap-2">
+                    <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                       <Mail className="h-5 w-5" />
                       Invitation Requests
                     </CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Send invitation emails to waitlist users
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {invitationLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <RefreshCw className="h-8 w-8 text-[#5cffb0] animate-spin" />
+                        <RefreshCw className="h-8 w-8 text-green-500 animate-spin" />
                       </div>
                     ) : (
                       <div className="space-y-6">
                         {/* Stats Overview */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/20">
+                          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-2">
-                              <Clock className="h-4 w-4 text-[#5cffb0]" />
-                              <span className="text-sm text-[#B0B0B0]">Pending Requests</span>
+                              <Clock className="h-4 w-4 text-green-500" />
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Pending Requests</span>
                             </div>
-                            <p className="text-2xl font-bold text-[#5cffb0]">
+                            <p className="text-2xl font-bold text-green-500">
                               {invitationStats?.pending_count || 0}
                             </p>
                           </div>
-                          <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/20">
+                          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-2">
-                              <Send className="h-4 w-4 text-[#5cffb0]" />
-                              <span className="text-sm text-[#B0B0B0]">Invited This Week</span>
+                              <Send className="h-4 w-4 text-green-500" />
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Invited This Week</span>
                             </div>
-                            <p className="text-2xl font-bold text-[#5cffb0]">
+                            <p className="text-2xl font-bold text-green-500">
                               {invitationStats?.invited_this_week || 0}
                             </p>
                           </div>
-                          <div className="bg-[#1a1f2e]/50 p-4 rounded-lg border border-[#5cffb0]/20">
+                          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="flex items-center gap-2 mb-2">
-                              <CheckCircle className="h-4 w-4 text-[#5cffb0]" />
-                              <span className="text-sm text-[#B0B0B0]">Redemption Rate</span>
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Redemption Rate</span>
                             </div>
-                            <p className="text-2xl font-bold text-[#5cffb0]">
+                            <p className="text-2xl font-bold text-green-500">
                               {invitationStats?.redemption_rate || 0}%
                             </p>
                           </div>
                         </div>
 
                         {/* Send Invitations Section */}
-                        <div className="bg-[#1a1f2e]/50 p-6 rounded-lg border border-[#5cffb0]/20">
+                        <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <Label htmlFor="batchSize" className="text-[#B0B0B0]">
+                              <Label htmlFor="batchSize" className="text-slate-500 dark:text-slate-400">
                                 Batch Size
                               </Label>
                               <Select
                                 value={batchSize.toString()}
                                 onValueChange={(value) => setBatchSize(parseInt(value))}
                               >
-                                <SelectTrigger className="bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] focus:border-[#5cffb0]">
+                                <SelectTrigger className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:border-green-500">
                                   <SelectValue placeholder="Select batch size" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -714,7 +716,7 @@ const AdminDashboard = () => {
                                   <SelectItem value="50">50 invitations</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <p className="text-xs text-[#B0B0B0]/70">
+                              <p className="text-xs text-slate-500">
                                 Number of invitation emails to send from the waitlist (FIFO order)
                               </p>
                             </div>
@@ -722,7 +724,7 @@ const AdminDashboard = () => {
                             <Button
                               onClick={() => setShowConfirmDialog(true)}
                               disabled={sendingInvitations || (invitationStats?.pending_count || 0) === 0}
-                              className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+                              className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
                             >
                               {sendingInvitations ? (
                                 <>
@@ -746,8 +748,8 @@ const AdminDashboard = () => {
                             )}
 
                             {(invitationStats?.pending_count || 0) > 0 && (
-                              <div className="bg-[#5cffb0]/10 p-3 rounded-md border border-[#5cffb0]/30">
-                                <p className="text-xs text-[#5cffb0]">
+                              <div className="bg-green-500/10 p-3 rounded-md border border-green-500/30">
+                                <p className="text-xs text-green-500">
                                   <strong>Ready to send:</strong> {invitationStats?.pending_count} pending requests in queue
                                 </p>
                               </div>
@@ -758,27 +760,27 @@ const AdminDashboard = () => {
                         {/* Recent Invitations Table */}
                         {invitationStats?.recent_invitations && invitationStats.recent_invitations.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-semibold text-[#B0B0B0] mb-3">Recent Invitations</h4>
-                            <div className="overflow-x-auto rounded-lg border border-[#5cffb0]/20">
+                            <h4 className="text-sm font-semibold text-slate-400 mb-3">Recent Invitations</h4>
+                            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                               <Table>
                                 <TableHeader>
-                                  <TableRow className="border-[#5cffb0]/20 hover:bg-[#5cffb0]/5">
-                                    <TableHead className="text-[#5cffb0]">Email</TableHead>
-                                    <TableHead className="text-[#5cffb0]">Invited</TableHead>
-                                    <TableHead className="text-[#5cffb0]">Code</TableHead>
-                                    <TableHead className="text-[#5cffb0]">Status</TableHead>
+                                  <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                                    <TableHead className="text-green-500">Email</TableHead>
+                                    <TableHead className="text-green-500">Invited</TableHead>
+                                    <TableHead className="text-green-500">Code</TableHead>
+                                    <TableHead className="text-green-500">Status</TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                   {invitationStats.recent_invitations.map((invitation, index) => (
-                                    <TableRow key={index} className="border-[#5cffb0]/10 hover:bg-[#5cffb0]/5">
-                                      <TableCell className="text-[#B0B0B0] font-mono text-sm">
+                                    <TableRow key={index} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                                      <TableCell className="text-slate-400 font-mono text-sm">
                                         {invitation.email}
                                       </TableCell>
-                                      <TableCell className="text-[#B0B0B0] text-sm">
+                                      <TableCell className="text-slate-400 text-sm">
                                         {formatDate(invitation.invited_at)}
                                       </TableCell>
-                                      <TableCell className="text-[#5cffb0] font-mono text-sm">
+                                      <TableCell className="text-green-500 font-mono text-sm">
                                         {invitation.code}
                                       </TableCell>
                                       <TableCell>
@@ -808,13 +810,13 @@ const AdminDashboard = () => {
 
                 {/* Confirmation Dialog */}
                 <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                  <AlertDialogContent className="bg-[#1a1f2e] border-[#5cffb0]/30">
+                  <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-[#5cffb0]">
+                      <AlertDialogTitle className="text-green-500">
                         Confirm Invitation Send
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-[#B0B0B0]">
-                        You are about to send <strong className="text-[#5cffb0]">{Math.min(batchSize, invitationStats?.pending_count || 0)} invitation emails</strong> to users in the waitlist.
+                      <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
+                        You are about to send <strong className="text-green-500">{Math.min(batchSize, invitationStats?.pending_count || 0)} invitation emails</strong> to users in the waitlist.
                         <br /><br />
                         Each user will receive:
                         <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
@@ -827,12 +829,12 @@ const AdminDashboard = () => {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-[#1a1f2e] border-[#5cffb0]/30 text-[#B0B0B0] hover:bg-[#1a1f2e]/80">
+                      <AlertDialogCancel className="bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800">
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleSendInvitations}
-                        className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] font-bold"
+                        className="bg-green-500 hover:bg-green-400 text-white font-bold"
                       >
                         <Send className="h-4 w-4 mr-2" />
                         Send Invitations
@@ -843,13 +845,13 @@ const AdminDashboard = () => {
 
                 {/* Top Referrers */}
                 {analytics.top_referrers.length > 0 && (
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-xl flex items-center gap-2">
+                      <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                         <TrendingUp className="h-5 w-5" />
                         Top Referrers
                       </CardTitle>
-                      <CardDescription className="text-[#B0B0B0]">
+                      <CardDescription className="text-slate-500 dark:text-slate-400">
                         Users with the most successful referrals
                       </CardDescription>
                     </CardHeader>
@@ -857,25 +859,25 @@ const AdminDashboard = () => {
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-[#5cffb0]/20 hover:bg-[#5cffb0]/5">
-                              <TableHead className="text-[#5cffb0]">Rank</TableHead>
-                              <TableHead className="text-[#5cffb0]">User</TableHead>
-                              <TableHead className="text-[#5cffb0]">Email</TableHead>
-                              <TableHead className="text-[#5cffb0]">Tier</TableHead>
-                              <TableHead className="text-[#5cffb0]">Referrals</TableHead>
-                              <TableHead className="text-[#5cffb0]">Revenue %</TableHead>
+                            <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                              <TableHead className="text-green-500">Rank</TableHead>
+                              <TableHead className="text-green-500">User</TableHead>
+                              <TableHead className="text-green-500">Email</TableHead>
+                              <TableHead className="text-green-500">Tier</TableHead>
+                              <TableHead className="text-green-500">Referrals</TableHead>
+                              <TableHead className="text-green-500">Revenue %</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {analytics.top_referrers.map((referrer, index) => (
-                              <TableRow key={referrer.email} className="border-[#5cffb0]/10 hover:bg-[#5cffb0]/5">
-                                <TableCell className="text-sm font-bold text-[#5cffb0]">
+                              <TableRow key={referrer.email} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                                <TableCell className="text-sm font-bold text-green-500">
                                   {index + 1}
                                 </TableCell>
-                                <TableCell className="text-sm text-[#B0B0B0]">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {referrer.display_name || 'Anonymous'}
                                 </TableCell>
-                                <TableCell className="text-sm text-[#B0B0B0]">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {referrer.email}
                                 </TableCell>
                                 <TableCell>
@@ -883,16 +885,16 @@ const AdminDashboard = () => {
                                     referrer.tier === 'founder'
                                       ? 'bg-[#FFD700]/20 text-[#FFD700] border-[#FFD700]/50'
                                       : referrer.tier === 'early_adopter'
-                                      ? 'bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50'
-                                      : 'bg-[#B0B0B0]/20 text-[#B0B0B0] border-[#B0B0B0]/50'
+                                      ? 'bg-green-500/20 text-green-500 border-green-500/50'
+                                      : 'bg-slate-500/20 text-slate-400 border-slate-500/50'
                                   }`}>
                                     {referrer.tier}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="text-sm font-medium text-[#5cffb0]">
+                                <TableCell className="text-sm font-medium text-green-500">
                                   {referrer.referral_count}
                                 </TableCell>
-                                <TableCell className="text-sm text-[#B0B0B0]">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {referrer.revenue_percentage}
                                 </TableCell>
                               </TableRow>
@@ -905,54 +907,54 @@ const AdminDashboard = () => {
                 )}
 
                 {/* Recent Codes Table */}
-                <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="text-[#5cffb0] text-xl flex items-center gap-2">
+                    <CardTitle className="text-green-500 text-xl flex items-center gap-2">
                       <Clock className="h-5 w-5" />
                       Recent Invite Codes
                     </CardTitle>
-                    <CardDescription className="text-[#B0B0B0]">
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
                       Last 20 generated invite codes
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {analytics.recent_codes.length === 0 ? (
-                      <p className="text-[#B0B0B0] text-center py-8">No codes generated yet</p>
+                      <p className="text-slate-400 text-center py-8">No codes generated yet</p>
                     ) : (
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-[#5cffb0]/20 hover:bg-[#5cffb0]/5">
-                              <TableHead className="text-[#5cffb0]">Code</TableHead>
-                              <TableHead className="text-[#5cffb0]">Type</TableHead>
-                              <TableHead className="text-[#5cffb0]">Status</TableHead>
-                              <TableHead className="text-[#5cffb0]">Created</TableHead>
-                              <TableHead className="text-[#5cffb0]">Used</TableHead>
+                            <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                              <TableHead className="text-green-500">Code</TableHead>
+                              <TableHead className="text-green-500">Type</TableHead>
+                              <TableHead className="text-green-500">Status</TableHead>
+                              <TableHead className="text-green-500">Created</TableHead>
+                              <TableHead className="text-green-500">Used</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {analytics.recent_codes.map((code) => (
-                              <TableRow key={code.code} className="border-[#5cffb0]/10 hover:bg-[#5cffb0]/5">
-                                <TableCell className="font-mono text-sm text-[#5cffb0]">
+                              <TableRow key={code.code} className="border-slate-200 dark:border-slate-700 hover:bg-green-500/5">
+                                <TableCell className="font-mono text-sm text-green-500">
                                   {code.code}
                                 </TableCell>
                                 <TableCell>
                                   <Badge className={`text-xs border ${
                                     code.code_type === 'founder'
                                       ? 'bg-[#FFD700]/20 text-[#FFD700] border-[#FFD700]/50'
-                                      : 'bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50'
+                                      : 'bg-green-500/20 text-green-500 border-green-500/50'
                                   }`}>
                                     {code.code_type}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
                                   {code.is_used ? (
-                                    <Badge className="bg-[#B0B0B0]/20 text-[#B0B0B0] border-[#B0B0B0]/50 text-xs border">
+                                    <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/50 text-xs border">
                                       <XCircle className="h-3 w-3 mr-1" />
                                       Used
                                     </Badge>
                                   ) : code.is_active ? (
-                                    <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/50 text-xs border">
+                                    <Badge className="bg-green-500/20 text-green-500 border-green-500/50 text-xs border">
                                       <CheckCircle className="h-3 w-3 mr-1" />
                                       Active
                                     </Badge>
@@ -963,10 +965,10 @@ const AdminDashboard = () => {
                                     </Badge>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-sm text-[#B0B0B0]">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {formatDate(code.created_at)}
                                 </TableCell>
-                                <TableCell className="text-sm text-[#B0B0B0]">
+                                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                                   {code.used_at ? formatDate(code.used_at) : '-'}
                                 </TableCell>
                               </TableRow>
@@ -980,42 +982,42 @@ const AdminDashboard = () => {
 
                 {/* Code Type Breakdown */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-lg">Founder Codes</CardTitle>
+                      <CardTitle className="text-green-500 text-lg">Founder Codes</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                        <span className="text-sm font-medium text-[#B0B0B0]">Total Generated</span>
-                        <span className="font-bold text-[#5cffb0]">{analytics.by_type.founder.total}</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Generated</span>
+                        <span className="font-bold text-green-500">{analytics.by_type.founder.total}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                        <span className="text-sm font-medium text-[#B0B0B0]">Used</span>
-                        <span className="font-bold text-[#5cffb0]">{analytics.by_type.founder.used}</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Used</span>
+                        <span className="font-bold text-green-500">{analytics.by_type.founder.used}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                        <span className="text-sm font-medium text-[#B0B0B0]">Available</span>
-                        <span className="font-bold text-[#5cffb0]">{analytics.by_type.founder.available}</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Available</span>
+                        <span className="font-bold text-green-500">{analytics.by_type.founder.available}</span>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <CardHeader>
-                      <CardTitle className="text-[#5cffb0] text-lg">Referral Codes</CardTitle>
+                      <CardTitle className="text-green-500 text-lg">Referral Codes</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                        <span className="text-sm font-medium text-[#B0B0B0]">Total Generated</span>
-                        <span className="font-bold text-[#5cffb0]">{analytics.by_type.referral.total}</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Generated</span>
+                        <span className="font-bold text-green-500">{analytics.by_type.referral.total}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                        <span className="text-sm font-medium text-[#B0B0B0]">Used</span>
-                        <span className="font-bold text-[#5cffb0]">{analytics.by_type.referral.used}</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Used</span>
+                        <span className="font-bold text-green-500">{analytics.by_type.referral.used}</span>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-[#1a1f2e]/50 rounded-lg border border-[#5cffb0]/10">
-                        <span className="text-sm font-medium text-[#B0B0B0]">Available</span>
-                        <span className="font-bold text-[#5cffb0]">{analytics.by_type.referral.available}</span>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Available</span>
+                        <span className="font-bold text-green-500">{analytics.by_type.referral.available}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -1025,8 +1027,13 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Directory Management */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-8">
+          <AdminDirectoryManager />
+        </div>
+
         {/* Footer */}
-        <footer className="text-center py-6 text-[#B0B0B0]/60 text-sm">
+        <footer className="text-center py-6 text-slate-500 text-sm">
           <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>

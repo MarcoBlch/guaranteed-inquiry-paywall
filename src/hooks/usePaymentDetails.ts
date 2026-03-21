@@ -3,6 +3,12 @@ import { useState, useEffect } from 'react';
 
 interface PaymentDetails {
   userName: string;
+  avatarUrl: string | null;
+  bioQuote: string | null;
+  avgRating: number | null;
+  totalRatings: number;
+  responseRate: number | null;
+  avgResponseHours: number | null;
   price: number;
   dailyLimit: number;
   messagesReceivedToday: number;
@@ -60,6 +66,12 @@ export const usePaymentDetails = (userId: string | undefined) => {
         setDetails({
           price: profile.price,
           userName: profile.userName,
+          avatarUrl: profile.avatarUrl ?? null,
+          bioQuote: profile.bioQuote ?? null,
+          avgRating: profile.avgRating ?? null,
+          totalRatings: profile.totalRatings ?? 0,
+          responseRate: profile.responseRate ?? null,
+          avgResponseHours: profile.avgResponseHours ?? null,
           dailyLimit: profile.dailyLimit ?? 5,
           messagesReceivedToday: profile.messagesReceivedToday ?? 0,
           isLimitReached: profile.isLimitReached ?? false,

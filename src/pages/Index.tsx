@@ -1,14 +1,23 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 import { useSEO } from '@/hooks/useSEO';
 import { InvitationRequestModal } from "@/components/invite/InvitationRequestModal";
 import { analytics } from "@/lib/analytics";
+import PageNav from '@/components/layout/PageNav';
+import PageFooter from '@/components/layout/PageFooter';
+
+/* ─── Tension Strip items (duplicated for seamless loop) ─── */
+const tensionItems = [
+  '91% of cold emails ignored',
+  '4.2s avg. email attention',
+  '$5 changes everything',
+  '75% goes to you',
+  '100% refund if no reply',
+];
 
 const PaywallPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,7 +26,6 @@ const PaywallPage = () => {
   const [inviteOnlyMode, setInviteOnlyMode] = useState<boolean | null>(null);
   const navigate = useNavigate();
 
-  // Track page view for analytics
   usePageViewTracking('/');
 
   useSEO({
@@ -43,37 +51,6 @@ const PaywallPage = () => {
         url: 'https://fastpass.email',
         description: 'Get paid to answer messages. Senders pay upfront for a guaranteed reply or a full refund.',
       },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'What exactly is a FastPass and why should I register?',
-            acceptedAnswer: { '@type': 'Answer', text: 'A FastPass lets your audience skip the line to reach you directly. They buy a pass, send you a message, and get a guaranteed reply within 24 hours. It is how creators, founders and experts stay available, without giving away their time.' },
-          },
-          {
-            '@type': 'Question',
-            name: 'How do I create my own FastPass link?',
-            acceptedAnswer: { '@type': 'Answer', text: 'It takes just a few minutes to become a member. Sign up, customize your profile, set your pricing per response, and publish your unique FastPass link. You can then share it on your website, LinkedIn, X (Twitter), Instagram bio, or anywhere else people try to reach you.' },
-          },
-          {
-            '@type': 'Question',
-            name: 'Can I control how much people pay and how fast I need to answer?',
-            acceptedAnswer: { '@type': 'Answer', text: 'Absolutely. You choose your response price and your timeframe (for example: 24h, 72h, 7 days). This gives you full control: charge more for urgent questions, less for general inquiries.' },
-          },
-          {
-            '@type': 'Question',
-            name: 'What happens once someone uses my FastPass link to contact me?',
-            acceptedAnswer: { '@type': 'Answer', text: "You'll get a clear notification. The sender has already paid, so you know they are serious. You then reply directly through your dashboard or email, and once the response is delivered, your payout (minus platform fees) is automatically processed." },
-          },
-          {
-            '@type': 'Question',
-            name: "What happens if I don't answer or my answer isn't accepted?",
-            acceptedAnswer: { '@type': 'Answer', text: "If you don't reply within the timeframe you set, the sender is refunded and no payout is made. FastPass has a fair-use policy: most members give clear, professional answers and never face issues." },
-          },
-        ],
-      },
     ],
   });
 
@@ -83,7 +60,6 @@ const PaywallPage = () => {
       setIsAuthenticated(!!user);
       setAuthChecked(true);
     };
-
     checkAuth();
   }, []);
 
@@ -94,7 +70,7 @@ const PaywallPage = () => {
         setInviteOnlyMode(data?.settings?.invite_only_mode?.enabled ?? true);
       } catch (error) {
         console.error('Error checking invite mode:', error);
-        setInviteOnlyMode(true); // Default to true for safety
+        setInviteOnlyMode(true);
       }
     };
     checkInviteMode();
@@ -110,269 +86,455 @@ const PaywallPage = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
-      
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="p-4 sm:p-6 text-center">
-          <div className="flex flex-col items-center">
-            <FastPassLogo size="xl" />
-            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-16 sm:-mt-20">TIME IS MONEY</p>
-          </div>
-        </header>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950">
+      {/* ── Nav ── */}
+      <PageNav
+        links={[
+          { label: 'How it works', href: '#how' },
+          { label: 'Pricing', href: '#pricing' },
+          { label: 'Directory', href: '/directory' },
+          { label: 'Log in', href: '/auth' },
+        ]}
+        showCTA={authChecked && !isAuthenticated}
+        ctaLabel="Get your invitation"
+        onCTAClick={handleCTAClick}
+      />
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 text-center">
-          {/* Hero Text */}
-          <div className="mb-8 sm:mb-12 max-w-2xl w-full">
-            {/* H1: Main Headline - Neon Vert, Bold, text-5xl */}
-            <h1 className="text-[#5cffb0] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              CREATE PRIORITY ACCESS<br />TO YOUR INBOX
-            </h1>
-            {/* Body Text (Primary) - Light Gray, Regular, text-base/text-lg */}
-            <p className="text-[#B0B0B0] text-base sm:text-lg md:text-xl font-normal mb-6 sm:mb-8 leading-relaxed px-2">
-              The best pay-to-reach service
-            </p>
-            {/* CTA Button below hero text - Only show for non-authenticated users */}
-            {authChecked && !isAuthenticated && (
-              <div className="flex justify-center">
-                <Button
-                  className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_25px_rgba(92,255,176,0.5)] hover:scale-[1.02]"
-                  onClick={handleCTAClick}
-                >
-                  Get your invitation
-                </Button>
-              </div>
-            )}
-          </div>
+      {/* ══════════════════════════════════════════════════════
+          HERO
+         ══════════════════════════════════════════════════════ */}
+      <section className="px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-20 text-center max-w-3xl mx-auto">
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-slate-900 dark:text-slate-100 leading-[1.1] mb-6">
+          Everyone wants your attention.<br />Make them prove it.
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-lg sm:text-xl max-w-xl mx-auto mb-8 leading-relaxed">
+          FastPass is a pay-to-reach platform for creators, founders and professionals. Senders pay upfront for a guaranteed response — or they get a full refund.
+        </p>
 
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-4xl mb-8 sm:mb-12">
-            <Card className="bg-transparent backdrop-blur-sm border border-[#5cffb0] text-white shadow-[0_0_15px_rgba(92,255,176,0.3)]">
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center text-xl sm:text-2xl">
-                  💰
-                </div>
-                {/* H3: Feature/Card Title - Neon Vert, Semibold, text-xl */}
-                <h3 className="font-semibold mb-2 text-lg sm:text-xl text-[#5cffb0]">Set Your Price</h3>
-                {/* Body Text (Primary) - Light Gray, Regular, text-base */}
-                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Decide how much your time is worth and choose your response timeframe.</p>
-              </CardContent>
-            </Card>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+          {authChecked && !isAuthenticated && (
+            <Button
+              className="bg-green-500 hover:bg-green-400 text-white font-semibold py-3 px-8 text-base rounded-md transition-colors"
+              onClick={handleCTAClick}
+            >
+              Get your invitation&nbsp;&rarr;
+            </Button>
+          )}
+          {authChecked && isAuthenticated && (
+            <Button
+              className="bg-green-500 hover:bg-green-400 text-white font-semibold py-3 px-8 text-base rounded-md transition-colors"
+              onClick={() => navigate('/dashboard')}
+            >
+              Go to Dashboard
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-sm"
+            onClick={() => document.querySelector('#demo')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            See the sender experience
+          </Button>
+        </div>
 
-            <Card className="bg-transparent backdrop-blur-sm border border-[#5cffb0] text-white shadow-[0_0_15px_rgba(92,255,176,0.3)]">
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center text-xl sm:text-2xl">
-                  ✉️
-                </div>
-                {/* H3: Feature/Card Title - Neon Vert, Semibold, text-xl */}
-                <h3 className="font-semibold mb-2 text-lg sm:text-xl text-[#5cffb0]">Share Your Link</h3>
-                {/* Body Text (Primary) - Light Gray, Regular, text-base */}
-                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Promote your unique FastPass link.</p>
-              </CardContent>
-            </Card>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          Stripe-secured&nbsp;&middot;&nbsp;USD, EUR, GBP&nbsp;&middot;&nbsp;2 min setup&nbsp;&middot;&nbsp;Free to create
+        </p>
+      </section>
 
-            <Card className="bg-transparent backdrop-blur-sm border border-[#5cffb0] text-white sm:col-span-2 lg:col-span-1 shadow-[0_0_15px_rgba(92,255,176,0.3)]">
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center text-xl sm:text-2xl">
-                  ⚡
-                </div>
-                {/* H3: Feature/Card Title - Neon Vert, Semibold, text-xl */}
-                <h3 className="font-semibold mb-2 text-lg sm:text-xl text-[#5cffb0]">Answer & Get Paid</h3>
-                {/* Body Text (Primary) - Light Gray, Regular, text-base */}
-                <p className="text-[#B0B0B0] text-sm sm:text-base font-normal leading-relaxed">Reply fast and automatically earn 75%.</p>
-              </CardContent>
-            </Card>
-          </div>
+      {/* ══════════════════════════════════════════════════════
+          TENSION STRIP
+         ══════════════════════════════════════════════════════ */}
+      <div className="border-y border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 overflow-hidden py-3">
+        <div className="flex animate-scroll whitespace-nowrap">
+          {[...tensionItems, ...tensionItems].map((item, i) => (
+            <span
+              key={i}
+              className="font-mono text-xs text-slate-500 dark:text-slate-400 mx-6 sm:mx-10 shrink-0"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
 
-          {/* Brand Messaging Section */}
-          <div className="w-full max-w-3xl mx-4 mb-12 sm:mb-16 space-y-8">
-            {/* H2: Section Title */}
-            <h2 className="text-[#5cffb0] text-2xl sm:text-3xl font-semibold text-center mb-6">
-              Keep your inbox exclusive and rewarding
-            </h2>
+      {/* ══════════════════════════════════════════════════════
+          PROBLEM – "Your inbox is broken"
+         ══════════════════════════════════════════════════════ */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-12">
+            Your inbox is broken
+          </h2>
 
-            {/* Body paragraphs */}
-            <p className="text-[#B0B0B0] text-base sm:text-lg font-normal leading-relaxed text-center px-4">
-              No spam, no wasted time. With FastPass, you decide who gets priority access to your inbox and you get paid for your attention. Value your time while respecting your audience, when they pay you commit to delivering a clear and timely answer. It is a smarter way to monetize your expertise and guarantee real engagement.
-            </p>
-
-            {/* H2: Second Section Title */}
-            <h2 className="text-[#5cffb0] text-2xl sm:text-3xl font-semibold text-center mt-8 mb-4">
-              Keep the link with your audience
-            </h2>
-
-            <p className="text-[#B0B0B0] text-base sm:text-lg font-normal leading-relaxed text-center px-4">
-              FastPass lets you stay close to your community while protecting your time. Engage with intention and reward meaningful interactions. Join a growing movement of creators, founders and professionals who value their attention and make every connection count.
-            </p>
-          </div>
-
-          {/* CTA Section */}
-          <Card className="w-full max-w-md mx-4 bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/30 shadow-[0_0_20px_rgba(92,255,176,0.2)] mb-12 sm:mb-16">
-            <CardContent className="p-6 sm:p-8">
-              {isAuthenticated ? (
-                <div className="space-y-4">
-                  {/* H2: Section Title - Neon Vert, Semibold, text-2xl */}
-                  <h2 className="text-2xl font-semibold text-[#5cffb0] mb-4">Welcome back!</h2>
-                  <Button
-                    className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-colors duration-300"
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    Go to Dashboard
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* CTA Subtitle - Use appropriate color for dark background */}
-                  <h2 className="text-2xl font-semibold text-[#5cffb0] mb-2">Ready to get started?</h2>
-                  {/* Body Text (Primary) - Light Gray, Regular, text-lg */}
-                  <p className="text-[#B0B0B0] text-lg font-normal mb-6 leading-relaxed">Join professionals who are monetizing their time and expertise</p>
-                  <Button
-                    className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-4 px-8 text-lg rounded-xl transition-colors duration-300"
-                    onClick={handleCTAClick}
-                  >
-                    Start Earning Today
-                  </Button>
-                  <p className="text-xs text-[#B0B0B0]/80 text-center">Free to join • No setup fees • 75% revenue share</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* FAQ Section */}
-          <div className="w-full max-w-4xl mx-4 mb-12 sm:mb-16">
-            {/* FAQ Title */}
-            <h2 className="text-[#5cffb0] text-3xl sm:text-4xl font-semibold text-center mb-10 sm:mb-12">
-              FAQ
-            </h2>
-
-            {/* FAQ Cards */}
-            <div className="space-y-6">
-              {/* Q1 */}
-              <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="mb-4">
-                    <h3 className="text-[#5cffb0] text-lg sm:text-xl font-semibold mb-3">
-                      ❓ Q1: What exactly is a FastPass and why should I register?
-                    </h3>
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
-                        A FastPass lets your audience skip the line to reach you directly. They buy a pass, send you a message, and get a guaranteed reply within 24 hours. It is how creators, founders and experts stay available, without giving away their time.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Q2 */}
-              <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="mb-4">
-                    <h3 className="text-[#5cffb0] text-lg sm:text-xl font-semibold mb-3">
-                      ❓ Q2: How do I create my own FastPass link?
-                    </h3>
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
-                        It takes just a few minutes to become a member. Sign up, customize your profile, set your pricing per response (you can even offer different tiers for standard vs. urgent replies), and publish your unique FastPass link. You can then share it on your website, LinkedIn, X (Twitter), Instagram bio, or anywhere else people try to reach you.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Q3 */}
-              <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="mb-4">
-                    <h3 className="text-[#5cffb0] text-lg sm:text-xl font-semibold mb-3">
-                      ❓ Q3: Can I control how much people pay and how fast I need to answer?
-                    </h3>
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
-                        Absolutely. You choose your response price and your timeframe (for example: 24h, 72h, 7 days). This gives you full control: charge more for urgent questions, less for general inquiries or even offer free slots if you wish.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Q4 */}
-              <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="mb-4">
-                    <h3 className="text-[#5cffb0] text-lg sm:text-xl font-semibold mb-3">
-                      ❓ Q4: What happens once someone uses my FastPass link to contact me?
-                    </h3>
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
-                        You'll get a clear notification. The sender has already paid, so you know they are serious. You then reply directly through your dashboard or email, and once the response is delivered, your payout (minus platform fees) is automatically processed.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Q5 */}
-              <Card className="bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_15px_rgba(92,255,176,0.15)]">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="mb-4">
-                    <h3 className="text-[#5cffb0] text-lg sm:text-xl font-semibold mb-3">
-                      ❓ Q5: What happens if I don't answer or my answer isn't accepted?
-                    </h3>
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#5cffb0] text-xl flex-shrink-0">💡</span>
-                      <p className="text-[#B0B0B0] text-base font-normal leading-relaxed">
-                        If you don't reply within the timeframe you set, the sender is refunded and no payout is made. If your reply is not satisfying, the sender can protest using the star-grade system or escalate to our support team. To protect both sides, if your grade is consistently too low, we may temporarily suspend your service. FastPass has a fair-use policy: most members give clear, professional answers and never face issues.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Card 1 */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <span className="font-mono text-3xl font-bold text-red-500">347</span>
+              <p className="text-slate-900 dark:text-slate-100 font-semibold mt-2">Recruiter emails per month</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">0 worth your time</p>
+            </div>
+            {/* Card 2 */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <span className="font-mono text-3xl font-bold text-red-500">23</span>
+              <p className="text-slate-900 dark:text-slate-100 font-semibold mt-2">"Quick question" DMs</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Still unanswered</p>
+            </div>
+            {/* Card 3 */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <span className="font-mono text-3xl font-bold text-green-500">1</span>
+              <p className="text-slate-900 dark:text-slate-100 font-semibold mt-2">Genuine message</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Buried under everything else</p>
+            </div>
+            {/* Punch card */}
+            <div className="p-6 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30">
+              <p className="font-mono text-sm text-green-600 dark:text-green-400 font-semibold">
+                A $5 price tag separates signal from noise.
+              </p>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Footer */}
-        <footer className="text-center py-8 text-white/60 text-sm border-t border-[#5cffb0]/20">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
-            <a
-              href="/privacy"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <span className="hidden sm:inline text-white/40">•</span>
-            <a
-              href="/terms"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
-            >
-              Terms & Conditions
-            </a>
-            <span className="hidden sm:inline text-white/40">•</span>
-            <a
-              href="/cookie-settings"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
-            >
-              Cookie Settings
-            </a>
-            <span className="hidden sm:inline text-white/40">•</span>
-            <a
-              href="mailto:support@fastpass.email"
-              className="text-[#5cffb0] hover:text-[#4de89d] hover:underline transition-colors"
-            >
-              Contact Us
-            </a>
+      {/* ══════════════════════════════════════════════════════
+          HOW IT WORKS
+         ══════════════════════════════════════════════════════ */}
+      <section id="how" className="scroll-mt-16 px-4 sm:px-6 py-16 sm:py-20 border-t border-slate-100 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-12">
+            How it works
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+            {/* Step 01 */}
+            <div>
+              <span className="font-mono text-sm text-green-500 font-semibold">01</span>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-2 mb-2">
+                Set your price and deadline
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">
+                Choose between $1–$100 per response and set a reply window of 24–72 hours. You keep 75% of every payment.
+              </p>
+              <span className="inline-block font-mono text-xs bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 px-2 py-1 rounded">
+                $10&nbsp;&middot;&nbsp;24h&nbsp;&middot;&nbsp;$7.50 for you
+              </span>
+            </div>
+            {/* Step 02 */}
+            <div>
+              <span className="font-mono text-sm text-green-500 font-semibold">02</span>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-2 mb-2">
+                Share your FastPass link
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">
+                Add it to your bio, email signature, website — anywhere people try to reach you.
+              </p>
+              <span className="inline-block font-mono text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded">
+                fastpass.email/you
+              </span>
+            </div>
+            {/* Step 03 */}
+            <div>
+              <span className="font-mono text-sm text-green-500 font-semibold">03</span>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-2 mb-2">
+                Respond and earn. Or don't.
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">
+                Reply within your window and get paid automatically. Miss the deadline? The sender is refunded. No penalty.
+              </p>
+              <span className="inline-block font-mono text-xs bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 px-2 py-1 rounded">
+                75% payout&nbsp;&middot;&nbsp;automatic
+              </span>
+            </div>
           </div>
-          <p>© 2026 FastPass • Guaranteed Response Platform</p>
-        </footer>
-      </div>
+        </div>
+      </section>
 
-      {/* Invitation Request Modal - Only show when invite_only_mode is enabled */}
+      {/* ══════════════════════════════════════════════════════
+          BOTH SIDES – "What they see. What you see."
+         ══════════════════════════════════════════════════════ */}
+      <section id="demo" className="scroll-mt-16 px-4 sm:px-6 py-16 sm:py-20 bg-slate-50 dark:bg-slate-900/50">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-4">
+            What they see. What you see.
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-center mb-12 max-w-lg mx-auto">
+            The sender gets a clean pay page. You get a dashboard that pays you.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* ── Sender side ── */}
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
+              <p className="font-mono text-xs text-slate-400 dark:text-slate-500 mb-4 uppercase tracking-wider">Sender view</p>
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Sarah Reynolds</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <span className="text-yellow-500">&#9733;&#9733;&#9733;&#9733;&#9734;</span>&nbsp;4.8
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-5">
+                {[
+                  { time: '24h', price: '$150' },
+                  { time: '48h', price: '$120' },
+                  { time: '72h', price: '$100' },
+                ].map((tier) => (
+                  <div
+                    key={tier.time}
+                    className="flex items-center justify-between px-3 py-2 rounded border border-slate-100 dark:border-slate-800 text-sm"
+                  >
+                    <span className="text-slate-600 dark:text-slate-300 font-mono">{tier.time}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{tier.price}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-green-500 text-white text-center py-2.5 rounded-md text-sm font-semibold">
+                Pay $120 &amp; Send&nbsp;&rarr;
+              </div>
+            </div>
+
+            {/* ── Receiver side ── */}
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6">
+              <p className="font-mono text-xs text-slate-400 dark:text-slate-500 mb-4 uppercase tracking-wider">Your dashboard</p>
+
+              <div className="mb-5">
+                <p className="text-xs text-slate-400 dark:text-slate-500">Total earnings</p>
+                <p className="font-mono text-2xl font-bold text-green-500">$1,247.50</p>
+              </div>
+
+              <div className="space-y-2">
+                {[
+                  { from: 'Alex M.', subject: 'Partnership opportunity', amount: '$25', timeLeft: '18h left' },
+                  { from: 'Jordan K.', subject: 'Technical question', amount: '$10', timeLeft: '6h left' },
+                  { from: 'Taylor S.', subject: 'Hiring inquiry', amount: '$50', timeLeft: '42h left' },
+                ].map((msg) => (
+                  <div
+                    key={msg.from}
+                    className="flex items-center justify-between px-3 py-2 rounded border border-slate-100 dark:border-slate-800 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-slate-900 dark:text-slate-100 font-medium truncate">{msg.from}</p>
+                      <p className="text-slate-400 dark:text-slate-500 text-xs truncate">{msg.subject}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="font-mono text-green-500 font-semibold text-sm">{msg.amount}</p>
+                      <p className="text-slate-400 dark:text-slate-500 text-xs">{msg.timeLeft}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          RATING SYSTEM
+         ══════════════════════════════════════════════════════ */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20 border-t border-slate-100 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-4">
+            Every response gets rated.
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-center mb-12 max-w-lg mx-auto">
+            Transparency builds trust. Senders see your track record before they pay.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="text-center p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <p className="font-mono text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">&#9733; 4.8</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Public rating</p>
+            </div>
+            <div className="text-center p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <p className="font-mono text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">97%</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Response rate</p>
+            </div>
+            <div className="text-center p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <p className="font-mono text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">4.2h</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Avg. response time</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          REFUND MECHANIC
+         ══════════════════════════════════════════════════════ */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20 bg-slate-50 dark:bg-slate-900/50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-4">
+            Nobody risks anything.
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-center mb-12 max-w-lg mx-auto">
+            The escrow model protects both sides. Money moves only when value is delivered.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* If you respond */}
+            <div className="p-6 rounded-lg border border-green-200 dark:border-green-900 bg-white dark:bg-slate-950">
+              <p className="font-mono text-xs text-green-500 uppercase tracking-wider mb-4">If you respond</p>
+              <div className="space-y-3 text-sm">
+                <p className="text-slate-600 dark:text-slate-300">
+                  Sender pays <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">$20</span>
+                </p>
+                <p className="text-slate-400 dark:text-slate-500">&darr;</p>
+                <p className="text-slate-600 dark:text-slate-300">
+                  You reply within deadline
+                </p>
+                <p className="text-slate-400 dark:text-slate-500">&darr;</p>
+                <p className="text-slate-600 dark:text-slate-300">
+                  You receive <span className="font-mono font-semibold text-green-500">$15</span> &middot; Platform keeps <span className="font-mono text-slate-500">$5</span>
+                </p>
+              </div>
+            </div>
+
+            {/* If you don't */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+              <p className="font-mono text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">If you don't</p>
+              <div className="space-y-3 text-sm">
+                <p className="text-slate-600 dark:text-slate-300">
+                  Sender pays <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">$20</span>
+                </p>
+                <p className="text-slate-400 dark:text-slate-500">&darr;</p>
+                <p className="text-slate-600 dark:text-slate-300">
+                  Deadline expires
+                </p>
+                <p className="text-slate-400 dark:text-slate-500">&darr;</p>
+                <p className="text-slate-600 dark:text-slate-300">
+                  Sender refunded <span className="font-mono font-semibold text-green-500">$20</span> &middot; Automatic
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          WHO IT'S FOR – Personas
+         ══════════════════════════════════════════════════════ */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20 border-t border-slate-100 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-12">
+            Who it's for
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Developer */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <p className="font-mono text-xs text-green-500 font-semibold mb-3">Developer</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                347 recruiter emails per month. Zero worth your time — until they put $10 behind it.
+              </p>
+              <div className="space-y-1 text-xs font-mono text-slate-600 dark:text-slate-300">
+                <p>$10&nbsp;&middot;&nbsp;24h deadline</p>
+                <p className="text-green-500">Avg. $187/mo earned</p>
+              </div>
+            </div>
+
+            {/* Creator */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <p className="font-mono text-xs text-green-500 font-semibold mb-3">Creator</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                2,400 DMs, 90% "collab?" — a $5 filter shows who's serious.
+              </p>
+              <div className="space-y-1 text-xs font-mono text-slate-600 dark:text-slate-300">
+                <p>$5&nbsp;&middot;&nbsp;48h deadline</p>
+                <p className="text-green-500">Avg. $340/mo earned</p>
+              </div>
+            </div>
+
+            {/* Founder */}
+            <div className="p-6 rounded-lg border border-slate-200 dark:border-slate-800">
+              <p className="font-mono text-xs text-green-500 font-semibold mb-3">Founder</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                12 "pick your brain" requests per week. Charge &pound;25 and turn noise into income.
+              </p>
+              <div className="space-y-1 text-xs font-mono text-slate-600 dark:text-slate-300">
+                <p>&pound;25&nbsp;&middot;&nbsp;72h deadline</p>
+                <p className="text-green-500">Avg. &pound;420/mo earned</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          PRICING
+         ══════════════════════════════════════════════════════ */}
+      <section id="pricing" className="scroll-mt-16 px-4 sm:px-6 py-16 sm:py-20 bg-slate-50 dark:bg-slate-900/50">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-4xl text-slate-900 dark:text-slate-100 text-center mb-12">
+            Pricing
+          </h2>
+
+          <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+            {[
+              { label: 'Create your FastPass', value: '$0', highlight: true },
+              { label: 'Receive & respond', value: '$0', highlight: true },
+              { label: 'FastPass commission', value: '25% per payment', highlight: false },
+              { label: 'Stripe processing', value: 'Standard Stripe fees', highlight: false },
+              { label: 'Currencies supported', value: 'USD, EUR, GBP', highlight: false },
+              { label: 'No-response refund', value: 'Automatic · 100%', highlight: true },
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-950"
+              >
+                <span className="text-sm text-slate-600 dark:text-slate-300">{row.label}</span>
+                <span className={`text-sm font-mono font-semibold ${row.highlight ? 'text-green-500' : 'text-slate-900 dark:text-slate-100'}`}>
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          FINAL CTA
+         ══════════════════════════════════════════════════════ */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20 border-t border-slate-100 dark:border-slate-800">
+        <div className="max-w-md mx-auto text-center">
+          {isAuthenticated ? (
+            <>
+              <h2 className="font-display text-2xl sm:text-3xl text-slate-900 dark:text-slate-100 mb-4">Welcome back!</h2>
+              <Button
+                className="w-full bg-green-500 hover:bg-green-400 text-white font-semibold py-3 text-base rounded-md transition-colors"
+                onClick={() => navigate('/dashboard')}
+              >
+                Go to Dashboard
+              </Button>
+            </>
+          ) : (
+            <>
+              <h2 className="font-display text-2xl sm:text-3xl text-slate-900 dark:text-slate-100 mb-3">
+                Stop ignoring everyone.<br />Start filtering.
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-base mb-6">
+                Create your FastPass in 2 minutes. Free forever — you earn when people pay.
+              </p>
+              <Button
+                className="w-full bg-green-500 hover:bg-green-400 text-white font-semibold py-3 text-base rounded-md transition-colors"
+                onClick={handleCTAClick}
+              >
+                Get your invitation&nbsp;&rarr;
+              </Button>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
+                Free to join&nbsp;&middot;&nbsp;No setup fees&nbsp;&middot;&nbsp;75% revenue share
+              </p>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <PageFooter />
+
+      {/* ── Invitation Request Modal ── */}
       {inviteOnlyMode && (
         <InvitationRequestModal
           open={invitationModalOpen}
@@ -384,4 +546,3 @@ const PaywallPage = () => {
 };
 
 export default PaywallPage;
-

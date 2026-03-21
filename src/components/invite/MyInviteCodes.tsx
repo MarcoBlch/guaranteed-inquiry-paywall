@@ -96,9 +96,9 @@ Sign up here: ${getInviteUrl(code)}`;
 
   if (loading) {
     return (
-      <Card className="bg-[#1a1f2e]/95 border-[#5cffb0]/20">
+      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <CardContent className="py-8 text-center">
-          <p className="text-[#B0B0B0]">Loading your invite codes...</p>
+          <p className="text-slate-500 dark:text-slate-400">Loading your invite codes...</p>
         </CardContent>
       </Card>
     );
@@ -106,31 +106,31 @@ Sign up here: ${getInviteUrl(code)}`;
 
   if (codes.length === 0) {
     return (
-      <Card className="bg-[#1a1f2e]/95 border-[#5cffb0]/20">
+      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <CardContent className="py-8 text-center">
-          <Gift className="h-12 w-12 text-[#5cffb0] mx-auto mb-4" />
-          <p className="text-[#B0B0B0]">You'll receive invite codes after completing your profile setup.</p>
+          <Gift className="h-12 w-12 text-green-500 mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">You'll receive invite codes after completing your profile setup.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-[#1a1f2e]/95 border-[#5cffb0]/20">
+    <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-[#5cffb0] flex items-center gap-2">
+            <CardTitle className="text-green-500 flex items-center gap-2">
               <Users className="h-5 w-5" />
               Your Invite Codes
             </CardTitle>
-            <CardDescription className="text-[#B0B0B0]">
+            <CardDescription className="text-slate-500 dark:text-slate-400">
               Invite friends and earn 85% revenue share when 3 join!
             </CardDescription>
           </div>
           <Badge
             variant="outline"
-            className={usedCount >= 3 ? 'border-green-500 text-green-500' : 'border-[#5cffb0] text-[#5cffb0]'}
+            className={usedCount >= 3 ? 'border-green-500 text-green-500' : 'border-green-500 text-green-500'}
           >
             {usedCount}/{totalCodes} used
           </Badge>
@@ -140,15 +140,15 @@ Sign up here: ${getInviteUrl(code)}`;
         {codes.map((code) => (
           <div
             key={code.id}
-            className={`p-4 rounded-lg border ${
+            className={`p-4 rounded-md border ${
               code.used_by_user_id
                 ? 'bg-green-900/20 border-green-500/30'
-                : 'bg-[#0a0e1a]/50 border-[#5cffb0]/20'
+                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
             }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <code className="font-mono text-lg tracking-wider text-white bg-[#0a0e1a] px-3 py-1 rounded">
+                <code className="font-mono text-lg tracking-wider text-white bg-slate-950 px-3 py-1 rounded">
                   {code.code}
                 </code>
                 {code.used_by_user_id ? (
@@ -156,7 +156,7 @@ Sign up here: ${getInviteUrl(code)}`;
                     Used
                   </Badge>
                 ) : (
-                  <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/30">
+                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
                     Available
                   </Badge>
                 )}
@@ -166,7 +166,7 @@ Sign up here: ${getInviteUrl(code)}`;
                 size="sm"
                 onClick={() => copyToClipboard(code.code)}
                 disabled={!!code.used_by_user_id}
-                className="text-[#5cffb0] hover:text-white hover:bg-[#5cffb0]/20"
+                className="text-green-500 hover:text-white hover:bg-green-500/20"
               >
                 {copiedCode === code.code ? (
                   <Check className="h-4 w-4" />
@@ -182,7 +182,7 @@ Sign up here: ${getInviteUrl(code)}`;
                   variant="outline"
                   size="sm"
                   onClick={() => shareOnTwitter(code.code)}
-                  className="flex-1 border-[#5cffb0]/30 text-[#B0B0B0] hover:text-[#5cffb0] hover:bg-[#5cffb0]/10"
+                  className="flex-1 border-green-500/30 text-slate-500 dark:text-slate-400 hover:text-green-500 hover:bg-green-500/10"
                 >
                   <Twitter className="h-4 w-4 mr-2" />
                   Twitter
@@ -191,7 +191,7 @@ Sign up here: ${getInviteUrl(code)}`;
                   variant="outline"
                   size="sm"
                   onClick={() => shareByEmail(code.code)}
-                  className="flex-1 border-[#5cffb0]/30 text-[#B0B0B0] hover:text-[#5cffb0] hover:bg-[#5cffb0]/10"
+                  className="flex-1 border-green-500/30 text-slate-500 dark:text-slate-400 hover:text-green-500 hover:bg-green-500/10"
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Email
@@ -202,14 +202,14 @@ Sign up here: ${getInviteUrl(code)}`;
         ))}
 
         {usedCount >= 3 && (
-          <div className="p-4 rounded-lg bg-gradient-to-r from-green-900/30 to-[#5cffb0]/10 border border-green-500/30">
+          <div className="p-4 rounded-md bg-green-900/30 border border-green-500/30">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
                 <Check className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <p className="font-semibold text-green-400">85% Revenue Share Unlocked!</p>
-                <p className="text-sm text-[#B0B0B0]">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   You now earn 85% on every paid message you receive.
                 </p>
               </div>
@@ -218,10 +218,10 @@ Sign up here: ${getInviteUrl(code)}`;
         )}
 
         {usedCount < 3 && (
-          <div className="p-4 rounded-lg bg-[#0a0e1a]/50 border border-[#5cffb0]/20">
-            <p className="text-sm text-[#B0B0B0]">
-              <span className="text-[#5cffb0] font-semibold">{3 - usedCount} more invite{3 - usedCount !== 1 ? 's' : ''}</span> needed
-              to unlock <span className="text-[#5cffb0]">85% revenue share</span> (instead of 75%)
+          <div className="p-4 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              <span className="text-green-500 font-semibold">{3 - usedCount} more invite{3 - usedCount !== 1 ? 's' : ''}</span> needed
+              to unlock <span className="text-green-500">85% revenue share</span> (instead of 75%)
             </p>
           </div>
         )}

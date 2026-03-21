@@ -190,7 +190,7 @@ const PaymentForm = ({ userId, price, onSuccess, onError }: PaymentFormProps) =>
             type="button"
             onClick={handleContinueToPayment}
             disabled={!customerEmail || message.length < 5 || !selectedResponseTime || uploadingFiles}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-green-500 text-white py-3 px-4 rounded-md font-medium hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploadingFiles ? (
               <>Uploading files...</>

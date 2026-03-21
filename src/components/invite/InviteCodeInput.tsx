@@ -88,14 +88,14 @@ export const InviteCodeInput: React.FC<InviteCodeInputProps> = ({
       case 'invalid':
         return 'border-red-500 focus:border-red-500';
       default:
-        return 'border-[#5cffb0]/30 focus:border-[#5cffb0]';
+        return 'border-green-500/30 focus:border-green-500';
     }
   };
 
   const renderValidationIcon = () => {
     switch (validationState) {
       case 'validating':
-        return <Loader2 className="h-4 w-4 animate-spin text-[#5cffb0]" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-green-500" />;
       case 'valid':
         return <Check className="h-4 w-4 text-green-500" />;
       case 'invalid':
@@ -107,7 +107,7 @@ export const InviteCodeInput: React.FC<InviteCodeInputProps> = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Label htmlFor="inviteCode" className="text-[#5cffb0]">
+      <Label htmlFor="inviteCode" className="text-green-500">
         Invite Code <span className="text-red-400">*</span>
       </Label>
       <div className="relative">
@@ -121,7 +121,7 @@ export const InviteCodeInput: React.FC<InviteCodeInputProps> = ({
           disabled={disabled}
           maxLength={20}
           className={cn(
-            "bg-[#1a1f2e]/50 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 pr-10 uppercase tracking-wider font-mono",
+            "bg-white dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 placeholder:text-slate-400/50 pr-10 uppercase tracking-wider font-mono",
             getInputBorderClass()
           )}
         />

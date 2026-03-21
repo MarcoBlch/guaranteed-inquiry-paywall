@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AuthForm from '@/components/auth/AuthForm';
 import { FastPassLogo } from '@/components/ui/FastPassLogo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 import { storeInviteCode, getInviteCodeSync } from '@/utils/inviteCodeStorage';
@@ -103,17 +104,19 @@ const AuthPage = () => {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-slate-950">
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header with Logo */}
-        <header className="p-4 sm:p-6 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <FastPassLogo size="lg" />
-            <p className="text-white/80 text-xs sm:text-sm font-medium tracking-wider -mt-4 sm:-mt-5">
-              GUARANTEED RESPONSES
-            </p>
+        <header className="p-4 sm:p-6">
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <div className="flex flex-col">
+              <FastPassLogo size="lg" />
+              <p className="text-slate-400 dark:text-slate-500 text-[10px] sm:text-xs font-mono font-medium tracking-[0.2em] uppercase mt-1">
+                GUARANTEED RESPONSES
+              </p>
+            </div>
+            <ThemeToggle />
           </div>
         </header>
 
@@ -122,18 +125,18 @@ const AuthPage = () => {
           <div className="w-full max-w-md space-y-4">
             {/* Invitation Code Badge */}
             {inviteCode && (
-              <div className="bg-gradient-to-r from-[#5cffb0]/20 to-[#2C424C]/20 backdrop-blur-md border border-[#5cffb0]/30 rounded-lg p-4 shadow-[0_0_15px_rgba(92,255,176,0.2)]">
+              <div className="bg-green-500/10 border border-green-500/30 rounded-md p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="h-5 w-5 text-[#5cffb0]" />
-                  <span className="text-[#5cffb0] font-semibold">Invitation Code Active</span>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-green-500 font-semibold">Invitation Code Active</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[#B0B0B0] text-sm">Code:</span>
-                  <Badge className="bg-[#5cffb0]/20 text-[#5cffb0] border-[#5cffb0]/30 font-mono">
+                  <span className="text-slate-400 text-sm">Code:</span>
+                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30 font-mono">
                     {inviteCode}
                   </Badge>
                 </div>
-                <p className="text-[#B0B0B0]/80 text-xs mt-2">
+                <p className="text-slate-500 text-xs mt-2">
                   This code will be applied automatically when you sign up
                 </p>
               </div>
@@ -144,8 +147,8 @@ const AuthPage = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-[#B0B0B0]/60 text-sm">
-          <p>© 2026 FastPass • Guaranteed Response Platform</p>
+        <footer className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} FastPass</p>
         </footer>
       </div>
     </div>

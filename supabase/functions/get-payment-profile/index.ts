@@ -130,7 +130,7 @@ serve(async (req) => {
     // Query profile with service role permissions (include daily_limit_override for limit calculation)
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('price, stripe_onboarding_completed, stripe_account_id, display_name, daily_limit_override')
+      .select('price, stripe_onboarding_completed, stripe_account_id, display_name, daily_limit_override, avatar_url, bio_quote, avg_rating, total_ratings, response_rate, avg_response_hours')
       .eq('id', userId)
       .maybeSingle();
 
@@ -180,6 +180,12 @@ serve(async (req) => {
           price: profile.price,
           stripeOnboardingCompleted: profile.stripe_onboarding_completed,
           userName: profile.display_name || 'this professional',
+          avatarUrl: profile.avatar_url || null,
+          bioQuote: profile.bio_quote || null,
+          avgRating: profile.avg_rating || null,
+          totalRatings: profile.total_ratings || 0,
+          responseRate: profile.response_rate || null,
+          avgResponseHours: profile.avg_response_hours || null,
           dailyLimit,
           messagesReceivedToday,
           isLimitReached: messagesReceivedToday >= dailyLimit

@@ -22,9 +22,8 @@ export const BlogCard = ({ post, featured = false }: BlogCardProps) => {
     <Link to={`/blog/${post.slug}`}>
       <Card
         className={`
-          bg-[#1a1f2e]/90 backdrop-blur-md border border-[#5cffb0]/20
-          shadow-[0_0_15px_rgba(92,255,176,0.15)]
-          hover:border-[#5cffb0]/50 hover:shadow-[0_0_25px_rgba(92,255,176,0.25)]
+          bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700
+          hover:border-green-500/50
           transition-all duration-300 cursor-pointer
           ${featured ? 'h-full' : ''}
         `}
@@ -33,7 +32,7 @@ export const BlogCard = ({ post, featured = false }: BlogCardProps) => {
           {/* Category Badge */}
           <Badge
             variant="outline"
-            className="mb-3 text-[#5cffb0] border-[#5cffb0]/40 bg-[#5cffb0]/5"
+            className="mb-3 text-green-500 border-green-500/40 bg-green-500/5"
           >
             {post.category}
           </Badge>
@@ -41,7 +40,7 @@ export const BlogCard = ({ post, featured = false }: BlogCardProps) => {
           {/* Title */}
           <h3
             className={`
-              text-[#5cffb0] font-semibold mb-3 leading-tight
+              text-green-500 font-semibold mb-3 leading-tight
               ${featured ? 'text-xl sm:text-2xl' : 'text-lg'}
             `}
           >
@@ -51,7 +50,7 @@ export const BlogCard = ({ post, featured = false }: BlogCardProps) => {
           {/* Excerpt */}
           <p
             className={`
-              text-[#B0B0B0] leading-relaxed mb-4
+              text-slate-500 dark:text-slate-400 leading-relaxed mb-4
               ${featured ? 'text-base' : 'text-sm line-clamp-3'}
             `}
           >
@@ -59,16 +58,16 @@ export const BlogCard = ({ post, featured = false }: BlogCardProps) => {
           </p>
 
           {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-4 text-xs text-[#B0B0B0]/80">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500/80 dark:text-slate-400/80">
             {formattedDate && (
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#5cffb0]/60" />
+                <Calendar className="w-3.5 h-3.5 text-green-500/60" />
                 {formattedDate}
               </span>
             )}
             {post.reading_time_minutes && (
               <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#5cffb0]/60" />
+                <Clock className="w-3.5 h-3.5 text-green-500/60" />
                 {post.reading_time_minutes} min read
               </span>
             )}

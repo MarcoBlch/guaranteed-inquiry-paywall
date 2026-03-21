@@ -115,7 +115,6 @@ COMMIT;
   if (!currentUser) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        {/* StaticBackground component from App.tsx provides the background */}
 
         <div className="relative z-10 min-h-screen flex flex-col">
           {/* Header */}
@@ -130,12 +129,12 @@ COMMIT;
 
           {/* Main Content */}
           <div className="flex-1 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+            <Card className="w-full max-w-md bg-slate-900 border border-slate-700">
               <CardContent className="p-6 text-center">
-                <p className="text-[#B0B0B0] mb-4">Please log in first</p>
+                <p className="text-slate-400 mb-4">Please log in first</p>
                 <Button
                   onClick={() => navigate('/auth')}
-                  className="bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold"
+                  className="bg-green-500 hover:bg-green-400 text-white font-bold"
                 >
                   Go to Login
                 </Button>
@@ -144,7 +143,7 @@ COMMIT;
           </div>
 
           {/* Footer */}
-          <footer className="text-center py-6 text-[#B0B0B0]/60 text-xs sm:text-sm px-4">
+          <footer className="text-center py-6 text-slate-500 text-xs sm:text-sm px-4">
             <p>© 2026 FastPass • Guaranteed Response Platform</p>
           </footer>
         </div>
@@ -154,7 +153,6 @@ COMMIT;
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* StaticBackground component from App.tsx provides the background */}
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
@@ -169,30 +167,30 @@ COMMIT;
 
         {/* Main Content */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20 shadow-[0_0_20px_rgba(92,255,176,0.2)]">
+          <Card className="w-full max-w-md bg-slate-900 border border-slate-700">
             <CardHeader>
-              <CardTitle className="text-[#5cffb0] text-2xl font-bold">Admin Setup</CardTitle>
+              <CardTitle className="text-green-500 text-2xl font-bold">Admin Setup</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-[#5cffb0]/10 border border-[#5cffb0]/30 rounded-lg p-4">
-                <p className="text-[#B0B0B0] text-sm mb-2">
-                  <strong className="text-[#5cffb0]">Current user:</strong> {currentUser.email}
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                <p className="text-slate-400 text-sm mb-2">
+                  <strong className="text-green-500">Current user:</strong> {currentUser.email}
                 </p>
-                <p className="text-[#B0B0B0] text-xs">
-                  <strong className="text-[#5cffb0]">User ID:</strong>
+                <p className="text-slate-400 text-xs">
+                  <strong className="text-green-500">User ID:</strong>
                   <code className="ml-2 text-xs">{currentUser.id}</code>
                 </p>
               </div>
 
               {currentUser.email === 'marc.bernard@ece-france.com' ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-[#B0B0B0]">
+                  <p className="text-sm text-slate-400">
                     You are authorized to grant yourself admin privileges.
                   </p>
                   <Button
                     onClick={grantSelfAdminPrivileges}
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-all duration-300"
+                    className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-all duration-300"
                   >
                     {loading ? 'Granting Admin Privileges...' : 'Grant Admin Privileges'}
                   </Button>
@@ -207,7 +205,7 @@ COMMIT;
                   <Button
                     onClick={() => navigate('/')}
                     variant="outline"
-                    className="w-full border-[#5cffb0]/50 text-[#5cffb0] hover:bg-[#5cffb0]/10"
+                    className="w-full border-green-500/50 text-green-500 hover:bg-green-500/10"
                   >
                     Go to Home
                   </Button>
@@ -218,7 +216,7 @@ COMMIT;
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-6 text-[#B0B0B0]/60 text-xs sm:text-sm px-4">
+        <footer className="text-center py-6 text-slate-500 text-xs sm:text-sm px-4">
           <p>© 2026 FastPass • Guaranteed Response Platform</p>
         </footer>
       </div>

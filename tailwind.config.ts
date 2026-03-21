@@ -18,7 +18,18 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				display: ['Instrument Serif', 'Georgia', 'serif'],
+				body: ['Geist Sans', 'system-ui', '-apple-system', 'sans-serif'],
+				mono: ['Geist Mono', 'SF Mono', 'Fira Code', 'monospace'],
+			},
 			colors: {
+				signal: {
+					DEFAULT: '#22c55e',
+					light: '#4ade80',
+					dark: '#16a34a',
+					subtle: '#f0fdf4',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -84,11 +95,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				scroll: {
+					'0%': { transform: 'translateX(0)' },
+					'100%': { transform: 'translateX(-50%)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				scroll: 'scroll 30s linear infinite',
 			}
 		}
 	},

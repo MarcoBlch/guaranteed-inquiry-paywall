@@ -5,9 +5,9 @@
  * Appears only on first visit, stores consent in localStorage
  *
  * Brand Standards:
- * - Glassmorphism styling with backdrop blur
- * - Neon Vert (#5cffb0) accents and borders
- * - Dark Navy (#1a1f2e) card background
+ * - Clean monochrome + signal green palette
+ * - Signal green (#22c55e) accents and borders
+ * - White/slate card background
  * - Two equally prominent buttons: "Essential Only" and "Accept All"
  * - Mobile responsive (buttons stack on small screens)
  */
@@ -71,11 +71,11 @@ export const CookieBanner = () => {
       aria-describedby="cookie-banner-description"
     >
       <div className="max-w-6xl mx-auto">
-        <div className="relative bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/30 shadow-[0_0_30px_rgba(92,255,176,0.2)] rounded-2xl p-6 sm:p-8">
+        <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-6 sm:p-8">
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-[#B0B0B0] hover:text-[#5cffb0] transition-colors"
+            className="absolute top-4 right-4 text-slate-500 dark:text-slate-400 hover:text-green-500 transition-colors"
             aria-label="Close cookie banner"
           >
             <X className="w-5 h-5" />
@@ -86,30 +86,30 @@ export const CookieBanner = () => {
             <div className="pr-8">
               <h2
                 id="cookie-banner-title"
-                className="text-[#5cffb0] text-xl sm:text-2xl font-semibold mb-3"
+                className="text-green-500 text-xl sm:text-2xl font-semibold mb-3"
               >
                 🍪 We Value Your Privacy
               </h2>
               <p
                 id="cookie-banner-description"
-                className="text-[#B0B0B0] text-sm sm:text-base leading-relaxed mb-4"
+                className="text-slate-500 dark:text-slate-400 text-sm sm:text-base leading-relaxed mb-4"
               >
                 FastPass uses essential cookies to provide secure authentication and core functionality.
                 We also use optional functional cookies to enhance your experience. You can customize
                 your preferences anytime in{' '}
                 <a
                   href="/cookie-settings"
-                  className="text-[#5cffb0] hover:underline font-medium"
+                  className="text-green-500 hover:underline font-medium"
                 >
                   Cookie Settings
                 </a>
                 .
               </p>
-              <p className="text-[#B0B0B0]/80 text-xs sm:text-sm">
+              <p className="text-slate-500/80 dark:text-slate-400/80 text-xs sm:text-sm">
                 Read our full{' '}
                 <a
                   href="/privacy"
-                  className="text-[#5cffb0] hover:underline font-medium"
+                  className="text-green-500 hover:underline font-medium"
                 >
                   Privacy Policy
                 </a>
@@ -121,7 +121,7 @@ export const CookieBanner = () => {
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 min-w-[200px]">
               <Button
                 onClick={handleAcceptAll}
-                className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(92,255,176,0.3)] hover:shadow-[0_0_25px_rgba(92,255,176,0.5)]"
+                className="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-md transition-all duration-300"
                 aria-label="Accept all cookies"
               >
                 Accept All
@@ -129,7 +129,7 @@ export const CookieBanner = () => {
               <Button
                 onClick={handleEssentialOnly}
                 variant="outline"
-                className="w-full border-2 border-[#5cffb0] text-[#5cffb0] hover:bg-[#5cffb0]/10 hover:text-[#5cffb0] font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+                className="w-full border-2 border-green-500 text-green-500 hover:bg-green-500/10 hover:text-green-500 font-semibold py-3 px-6 rounded-md transition-all duration-300"
                 aria-label="Accept essential cookies only"
               >
                 Essential Only

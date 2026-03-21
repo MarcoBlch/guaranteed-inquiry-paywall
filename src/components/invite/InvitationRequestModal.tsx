@@ -114,12 +114,12 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-[#1a1f2e]/95 backdrop-blur-md border border-[#5cffb0]/20">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle className="text-[#5cffb0] text-2xl font-bold">
+          <DialogTitle className="text-green-500 text-2xl font-bold">
             {submitted ? 'Request Received!' : 'Get Your Exclusive Invitation'}
           </DialogTitle>
-          <DialogDescription className="text-[#B0B0B0]">
+          <DialogDescription className="text-slate-500 dark:text-slate-400">
             {submitted
               ? "We'll review your request and send you an invitation code soon."
               : "Fastpass is reserved for selected creators."
@@ -130,11 +130,11 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
         {!submitted ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#5cffb0]">
+              <Label htmlFor="email" className="text-green-500">
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#B0B0B0]" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 dark:text-slate-400" />
                 <Input
                   id="email"
                   type="email"
@@ -142,7 +142,7 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
                   value={email}
                   onChange={handleEmailChange}
                   disabled={loading}
-                  className="pl-10 bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] placeholder:text-[#B0B0B0]/50 focus:border-[#5cffb0]"
+                  className="pl-10 bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400 placeholder:text-slate-400/50 focus:border-green-500"
                   autoComplete="email"
                   autoFocus
                 />
@@ -155,7 +155,7 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+              className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
             >
               {loading ? (
                 <>
@@ -169,10 +169,10 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-[#5cffb0]/30" />
+                <span className="w-full border-t border-green-500/30" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#1a1f2e] px-2 text-[#B0B0B0]">
+                <span className="bg-white dark:bg-slate-900 px-2 text-slate-500 dark:text-slate-400">
                   Already have a code?
                 </span>
               </div>
@@ -182,7 +182,7 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
               type="button"
               variant="outline"
               onClick={handleGoToAuth}
-              className="w-full border-[#5cffb0]/50 text-[#B0B0B0] bg-transparent hover:bg-[#5cffb0]/10 hover:text-[#5cffb0]"
+              className="w-full border-green-500/50 text-slate-500 dark:text-slate-400 bg-transparent hover:bg-green-500/10 hover:text-green-500"
             >
               Sign Up or Login
             </Button>
@@ -190,21 +190,21 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
         ) : (
           <div className="space-y-4">
             <div className="flex flex-col items-center justify-center py-6">
-              <CheckCircle className="h-16 w-16 text-[#5cffb0] mb-4" />
-              <p className="text-[#B0B0B0] text-center mb-2">
+              <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+              <p className="text-slate-500 dark:text-slate-400 text-center mb-2">
                 Check your email inbox for your invitation code.
               </p>
-              <p className="text-[#B0B0B0]/70 text-sm text-center">
+              <p className="text-slate-500/70 dark:text-slate-400/70 text-sm text-center">
                 It may take a few days during our beta period.
               </p>
             </div>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-[#5cffb0]/30" />
+                <span className="w-full border-t border-green-500/30" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#1a1f2e] px-2 text-[#B0B0B0]">
+                <span className="bg-white dark:bg-slate-900 px-2 text-slate-500 dark:text-slate-400">
                   Already have a code?
                 </span>
               </div>
@@ -213,7 +213,7 @@ export const InvitationRequestModal: React.FC<InvitationRequestModalProps> = ({
             <Button
               type="button"
               onClick={handleGoToAuth}
-              className="w-full bg-gradient-to-r from-[#5cffb0] to-[#2C424C] hover:from-[#4de89d] hover:to-[#253740] text-[#0a0e1a] hover:text-white font-bold transition-colors duration-300"
+              className="w-full bg-green-500 hover:bg-green-400 text-white font-bold transition-colors duration-300"
             >
               Sign Up or Login
             </Button>

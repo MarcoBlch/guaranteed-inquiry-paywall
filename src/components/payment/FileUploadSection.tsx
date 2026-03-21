@@ -60,10 +60,10 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
   return (
     <div className="space-y-3">
       <div>
-        <Label htmlFor="attachments" className="text-[#5cffb0]">
+        <Label htmlFor="attachments" className="text-green-500">
           Attachments (Optional)
         </Label>
-        <p className="text-xs text-[#B0B0B0]/70 mt-1">
+        <p className="text-xs text-slate-500/70 dark:text-slate-400/70 mt-1">
           Up to 5 files, {maxFileSizeMB}MB each, {maxTotalSizeMB}MB total
         </p>
       </div>
@@ -74,16 +74,16 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
         multiple
         onChange={handleFileChange}
         accept={allowedTypes}
-        className={`bg-[#1a1f2e]/50 border-[#5cffb0]/30 text-[#B0B0B0] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[#5cffb0]/20 file:text-[#5cffb0] hover:file:bg-[#5cffb0]/30 focus:border-[#5cffb0] ${errors.length > 0 ? "border-red-500/50" : ""}`}
+        className={`bg-white dark:bg-slate-900/50 border-green-500/30 text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-green-500/20 file:text-green-500 hover:file:bg-green-500/30 focus:border-green-500 ${errors.length > 0 ? "border-red-500/50" : ""}`}
         disabled={attachments.length >= 5}
       />
 
-      <div className="text-xs text-[#B0B0B0]/70">
+      <div className="text-xs text-slate-500/70 dark:text-slate-400/70">
         Allowed formats: Images (JPG, PNG, GIF), Documents (PDF, TXT, DOC, DOCX)
       </div>
 
       {errors.length > 0 && (
-        <div className="space-y-1 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+        <div className="space-y-1 p-3 bg-red-500/10 border border-red-500/30 rounded-md">
           {errors.map((error, index) => (
             <p key={index} className="text-sm text-red-400 flex items-start gap-2">
               <span className="text-red-400 font-bold">•</span>
@@ -94,12 +94,12 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
       )}
 
       {attachments.length > 0 && (
-        <div className="space-y-2 p-3 bg-[#5cffb0]/5 border border-[#5cffb0]/30 rounded-lg">
+        <div className="space-y-2 p-3 bg-green-500/5 border border-green-500/30 rounded-md">
           <div className="flex justify-between items-center">
-            <div className="text-sm font-medium text-[#5cffb0]">
+            <div className="text-sm font-medium text-green-500">
               Selected files ({attachments.length}/5)
             </div>
-            <div className="text-xs text-[#B0B0B0]/70">
+            <div className="text-xs text-slate-500/70 dark:text-slate-400/70">
               Total: {totalSizeMB.toFixed(2)} MB / {maxTotalSizeMB} MB
             </div>
           </div>
@@ -108,15 +108,15 @@ const FileUploadSection = ({ attachments, setAttachments }: FileUploadSectionPro
             {attachments.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 bg-[#1a1f2e]/50 border border-[#5cffb0]/20 rounded hover:border-[#5cffb0]/40 transition-colors"
+                className="flex items-center justify-between p-2 bg-white dark:bg-slate-900/50 border border-green-500/20 rounded-md hover:border-green-500/40 transition-colors"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="text-[#5cffb0]">
+                  <div className="text-green-500">
                     {getFileIcon(file.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-[#B0B0B0]">{file.name}</p>
-                    <p className="text-xs text-[#B0B0B0]/70">
+                    <p className="text-sm font-medium truncate text-slate-500 dark:text-slate-400">{file.name}</p>
+                    <p className="text-xs text-slate-500/70 dark:text-slate-400/70">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
