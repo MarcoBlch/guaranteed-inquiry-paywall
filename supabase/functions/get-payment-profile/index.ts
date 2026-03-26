@@ -103,15 +103,24 @@ serve(async (req) => {
     console.log('Getting payment profile information');
 
     const url = new URL(req.url);
-    const userId = url.searchParams.get('userId');
+    const userIdParam = url.searchParams.get('userId');
+    const slugParam = url.searchParams.get('slug');
 
-    if (!userId) {
-      throw new Error('User ID is required');
+    if (!userIdParam && !slugParam) {
+      throw new Error('User ID or slug is required');
     }
 
-    // Validate userId format (should be UUID)
+    // Determine lookup method: UUID or slug
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
+    const isUuidLookup = userIdParam && uuidRegex.test(userIdParam);
+
+    if (slugParam) {
+      // Validate slug format
+      const slugRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+      if (!slugRegex.test(slugParam) || slugParam.length < 3 || slugParam.length > 30) {
+        throw new Error('Invalid slug format');
+      }
+    } else if (!isUuidLookup) {
       throw new Error('Invalid user ID format');
     }
 
@@ -125,18 +134,42 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Fetching profile for userId:', userId);
+    const selectFields = 'id, slug, price, stripe_onboarding_completed, stripe_account_id, display_name, daily_limit_override, avatar_url, bio_quote, avg_rating, total_ratings, response_rate, avg_response_hours';
 
-    // Query profile with service role permissions (include daily_limit_override for limit calculation)
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('price, stripe_onboarding_completed, stripe_account_id, display_name, daily_limit_override, avatar_url, bio_quote, avg_rating, total_ratings, response_rate, avg_response_hours')
-      .eq('id', userId)
-      .maybeSingle();
+    let profile;
+    let resolvedUserId: string;
 
-    if (error) {
-      console.error('Database error:', error);
-      throw new Error('Failed to fetch profile information');
+    if (isUuidLookup) {
+      // Existing path: look up by UUID
+      console.log('Fetching profile by userId:', userIdParam);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(selectFields)
+        .eq('id', userIdParam)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Database error:', error);
+        throw new Error('Failed to fetch profile information');
+      }
+      profile = data;
+      resolvedUserId = userIdParam!;
+    } else {
+      // New path: look up by slug
+      const lookupSlug = (slugParam || userIdParam)!.toLowerCase();
+      console.log('Fetching profile by slug:', lookupSlug);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(selectFields)
+        .eq('slug', lookupSlug)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Database error:', error);
+        throw new Error('Failed to fetch profile information');
+      }
+      profile = data;
+      resolvedUserId = profile?.id;
     }
 
     if (!profile) {
@@ -165,7 +198,7 @@ serve(async (req) => {
     const { count: todayCount } = await supabase
       .from('escrow_transactions')
       .select('id', { count: 'exact', head: true })
-      .eq('recipient_user_id', userId)
+      .eq('recipient_user_id', resolvedUserId)
       .gte('created_at', todayUTC.toISOString())
       .in('status', ['held', 'processing', 'released', 'pending_user_setup'])
 
@@ -177,6 +210,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         profile: {
+          userId: resolvedUserId,
+          slug: profile.slug || null,
           price: profile.price,
           stripeOnboardingCompleted: profile.stripe_onboarding_completed,
           userName: profile.display_name || 'this professional',

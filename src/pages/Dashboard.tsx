@@ -41,6 +41,7 @@ import { FastPassLogo } from "@/components/ui/FastPassLogo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { usePageViewTracking } from '@/hooks/usePageViewTracking';
 import { MyInviteCodes, ReferralProgress } from '@/components/invite';
+import { RESERVED_SLUGS } from '@/constants/reservedSlugs';
 
 interface Message {
   id: string;
@@ -100,6 +101,10 @@ const Dashboard = () => {
   const [revenuePercentage, setRevenuePercentage] = useState(0.75);
   const [todayMessageCount, setTodayMessageCount] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(5);
+  const [slug, setSlug] = useState('');
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -359,7 +364,7 @@ const Dashboard = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override, avatar_url, bio_quote')
+      .select('stripe_account_id, stripe_onboarding_completed, price, is_admin, display_name, daily_limit_override, avatar_url, bio_quote, slug')
       .eq('id', user.id)
       .single();
 
@@ -370,6 +375,7 @@ const Dashboard = () => {
       setDisplayName(profile.display_name || '');
       setAvatarUrl(profile.avatar_url || null);
       setBioQuote(profile.bio_quote || '');
+      setSlug(profile.slug || '');
       setDailyLimit(profile.daily_limit_override ?? 5);
     }
 
@@ -413,13 +419,17 @@ const Dashboard = () => {
 
     setLoading(true);
     try {
+      const updateData: Record<string, any> = {
+        price: price,
+        display_name: displayName.trim() || null,
+        bio_quote: bioQuote.trim() || null,
+      };
+      if (slug.trim()) {
+        updateData.slug = slug.trim().toLowerCase();
+      }
       const { error } = await supabase
         .from('profiles')
-        .update({
-          price: price,
-          display_name: displayName.trim() || null,
-          bio_quote: bioQuote.trim() || null
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;
@@ -511,7 +521,7 @@ const Dashboard = () => {
     if (!user) return '';
 
     const baseUrl = window.location.origin;
-    return `${baseUrl}/pay/${user.id}`;
+    return slug ? `${baseUrl}/${slug}` : `${baseUrl}/pay/${user.id}`;
   };
 
   return (
@@ -962,6 +972,74 @@ const Dashboard = () => {
                       />
                       <p className="text-xs text-slate-500">
                         {bioQuote.length}/200 characters. Shown on your payment page.
+                      </p>
+                    </div>
+
+                    {/* Profile URL (Slug) */}
+                    <div className="space-y-2">
+                      <Label htmlFor="slug" className="text-green-500">Profile URL</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-400 whitespace-nowrap">fastpass.email/</span>
+                        <Input
+                          id="slug"
+                          type="text"
+                          placeholder="your-name"
+                          value={slug}
+                          onChange={(e) => {
+                            const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                            setSlug(val);
+                            setSlugAvailable(null);
+                            setSlugError(null);
+                          }}
+                          onBlur={async () => {
+                            if (!slug || slug.length < 3) {
+                              if (slug.length > 0) setSlugError('Minimum 3 characters');
+                              return;
+                            }
+                            if (slug.length > 30) {
+                              setSlugError('Maximum 30 characters');
+                              return;
+                            }
+                            if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug)) {
+                              setSlugError('Must start and end with a letter or number');
+                              return;
+                            }
+                            if (RESERVED_SLUGS.includes(slug)) {
+                              setSlugError('This URL is reserved');
+                              return;
+                            }
+                            setCheckingSlug(true);
+                            try {
+                              const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                              const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                              const res = await fetch(
+                                `${supabaseUrl}/functions/v1/get-payment-profile?slug=${encodeURIComponent(slug)}`,
+                                { headers: { 'Authorization': `Bearer ${supabaseKey}` } }
+                              );
+                              const data = await res.json();
+                              if (data.success && data.profile?.userId !== user?.id) {
+                                setSlugError('This URL is already taken');
+                                setSlugAvailable(false);
+                              } else {
+                                setSlugAvailable(true);
+                                setSlugError(null);
+                              }
+                            } catch {
+                              setSlugAvailable(true);
+                              setSlugError(null);
+                            } finally {
+                              setCheckingSlug(false);
+                            }
+                          }}
+                          className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-400 placeholder:text-slate-600 focus:border-green-500"
+                          maxLength={30}
+                        />
+                      </div>
+                      {slugError && <p className="text-xs text-red-400">{slugError}</p>}
+                      {checkingSlug && <p className="text-xs text-slate-400">Checking availability...</p>}
+                      {slugAvailable === true && !slugError && <p className="text-xs text-green-500">Available!</p>}
+                      <p className="text-xs text-slate-500">
+                        3-30 characters. Lowercase letters, numbers, and hyphens only. This is your shareable link.
                       </p>
                     </div>
 
