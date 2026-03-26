@@ -26,13 +26,15 @@ const stripePromise = loadStripe(stripeKey, {
 });
 
 const PaymentPage = () => {
-  const { userId } = useParams();
+  const params = useParams();
   const navigate = useNavigate();
-  const { details, loading, error } = usePaymentDetails(userId);
+  // Supports both /pay/:userId (UUID) and /:slug (short URL) routes
+  const identifier = params.userId || params.slug;
+  const { details, loading, error, resolvedUserId } = usePaymentDetails(identifier);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  // Track page view for analytics (includes userId in path for conversion tracking)
-  usePageViewTracking(userId ? `/pay/${userId}` : '/pay');
+  // Track page view for analytics (use resolved UUID for consistent tracking)
+  usePageViewTracking(resolvedUserId ? `/pay/${resolvedUserId}` : '/pay');
 
   if (loading) {
     return (
@@ -90,7 +92,7 @@ const PaymentPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 lg:p-8">
-                  {details && userId && (
+                  {details && resolvedUserId && (
                     <div className="space-y-4 sm:space-y-6">
                       {details.isLimitReached ? (
                         /* Inbox full — daily limit reached */
@@ -168,7 +170,7 @@ const PaymentPage = () => {
                           </div>
 
                           <StripeEscrowForm
-                            userId={userId}
+                            userId={resolvedUserId}
                             basePrice={details.price}
                             userName={details.userName}
                             onSuccess={() => navigate('/payment-success')}

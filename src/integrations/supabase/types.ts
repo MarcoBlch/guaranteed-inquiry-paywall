@@ -596,6 +596,7 @@ export type Database = {
           price: number | null
           response_rate: number | null
           signed_up_at: string | null
+          slug: string
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           total_ratings: number | null
@@ -615,6 +616,7 @@ export type Database = {
           price?: number | null
           response_rate?: number | null
           signed_up_at?: string | null
+          slug?: string
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           total_ratings?: number | null
@@ -634,6 +636,7 @@ export type Database = {
           price?: number | null
           response_rate?: number | null
           signed_up_at?: string | null
+          slug?: string
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           total_ratings?: number | null

@@ -155,6 +155,9 @@ const App = () => {
               </AuthProvider>
             } />
 
+            {/* SHORT PROFILE URL - Resolves slug to payment page */}
+            <Route path="/:slug" element={<PaymentPage />} />
+
             {/* Route 404 - Fallback */}
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950">
